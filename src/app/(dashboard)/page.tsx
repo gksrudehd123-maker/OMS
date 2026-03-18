@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { ShoppingCart, TrendingUp, Percent, Package } from 'lucide-react';
+import { DateRangeFilter } from '@/components/common/date-range-filter';
 import {
   AreaChart,
   Area,
@@ -108,9 +109,9 @@ export default function DashboardPage() {
   ];
 
   const formatCurrency = (value: number) => {
-    if (value >= 1000000) return `₩${(value / 1000000).toFixed(1)}M`;
-    if (value >= 1000) return `₩${(value / 1000).toFixed(0)}K`;
-    return `₩${value}`;
+    if (value >= 100000000) return `${(value / 100000000).toFixed(1)}억원`;
+    if (value >= 10000) return `${(value / 10000).toFixed(0)}만원`;
+    return `${value.toLocaleString()}원`;
   };
 
   const formatDate = (dateStr: string) => {
@@ -120,39 +121,19 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="space-y-3">
         <div>
           <h1 className="text-2xl font-semibold">대시보드</h1>
           <p className="text-sm text-muted-foreground">
             매출 및 마진 현황을 한눈에 확인하세요
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <input
-            type="date"
-            value={from}
-            onChange={(e) => setFrom(e.target.value)}
-            className="rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-          />
-          <span className="text-sm text-muted-foreground">~</span>
-          <input
-            type="date"
-            value={to}
-            onChange={(e) => setTo(e.target.value)}
-            className="rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-          />
-          {(from || to) && (
-            <button
-              onClick={() => {
-                setFrom('');
-                setTo('');
-              }}
-              className="rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-muted"
-            >
-              초기화
-            </button>
-          )}
-        </div>
+        <DateRangeFilter
+          from={from}
+          to={to}
+          onFromChange={setFrom}
+          onToChange={setTo}
+        />
       </div>
 
       {/* KPI Cards */}
@@ -208,12 +189,12 @@ export default function DashboardPage() {
                   dataKey="date"
                   tickFormatter={formatDate}
                   className="text-xs"
-                  tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                  tick={{ fill: '#9CA3AF' }}
                 />
                 <YAxis
                   tickFormatter={formatCurrency}
                   className="text-xs"
-                  tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                  tick={{ fill: '#9CA3AF' }}
                 />
                 <Tooltip
                   content={({ active, payload, label }) => {
@@ -295,13 +276,13 @@ export default function DashboardPage() {
                   <XAxis
                     type="number"
                     tickFormatter={formatCurrency}
-                    tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
+                    tick={{ fill: '#9CA3AF', fontSize: 11 }}
                   />
                   <YAxis
                     type="category"
                     dataKey="label"
                     width={140}
-                    tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
+                    tick={{ fill: '#9CA3AF', fontSize: 11 }}
                     tickFormatter={(value: string) =>
                       value.length > 18 ? value.slice(0, 18) + '...' : value
                     }

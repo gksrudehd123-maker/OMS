@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react';
 import { FileSpreadsheet, FileText, Download, Loader2 } from 'lucide-react';
+import { DateRangeFilter } from '@/components/common/date-range-filter';
 import {
   AreaChart,
   Area,
@@ -194,9 +195,9 @@ export default function ReportsPage() {
   const fmt = (n: number) => `₩${n.toLocaleString()}`;
 
   const formatCurrency = (value: number) => {
-    if (value >= 1000000) return `₩${(value / 1000000).toFixed(1)}M`;
-    if (value >= 1000) return `₩${(value / 1000).toFixed(0)}K`;
-    return `₩${value}`;
+    if (value >= 100000000) return `${(value / 100000000).toFixed(1)}억원`;
+    if (value >= 10000) return `${(value / 10000).toFixed(0)}만원`;
+    return `${value.toLocaleString()}원`;
   };
 
   const formatDate = (dateStr: string) => {
@@ -228,29 +229,13 @@ export default function ReportsPage() {
 
       {/* 기간 선택 + 조회 */}
       <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
-        <div className="flex flex-wrap items-end gap-4">
-          <div>
-            <label className="mb-1 block text-sm text-muted-foreground">
-              시작일
-            </label>
-            <input
-              type="date"
-              value={from}
-              onChange={(e) => setFrom(e.target.value)}
-              className="rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm text-muted-foreground">
-              종료일
-            </label>
-            <input
-              type="date"
-              value={to}
-              onChange={(e) => setTo(e.target.value)}
-              className="rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-            />
-          </div>
+        <div className="space-y-4">
+          <DateRangeFilter
+            from={from}
+            to={to}
+            onFromChange={setFrom}
+            onToChange={setTo}
+          />
           <button
             onClick={fetchReport}
             disabled={!from || !to || loading}
