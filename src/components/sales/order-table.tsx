@@ -9,6 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { Skeleton } from '@/components/ui/skeleton';
 
 type MarginData = {
   salesAmount: number;
@@ -39,9 +40,11 @@ export function OrderTable({ refreshKey }: { refreshKey: number }) {
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
+  const [loading, setLoading] = useState(true);
   const limit = 20;
 
   useEffect(() => {
+    setLoading(true);
     const params = new URLSearchParams({
       page: String(page),
       limit: String(limit),
@@ -53,7 +56,8 @@ export function OrderTable({ refreshKey }: { refreshKey: number }) {
       .then((data) => {
         setOrders(data.orders);
         setTotal(data.total);
-      });
+      })
+      .finally(() => setLoading(false));
   }, [page, search, refreshKey]);
 
   const totalPages = Math.ceil(total / limit);
@@ -93,7 +97,17 @@ export function OrderTable({ refreshKey }: { refreshKey: number }) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {orders.length === 0 ? (
+            {loading ? (
+              Array.from({ length: 5 }).map((_, i) => (
+                <TableRow key={i}>
+                  {Array.from({ length: 9 }).map((_, j) => (
+                    <TableCell key={j}>
+                      <Skeleton className="h-4 w-full" />
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : orders.length === 0 ? (
               <TableRow>
                 <TableCell
                   colSpan={9}

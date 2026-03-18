@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { Store, Plus } from 'lucide-react';
+import { ProgressBar } from '@/components/ui/progress-bar';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Dialog,
   DialogContent,
@@ -26,6 +28,8 @@ export default function ChannelsPage() {
   const [code, setCode] = useState('');
   const [feeRate, setFeeRate] = useState('');
 
+  const [loading, setLoading] = useState(true);
+
   // 편집 다이얼로그
   const [editChannel, setEditChannel] = useState<Channel | null>(null);
   const [editName, setEditName] = useState('');
@@ -33,9 +37,11 @@ export default function ChannelsPage() {
   const [saving, setSaving] = useState(false);
 
   const fetchChannels = () => {
+    setLoading(true);
     fetch('/api/channels')
       .then((res) => res.json())
-      .then(setChannels);
+      .then(setChannels)
+      .finally(() => setLoading(false));
   };
 
   useEffect(() => {
@@ -126,6 +132,7 @@ export default function ChannelsPage() {
 
   return (
     <div className="space-y-6">
+      <ProgressBar loading={loading} />
       <Toaster richColors position="top-right" />
       <div className="flex items-center justify-between">
         <div>
@@ -199,7 +206,30 @@ export default function ChannelsPage() {
       )}
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {channels.length === 0 ? (
+        {loading ? (
+          Array.from({ length: 3 }).map((_, i) => (
+            <div
+              key={i}
+              className="rounded-xl border border-border bg-card p-6 shadow-sm"
+            >
+              <div className="flex items-center justify-between">
+                <Skeleton className="h-5 w-24" />
+                <Skeleton className="h-5 w-12 rounded-full" />
+              </div>
+              <Skeleton className="mt-2 h-4 w-32" />
+              <div className="mt-4 grid grid-cols-2 gap-2">
+                <div>
+                  <Skeleton className="h-3 w-12 mb-1" />
+                  <Skeleton className="h-5 w-16" />
+                </div>
+                <div>
+                  <Skeleton className="h-3 w-12 mb-1" />
+                  <Skeleton className="h-5 w-16" />
+                </div>
+              </div>
+            </div>
+          ))
+        ) : channels.length === 0 ? (
           <div className="col-span-full rounded-xl border border-dashed border-border p-12 text-center">
             <Store className="mx-auto h-8 w-8 text-muted-foreground" />
             <p className="mt-3 text-sm text-muted-foreground">

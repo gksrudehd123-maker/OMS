@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { Toaster, toast } from 'sonner';
 import { Plus, Trash2, Megaphone } from 'lucide-react';
+import { ProgressBar } from '@/components/ui/progress-bar';
+import { Skeleton } from '@/components/ui/skeleton';
 
 type Channel = {
   id: string;
@@ -34,6 +36,7 @@ export default function AdCostsPage() {
   const [formCost, setFormCost] = useState('');
   const [formMemo, setFormMemo] = useState('');
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetch('/api/channels')
@@ -56,6 +59,7 @@ export default function AdCostsPage() {
   }, [filterFrom, filterTo, filterChannel]);
 
   const fetchAdCosts = () => {
+    setLoading(true);
     const params = new URLSearchParams();
     if (filterFrom) params.set('from', filterFrom);
     if (filterTo) params.set('to', filterTo);
@@ -66,7 +70,8 @@ export default function AdCostsPage() {
       .then((data) => {
         setAdCosts(data.adCosts);
         setTotalCost(data.totalCost);
-      });
+      })
+      .finally(() => setLoading(false));
   };
 
   const handleSubmit = async () => {
@@ -119,6 +124,7 @@ export default function AdCostsPage() {
 
   return (
     <div className="space-y-6">
+      <ProgressBar loading={loading} />
       <Toaster richColors position="top-right" />
       <div>
         <h1 className="text-2xl font-semibold">광고비 관리</h1>
@@ -250,7 +256,17 @@ export default function AdCostsPage() {
               </tr>
             </thead>
             <tbody>
-              {adCosts.length === 0 ? (
+              {loading ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <tr key={i} className="border-b border-border last:border-0">
+                    {Array.from({ length: 5 }).map((_, j) => (
+                      <td key={j} className="px-4 py-3">
+                        <Skeleton className="h-4 w-full" />
+                      </td>
+                    ))}
+                  </tr>
+                ))
+              ) : adCosts.length === 0 ? (
                 <tr>
                   <td
                     colSpan={5}

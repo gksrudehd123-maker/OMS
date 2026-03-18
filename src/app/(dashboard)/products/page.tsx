@@ -16,6 +16,8 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
+import { ProgressBar } from '@/components/ui/progress-bar';
+import { Skeleton } from '@/components/ui/skeleton';
 
 type Product = {
   id: string;
@@ -55,6 +57,7 @@ export default function ProductsPage() {
   const [editFreeShippingMin, setEditFreeShippingMin] = useState('');
   const [editMemo, setEditMemo] = useState('');
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetch('/api/channels')
@@ -63,6 +66,7 @@ export default function ProductsPage() {
   }, []);
 
   const fetchProducts = useCallback(() => {
+    setLoading(true);
     const params = new URLSearchParams({
       page: String(page),
       limit: String(limit),
@@ -75,7 +79,8 @@ export default function ProductsPage() {
       .then((data) => {
         setProducts(data.products);
         setTotal(data.total);
-      });
+      })
+      .finally(() => setLoading(false));
   }, [page, search, channelId]);
 
   useEffect(() => {
@@ -162,6 +167,7 @@ export default function ProductsPage() {
 
   return (
     <div className="space-y-6">
+      <ProgressBar loading={loading} />
       <div>
         <h1 className="text-2xl font-semibold">상품 관리</h1>
         <p className="text-sm text-muted-foreground">
@@ -217,7 +223,17 @@ export default function ProductsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {products.length === 0 ? (
+              {loading ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <TableRow key={i}>
+                    {Array.from({ length: 6 }).map((_, j) => (
+                      <TableCell key={j}>
+                        <Skeleton className="h-4 w-full" />
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : products.length === 0 ? (
                 <TableRow>
                   <TableCell
                     colSpan={6}

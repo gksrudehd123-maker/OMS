@@ -9,6 +9,8 @@ import {
   Megaphone,
 } from 'lucide-react';
 import { DateRangeFilter } from '@/components/common/date-range-filter';
+import { ProgressBar } from '@/components/ui/progress-bar';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   AreaChart,
   Area,
@@ -66,17 +68,20 @@ type DashboardData = {
 
 export default function DashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
 
   useEffect(() => {
+    setLoading(true);
     const params = new URLSearchParams();
     if (from) params.set('from', from);
     if (to) params.set('to', to);
 
     fetch(`/api/dashboard?${params}`)
       .then((res) => res.json())
-      .then(setData);
+      .then(setData)
+      .finally(() => setLoading(false));
   }, [from, to]);
 
   const kpi = data?.kpi;
@@ -145,6 +150,7 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
+      <ProgressBar loading={loading} />
       <div className="space-y-3">
         <div>
           <h1 className="text-2xl font-semibold">대시보드</h1>
@@ -162,32 +168,49 @@ export default function DashboardPage() {
 
       {/* KPI Cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        {kpiCards.map((card) => (
-          <div
-            key={card.label}
-            className="rounded-xl border border-border bg-card p-6 shadow-sm transition-shadow hover:shadow-md"
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">
-                {card.label}
-              </span>
-              <div className={`rounded-lg p-2 ${card.bgColor}`}>
-                <card.icon className={`h-4 w-4 ${card.color}`} />
+        {loading
+          ? Array.from({ length: 5 }).map((_, i) => (
+              <div
+                key={i}
+                className="rounded-xl border border-border bg-card p-6 shadow-sm"
+              >
+                <div className="flex items-center justify-between">
+                  <Skeleton className="h-4 w-16" />
+                  <Skeleton className="h-8 w-8 rounded-lg" />
+                </div>
+                <Skeleton className="mt-3 h-8 w-28" />
               </div>
-            </div>
-            <div className="mt-3">
-              <span className="font-mono text-2xl font-semibold">
-                {card.value}
-              </span>
-            </div>
-          </div>
-        ))}
+            ))
+          : kpiCards.map((card) => (
+              <div
+                key={card.label}
+                className="rounded-xl border border-border bg-card p-6 shadow-sm transition-shadow hover:shadow-md"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">
+                    {card.label}
+                  </span>
+                  <div className={`rounded-lg p-2 ${card.bgColor}`}>
+                    <card.icon className={`h-4 w-4 ${card.color}`} />
+                  </div>
+                </div>
+                <div className="mt-3">
+                  <span className="font-mono text-2xl font-semibold">
+                    {card.value}
+                  </span>
+                </div>
+              </div>
+            ))}
       </div>
 
       {/* 매출 추이 차트 */}
       <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
         <h2 className="text-lg font-semibold">매출 추이</h2>
-        {dailyData.length === 0 ? (
+        {loading ? (
+          <div className="mt-4 space-y-3">
+            <Skeleton className="h-72 w-full rounded-lg" />
+          </div>
+        ) : dailyData.length === 0 ? (
           <div className="mt-4 flex h-64 items-center justify-center text-muted-foreground">
             데이터가 없습니다
           </div>
@@ -278,7 +301,9 @@ export default function DashboardPage() {
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
           <h2 className="text-lg font-semibold">채널별 매출/마진</h2>
-          {data?.channelData && data.channelData.length > 0 ? (
+          {loading ? (
+            <Skeleton className="mt-4 h-[300px] w-full rounded-lg" />
+          ) : data?.channelData && data.channelData.length > 0 ? (
             <div className="mt-4 h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={data.channelData}>
@@ -337,7 +362,9 @@ export default function DashboardPage() {
         </div>
         <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
           <h2 className="text-lg font-semibold">상품별 마진 Top 10</h2>
-          {data?.productMarginRank && data.productMarginRank.length > 0 ? (
+          {loading ? (
+            <Skeleton className="mt-4 h-[300px] w-full rounded-lg" />
+          ) : data?.productMarginRank && data.productMarginRank.length > 0 ? (
             <div className="mt-4 h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart

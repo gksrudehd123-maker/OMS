@@ -3,6 +3,8 @@
 import { useRef, useState } from 'react';
 import { FileSpreadsheet, FileText, Download, Loader2 } from 'lucide-react';
 import { DateRangeFilter } from '@/components/common/date-range-filter';
+import { ProgressBar } from '@/components/ui/progress-bar';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   AreaChart,
   Area,
@@ -218,6 +220,7 @@ export default function ReportsPage() {
 
   return (
     <div className="space-y-6">
+      <ProgressBar loading={loading} />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold">리포트</h1>
@@ -246,6 +249,27 @@ export default function ReportsPage() {
           </button>
         </div>
       </div>
+
+      {/* 로딩 스켈레톤 */}
+      {loading && !data && (
+        <div className="space-y-6">
+          <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+            <Skeleton className="h-5 w-24 mb-4" />
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {Array.from({ length: 7 }).map((_, i) => (
+                <div key={i} className="rounded-lg border border-border p-4">
+                  <Skeleton className="h-3 w-16 mb-2" />
+                  <Skeleton className="h-6 w-24" />
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+            <Skeleton className="h-5 w-32 mb-4" />
+            <Skeleton className="h-72 w-full rounded-lg" />
+          </div>
+        </div>
+      )}
 
       {/* 결과 미리보기 + 다운로드 */}
       {data && (

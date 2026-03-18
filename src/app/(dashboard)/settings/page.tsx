@@ -17,6 +17,8 @@ import {
   AlertTriangle,
   FileSpreadsheet,
 } from 'lucide-react';
+import { ProgressBar } from '@/components/ui/progress-bar';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const themes = [
   {
@@ -169,6 +171,7 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-6">
+      <ProgressBar loading={loadingChannels || loadingUploads || loadingDefaults} />
       <div>
         <h1 className="text-2xl font-semibold">설정</h1>
         <p className="text-sm text-muted-foreground">
@@ -236,9 +239,16 @@ export default function SettingsPage() {
         </p>
 
         {loadingDefaults ? (
-          <div className="mt-4 flex h-24 items-center justify-center text-sm text-muted-foreground">
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            불러오는 중...
+          <div className="mt-4 space-y-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+              {Array.from({ length: 2 }).map((_, i) => (
+                <div key={i}>
+                  <Skeleton className="h-4 w-24 mb-1" />
+                  <Skeleton className="h-3 w-40 mb-2" />
+                  <Skeleton className="h-10 w-full rounded-lg" />
+                </div>
+              ))}
+            </div>
           </div>
         ) : (
           <div className="mt-4 space-y-4">
@@ -323,9 +333,20 @@ export default function SettingsPage() {
         </div>
 
         {loadingChannels ? (
-          <div className="mt-4 flex h-16 items-center justify-center text-sm text-muted-foreground">
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            불러오는 중...
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="rounded-lg border border-border p-4">
+                <div className="flex items-center justify-between">
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="h-4 w-10 rounded-full" />
+                </div>
+                <div className="mt-2 flex items-center gap-4">
+                  <Skeleton className="h-3 w-16" />
+                  <Skeleton className="h-3 w-16" />
+                  <Skeleton className="h-3 w-12" />
+                </div>
+              </div>
+            ))}
           </div>
         ) : channels.length === 0 ? (
           <div className="mt-4 rounded-lg bg-muted/50 p-4 text-center text-sm text-muted-foreground">
@@ -370,9 +391,30 @@ export default function SettingsPage() {
         </p>
 
         {loadingUploads ? (
-          <div className="mt-4 flex h-24 items-center justify-center text-sm text-muted-foreground">
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            불러오는 중...
+          <div className="mt-4 overflow-x-auto rounded-lg border border-border">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border bg-muted/50">
+                  <th className="px-4 py-3 text-left font-medium">파일명</th>
+                  <th className="px-4 py-3 text-left font-medium">채널</th>
+                  <th className="px-4 py-3 text-center font-medium">성공</th>
+                  <th className="px-4 py-3 text-center font-medium">오류</th>
+                  <th className="px-4 py-3 text-left font-medium">업로드 일시</th>
+                  <th className="px-4 py-3 text-center font-medium">관리</th>
+                </tr>
+              </thead>
+              <tbody>
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <tr key={i} className="border-b border-border last:border-0">
+                    {Array.from({ length: 6 }).map((_, j) => (
+                      <td key={j} className="px-4 py-3">
+                        <Skeleton className="h-4 w-full" />
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         ) : uploads.length === 0 ? (
           <div className="mt-4 rounded-lg bg-muted/50 p-6 text-center text-sm text-muted-foreground">

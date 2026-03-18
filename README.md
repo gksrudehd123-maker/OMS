@@ -445,9 +445,19 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 - [x] Vercel 배포 설정 (https://oms-dun.vercel.app/ — 대시보드/조회용, API 동기화는 로컬만)
 - [x] Python 의존성 제거 (엑셀 복호화: msoffcrypto → xlsx-populate 자체 암호 해제)
 - [x] 환경별 UI 분기 (NEXT_PUBLIC_HIDE_API_SYNC 환경 변수로 Vercel에서는 API 동기화 UI 숨김)
-- [ ] 성능 최적화 (캐싱, 이미지 등)
-- [ ] SEO 및 메타 태그 설정
+- [x] 로딩 UX 개선 (전 페이지 적용)
+  - ProgressBar: 페이지 상단 얇은 애니메이션 프로그레스바 (YouTube/GitHub 스타일)
+  - Skeleton UI: 데이터 로딩 중 펄스 애니메이션 플레이스홀더 (KPI 카드, 테이블 행, 차트 영역, 채널 카드 등)
+  - 적용 페이지: 대시보드, 상품관리, 주문내역, 광고비관리, 리포트, 채널관리, 설정
+- [ ] 성능 최적화
+  - [ ] TanStack Query 도입 (자동 캐싱, 중복 요청 방지, 백그라운드 리프레시 — 페이지 전환 시 불필요한 재호출 방지)
+  - [ ] DB 쿼리 최적화 (Prisma groupBy/aggregate로 DB 레벨 집계, 주요 컬럼 인덱스 추가 — Order.orderDate, Order.channelId)
+  - [ ] API 응답 캐싱 (대시보드 KPI, 채널 목록 등 Cache-Control 헤더 설정, Next.js revalidate 옵션)
+  - [ ] 번들 사이즈 최적화 (next/dynamic으로 차트 컴포넌트 lazy load — recharts, xlsx, jspdf 등)
+- [ ] SEO 및 메타 태그 설정 (내부 관리 도구라 우선순위 낮음)
 - [ ] 에러 모니터링 설정
+  - [ ] Sentry 연동 (@sentry/nextjs — 프론트엔드/API 에러 자동 수집, 코드 라인 추적, Slack 알림)
+  - [ ] Vercel Analytics 활성화 (페이지별 로딩 시간, Web Vitals 측정 — 클릭 한 번으로 활성화 가능)
 
 ### Phase 8 - 인증 및 권한 관리
 - [ ] NextAuth.js 설정
