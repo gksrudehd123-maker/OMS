@@ -14,7 +14,9 @@ export async function getNaverToken(): Promise<string> {
   const clientSecret = process.env.NAVER_CLIENT_SECRET;
 
   if (!clientId || !clientSecret) {
-    throw new Error('NAVER_CLIENT_ID 또는 NAVER_CLIENT_SECRET이 설정되지 않았습니다');
+    throw new Error(
+      'NAVER_CLIENT_ID 또는 NAVER_CLIENT_SECRET이 설정되지 않았습니다',
+    );
   }
 
   const timestamp = Date.now();
@@ -88,7 +90,10 @@ export async function fetchProductOrders(
 
     // 첫 페이지 첫 주문 raw 데이터 로그 (디버깅용)
     if (contents.length > 0 && allOrders.length === 0) {
-      console.log('[Naver API] 첫 주문 raw 데이터:', JSON.stringify(contents[0], null, 2));
+      console.log(
+        '[Naver API] 첫 주문 raw 데이터:',
+        JSON.stringify(contents[0], null, 2),
+      );
     }
 
     for (const item of contents) {

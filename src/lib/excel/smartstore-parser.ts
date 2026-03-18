@@ -1,11 +1,10 @@
-import { execSync } from 'child_process';
-import { writeFileSync, readFileSync, unlinkSync } from 'fs';
-import { join } from 'path';
-import { tmpdir } from 'os';
 import XlsxPopulate from 'xlsx-populate';
 import { SMARTSTORE_COLUMNS, REQUIRED_COLUMNS } from './column-map';
 import { generateProductKey } from '../helpers/product-key';
-import { normalizeOrderStatus, normalizeDeliveryAttribute } from '../helpers/status-map';
+import {
+  normalizeOrderStatus,
+  normalizeDeliveryAttribute,
+} from '../helpers/status-map';
 
 export type ParsedOrder = {
   productOrderNumber: string;
@@ -33,46 +32,18 @@ export type ParseResult = {
   errors: { row: number; message: string }[];
 };
 
-async function decryptExcel(buffer: Buffer, password: string): Promise<Buffer> {
-  const ts = Date.now();
-  const inputPath = join(tmpdir(), `oms_enc_${ts}.xlsx`);
-  const outputPath = join(tmpdir(), `oms_dec_${ts}.xlsx`);
-  const scriptPath = join(tmpdir(), `oms_decrypt_${ts}.py`);
-
-  try {
-    writeFileSync(inputPath, buffer);
-    writeFileSync(
-      scriptPath,
-      `import msoffcrypto, io, sys, shutil
-with open(sys.argv[1], "rb") as f:
-    ms = msoffcrypto.OfficeFile(f)
-    if ms.is_encrypted():
-        ms.load_key(password=sys.argv[3])
-        dec = io.BytesIO()
-        ms.decrypt(dec)
-        with open(sys.argv[2], "wb") as out:
-            out.write(dec.getvalue())
-    else:
-        shutil.copy2(sys.argv[1], sys.argv[2])
-`,
-    );
-    execSync(`python "${scriptPath}" "${inputPath}" "${outputPath}" "${password}"`);
-    return readFileSync(outputPath);
-  } finally {
-    for (const p of [inputPath, outputPath, scriptPath]) {
-      try {
-        unlinkSync(p);
-      } catch {}
-    }
-  }
-}
-
 export async function parseSmartstoreExcel(
   buffer: Buffer,
   password: string = '1234',
 ): Promise<ParseResult> {
-  const decryptedBuffer = await decryptExcel(buffer, password);
-  const workbook = await XlsxPopulate.fromDataAsync(decryptedBuffer);
+  // xlsx-populate 자체 암호 해제 (Python 의존성 제거)
+  let workbook;
+  try {
+    workbook = await XlsxPopulate.fromDataAsync(buffer, { password });
+  } catch {
+    // 암호 없는 파일일 수 있음
+    workbook = await XlsxPopulate.fromDataAsync(buffer);
+  }
   const sheet = workbook.sheet(0);
   const usedRange = sheet.usedRange();
 
@@ -179,7 +150,9 @@ export async function parseSmartstoreExcel(
         orderNumber,
         orderDate,
         orderStatus: normalizeOrderStatus(orderStatus),
-        deliveryAttribute: normalizeDeliveryAttribute(getValue('deliveryAttribute')),
+        deliveryAttribute: normalizeDeliveryAttribute(
+          getValue('deliveryAttribute'),
+        ),
         fulfillmentCompany: getValue('fulfillmentCompany'),
         claimStatus: getValue('claimStatus'),
         quantityClaim: getValue('quantityClaim'),

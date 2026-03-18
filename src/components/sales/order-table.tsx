@@ -194,15 +194,22 @@ export function OrderTable({ refreshKey }: { refreshKey: number }) {
 
 const STATUS_COLOR: Record<string, string> = {
   PAYED: 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300',
-  PAYMENT_WAITING: 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300',
-  PRODUCT_PREPARE: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300',
-  DELIVERING: 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300',
-  DELIVERED: 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300',
-  PURCHASE_DECIDED: 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300',
+  PAYMENT_WAITING:
+    'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300',
+  PRODUCT_PREPARE:
+    'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300',
+  DELIVERING:
+    'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300',
+  DELIVERED:
+    'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300',
+  PURCHASE_DECIDED:
+    'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300',
   CANCELED: 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300',
   CANCEL_DONE: 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300',
-  RETURNED: 'bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300',
-  EXCHANGED: 'bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300',
+  RETURNED:
+    'bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300',
+  EXCHANGED:
+    'bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300',
 };
 
 const STATUS_LABEL: Record<string, string> = {

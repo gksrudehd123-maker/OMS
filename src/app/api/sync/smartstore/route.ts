@@ -32,7 +32,10 @@ export async function POST(request: NextRequest) {
 
     if (!channel) {
       return NextResponse.json(
-        { error: '스마트스토어 채널이 등록되어 있지 않습니다. 채널 관리에서 먼저 등록해주세요.' },
+        {
+          error:
+            '스마트스토어 채널이 등록되어 있지 않습니다. 채널 관리에서 먼저 등록해주세요.',
+        },
         { status: 400 },
       );
     }
@@ -119,14 +122,16 @@ export async function POST(request: NextRequest) {
         total: parsedOrders.length,
         success: result.successCount,
         errors: result.errors.length,
-        duplicates: result.errors.filter((e) => e.message.startsWith('중복')).length,
+        duplicates: result.errors.filter((e) => e.message.startsWith('중복'))
+          .length,
         newProducts: result.newProductIds.size,
       },
       message: `${result.successCount}건 동기화 완료`,
     });
   } catch (err) {
     console.error('Smartstore sync error:', err);
-    const message = err instanceof Error ? err.message : '동기화 중 오류가 발생했습니다';
+    const message =
+      err instanceof Error ? err.message : '동기화 중 오류가 발생했습니다';
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

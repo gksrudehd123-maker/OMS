@@ -142,9 +142,7 @@ export function UploadZone({
               sellingPrice: input.sellingPrice
                 ? parseFloat(input.sellingPrice)
                 : null,
-              costPrice: input.costPrice
-                ? parseFloat(input.costPrice)
-                : null,
+              costPrice: input.costPrice ? parseFloat(input.costPrice) : null,
               shippingCost: parseFloat(input.shippingCost) || 0,
               freeShippingMin: input.freeShippingMin
                 ? parseFloat(input.freeShippingMin)
@@ -249,9 +247,7 @@ export function UploadZone({
                 className="rounded-lg border border-border p-4 space-y-3"
               >
                 <div>
-                  <p className="text-sm font-medium truncate">
-                    {product.name}
-                  </p>
+                  <p className="text-sm font-medium truncate">{product.name}</p>
                   {product.optionInfo && (
                     <p className="text-xs text-muted-foreground truncate">
                       옵션: {product.optionInfo}
