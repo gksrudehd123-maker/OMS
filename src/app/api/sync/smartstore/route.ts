@@ -7,6 +7,30 @@ import {
 } from '@/lib/naver/commerce-api';
 import { processOrders } from '@/lib/services/order-processor';
 
+/**
+ * GET: 자동 동기화용 (전날 주문 자동 수집)
+ * Windows 작업 스케줄러에서 호출
+ */
+export async function GET() {
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const dateStr = yesterday.toISOString().split('T')[0];
+
+  const from = `${dateStr}T00:00:00.000+09:00`;
+  const to = `${dateStr}T23:59:59.999+09:00`;
+
+  const fakeRequest = new NextRequest(
+    'http://localhost:3000/api/sync/smartstore',
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ from, to }),
+    },
+  );
+
+  return POST(fakeRequest);
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
