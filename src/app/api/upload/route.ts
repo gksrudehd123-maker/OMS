@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { parseSmartstoreExcel } from '@/lib/excel/smartstore-parser';
-import { generateProductKey } from '@/lib/helpers/product-key';
+import { processOrders } from '@/lib/services/order-processor';
 
 export async function POST(request: NextRequest) {
   try {
@@ -34,106 +34,24 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // 기본값 설정 조회
-    const defaultSettings = await prisma.setting.findMany({
-      where: { key: { in: ['defaultShippingCost', 'defaultFreeShippingMin'] } },
-    });
-    const defaults: Record<string, string> = {};
-    for (const s of defaultSettings) {
-      defaults[s.key] = s.value;
-    }
-
-    let successCount = 0;
-    const uploadErrors = [...errors];
-    const newProductIds = new Set<string>();
-
-    for (const order of parsedOrders) {
-      try {
-        // 상품 조회 후 없으면 생성 (신규 상품 추적용)
-        let product = await prisma.product.findUnique({
-          where: { productKey: order.productKey },
-        });
-        const isNew = !product;
-        if (!product) {
-          const shippingCost = defaults.defaultShippingCost
-            ? parseFloat(defaults.defaultShippingCost)
-            : 0;
-          const freeShippingMin = defaults.defaultFreeShippingMin
-            ? parseFloat(defaults.defaultFreeShippingMin)
-            : null;
-
-          product = await prisma.product.create({
-            data: {
-              name: order.productName,
-              optionInfo: order.optionInfo,
-              productKey: order.productKey,
-              shippingCost,
-              freeShippingMin,
-            },
-          });
-        }
-        if (isNew) {
-          newProductIds.add(product.id);
-        }
-
-        // 주문 생성 (중복 무시)
-        await prisma.order.create({
-          data: {
-            productOrderNumber: order.productOrderNumber,
-            orderNumber: order.orderNumber,
-            orderDate: order.orderDate,
-            orderStatus: order.orderStatus,
-            deliveryAttribute: order.deliveryAttribute,
-            fulfillmentCompany: order.fulfillmentCompany,
-            claimStatus: order.claimStatus,
-            quantityClaim: order.quantityClaim,
-            channelProductId: order.channelProductId,
-            productName: order.productName,
-            optionInfo: order.optionInfo,
-            quantity: order.quantity,
-            buyerName: order.buyerName,
-            buyerId: order.buyerId,
-            recipientName: order.recipientName,
-            subscriptionRound: order.subscriptionRound,
-            subscriptionSeq: order.subscriptionSeq,
-            productId: product.id,
-            channelId,
-            uploadId: upload.id,
-          },
-        });
-        successCount++;
-      } catch (err: unknown) {
-        const prismaError = err as { code?: string };
-        if (prismaError.code === 'P2002') {
-          // 중복 주문 - 건너뛰기
-          uploadErrors.push({
-            row: 0,
-            message: `중복 주문: ${order.productOrderNumber}`,
-          });
-        } else {
-          uploadErrors.push({
-            row: 0,
-            message: `저장 오류: ${order.productOrderNumber}`,
-          });
-        }
-      }
-    }
+    // 공통 주문 처리
+    const result = await processOrders(parsedOrders, channelId, upload.id, errors);
 
     // Upload 결과 업데이트
     const updatedUpload = await prisma.upload.update({
       where: { id: upload.id },
       data: {
-        successRows: successCount,
-        errorRows: uploadErrors.length,
-        errors: uploadErrors.length > 0 ? uploadErrors : undefined,
+        successRows: result.successCount,
+        errorRows: result.errors.length,
+        errors: result.errors.length > 0 ? result.errors : undefined,
       },
     });
 
     // 신규 상품 목록 조회 (가격 미설정 상품)
     const newProducts =
-      newProductIds.size > 0
+      result.newProductIds.size > 0
         ? await prisma.product.findMany({
-            where: { id: { in: [...newProductIds] } },
+            where: { id: { in: [...result.newProductIds] } },
             select: {
               id: true,
               name: true,
@@ -150,9 +68,9 @@ export async function POST(request: NextRequest) {
       upload: updatedUpload,
       summary: {
         total: parsedOrders.length + errors.length,
-        success: successCount,
-        errors: uploadErrors.length,
-        duplicates: uploadErrors.filter((e) => e.message.startsWith('중복'))
+        success: result.successCount,
+        errors: result.errors.length,
+        duplicates: result.errors.filter((e) => e.message.startsWith('중복'))
           .length,
       },
       newProducts,

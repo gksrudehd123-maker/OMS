@@ -192,28 +192,43 @@ export function OrderTable({ refreshKey }: { refreshKey: number }) {
   );
 }
 
-function OrderStatusBadge({ status }: { status: string }) {
-  const colorMap: Record<string, string> = {
-    결제완료: 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300',
-    배송준비중:
-      'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300',
-    배송중:
-      'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300',
-    배송완료:
-      'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300',
-    취소: 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300',
-    반품: 'bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300',
-  };
+const STATUS_COLOR: Record<string, string> = {
+  PAYED: 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300',
+  PAYMENT_WAITING: 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300',
+  PRODUCT_PREPARE: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300',
+  DELIVERING: 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300',
+  DELIVERED: 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300',
+  PURCHASE_DECIDED: 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300',
+  CANCELED: 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300',
+  CANCEL_DONE: 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300',
+  RETURNED: 'bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300',
+  EXCHANGED: 'bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300',
+};
 
+const STATUS_LABEL: Record<string, string> = {
+  PAYED: '결제완료',
+  PAYMENT_WAITING: '입금대기',
+  PRODUCT_PREPARE: '상품준비중',
+  DELIVERING: '배송중',
+  DELIVERED: '배송완료',
+  PURCHASE_DECIDED: '구매확정',
+  CANCELED: '취소',
+  CANCEL_DONE: '취소완료',
+  RETURNED: '반품',
+  EXCHANGED: '교환',
+};
+
+function OrderStatusBadge({ status }: { status: string }) {
   const color =
-    colorMap[status] ||
+    STATUS_COLOR[status] ||
     'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300';
+  const label = STATUS_LABEL[status] || status;
 
   return (
     <span
       className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${color}`}
     >
-      {status}
+      {label}
     </span>
   );
 }

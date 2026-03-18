@@ -5,6 +5,7 @@ import { tmpdir } from 'os';
 import XlsxPopulate from 'xlsx-populate';
 import { SMARTSTORE_COLUMNS, REQUIRED_COLUMNS } from './column-map';
 import { generateProductKey } from '../helpers/product-key';
+import { normalizeOrderStatus, normalizeDeliveryAttribute } from '../helpers/status-map';
 
 export type ParsedOrder = {
   productOrderNumber: string;
@@ -177,8 +178,8 @@ export async function parseSmartstoreExcel(
         productOrderNumber,
         orderNumber,
         orderDate,
-        orderStatus,
-        deliveryAttribute: getValue('deliveryAttribute'),
+        orderStatus: normalizeOrderStatus(orderStatus),
+        deliveryAttribute: normalizeDeliveryAttribute(getValue('deliveryAttribute')),
         fulfillmentCompany: getValue('fulfillmentCompany'),
         claimStatus: getValue('claimStatus'),
         quantityClaim: getValue('quantityClaim'),
