@@ -22,6 +22,29 @@ export async function GET(request: NextRequest) {
     orderBy: { orderDate: 'asc' },
   });
 
+  // 광고비 조회 (같은 기간)
+  const adCostWhere: Record<string, unknown> = {};
+  if (from || to) {
+    adCostWhere.date = {
+      ...(from ? { gte: new Date(from) } : {}),
+      ...(to ? { lte: new Date(to + 'T23:59:59') } : {}),
+    };
+  }
+  const adCosts = await prisma.adCost.findMany({ where: adCostWhere });
+
+  // 날짜+채널별 광고비 맵
+  const adCostMap: Record<string, number> = {};
+  for (const ac of adCosts) {
+    const key = `${ac.date.toISOString().split('T')[0]}_${ac.channelId}`;
+    adCostMap[key] = (adCostMap[key] || 0) + Number(ac.cost);
+  }
+
+  // 광고비 총액
+  const totalAdCostAmount = adCosts.reduce(
+    (sum, ac) => sum + Number(ac.cost),
+    0,
+  );
+
   // 주문번호별 합산금액 및 무료배송 판단
   const orderTotals: Record<string, number> = {};
   const orderFreeShipping: Record<string, boolean> = {};
@@ -62,7 +85,13 @@ export async function GET(request: NextRequest) {
   // 상품별 마진 집계
   const productMarginMap: Record<
     string,
-    { name: string; optionInfo: string; sales: number; margin: number; orders: number }
+    {
+      name: string;
+      optionInfo: string;
+      sales: number;
+      margin: number;
+      orders: number;
+    }
   > = {};
 
   for (const order of orders) {
@@ -118,7 +147,8 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  const avgMarginRate = totalSales > 0 ? (totalMargin / totalSales) * 100 : 0;
+  const netMargin = totalMargin - totalAdCostAmount;
+  const avgMarginRate = totalSales > 0 ? (netMargin / totalSales) * 100 : 0;
 
   // 일별 데이터 정렬
   const dailyData = Object.values(dailyMap).sort((a, b) =>
@@ -138,7 +168,8 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({
     kpi: {
       totalSales,
-      totalMargin,
+      totalMargin: netMargin,
+      totalAdCost: totalAdCostAmount,
       avgMarginRate,
       totalOrders,
       calculableCount,

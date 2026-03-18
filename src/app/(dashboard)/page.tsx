@@ -1,7 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { ShoppingCart, TrendingUp, Percent, Package } from 'lucide-react';
+import {
+  ShoppingCart,
+  TrendingUp,
+  Percent,
+  Package,
+  Megaphone,
+} from 'lucide-react';
 import { DateRangeFilter } from '@/components/common/date-range-filter';
 import {
   AreaChart,
@@ -19,6 +25,7 @@ import {
 type KPI = {
   totalSales: number;
   totalMargin: number;
+  totalAdCost: number;
   avgMarginRate: number;
   totalOrders: number;
   calculableCount: number;
@@ -100,6 +107,13 @@ export default function DashboardPage() {
           : 'bg-red-50 dark:bg-red-950',
     },
     {
+      label: '총 광고비',
+      value: kpi ? `₩${kpi.totalAdCost.toLocaleString()}` : '-',
+      icon: Megaphone,
+      color: 'text-orange-600 dark:text-orange-400',
+      bgColor: 'bg-orange-50 dark:bg-orange-950',
+    },
+    {
       label: '총 주문수',
       value: kpi ? `${kpi.totalOrders.toLocaleString()}건` : '-',
       icon: Package,
@@ -137,7 +151,7 @@ export default function DashboardPage() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         {kpiCards.map((card) => (
           <div
             key={card.label}
@@ -210,8 +224,8 @@ export default function DashboardPage() {
                             className="text-sm font-mono"
                             style={{ color: entry.color }}
                           >
-                            {entry.name === 'sales' ? '매출' : '마진'}:{' '}
-                            ₩{Number(entry.value).toLocaleString()}
+                            {entry.name === 'sales' ? '매출' : '마진'}: ₩
+                            {Number(entry.value).toLocaleString()}
                           </p>
                         ))}
                       </div>
@@ -302,18 +316,10 @@ export default function DashboardPage() {
                             </p>
                           )}
                           <div className="mt-2 space-y-1 font-mono text-sm">
-                            <p>
-                              마진: ₩{d.margin.toLocaleString()}
-                            </p>
-                            <p>
-                              매출: ₩{d.sales.toLocaleString()}
-                            </p>
-                            <p>
-                              마진율: {d.marginRate.toFixed(1)}%
-                            </p>
-                            <p>
-                              판매수량: {d.orders}개
-                            </p>
+                            <p>마진: ₩{d.margin.toLocaleString()}</p>
+                            <p>매출: ₩{d.sales.toLocaleString()}</p>
+                            <p>마진율: {d.marginRate.toFixed(1)}%</p>
+                            <p>판매수량: {d.orders}개</p>
                           </div>
                         </div>
                       );

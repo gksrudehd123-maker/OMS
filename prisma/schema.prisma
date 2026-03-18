@@ -66,6 +66,7 @@ model Channel {
   updatedAt DateTime @updatedAt
   orders    Order[]
   uploads   Upload[]
+  adCosts   AdCost[]
 
   @@map("channels")
 }
@@ -125,6 +126,22 @@ model Order {
   @@index([channelId])
   @@index([uploadId])
   @@map("orders")
+}
+
+model AdCost {
+  id        String   @id @default(cuid())
+  channelId String
+  channel   Channel  @relation(fields: [channelId], references: [id])
+  date      DateTime @db.Date
+  cost      Decimal  @db.Decimal(12, 2)
+  memo      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([channelId, date])
+  @@index([date])
+  @@index([channelId])
+  @@map("ad_costs")
 }
 
 model Setting {

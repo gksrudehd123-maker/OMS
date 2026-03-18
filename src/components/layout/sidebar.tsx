@@ -8,6 +8,7 @@ import {
   Package,
   TrendingUp,
   Store,
+  Megaphone,
   FileBarChart,
   Settings,
   ChevronLeft,
@@ -22,6 +23,7 @@ const navItems = [
   { href: '/products', label: '상품 관리', icon: Package },
   { href: '/margins', label: '마진 분석', icon: TrendingUp },
   { href: '/channels', label: '채널 분석', icon: Store },
+  { href: '/ad-costs', label: '광고비 관리', icon: Megaphone },
   { href: '/reports', label: '리포트', icon: FileBarChart },
   { href: '/settings', label: '설정', icon: Settings },
 ];

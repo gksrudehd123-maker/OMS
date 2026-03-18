@@ -4,6 +4,7 @@
  * 마진 = (판매가 × 수량) - (원가 × 수량) - 수수료 - 배송비
  * 수수료 = 판매가 × 수량 × (수수료율 / 100)
  * 배송비 = 같은 주문번호 합산금액 기준 조건부 무료배송 판단
+ * 광고비는 개별 주문이 아닌 기간 총합에서 차감 (대시보드/리포트 레벨)
  */
 
 export type MarginInput = {
@@ -22,7 +23,7 @@ export type MarginResult = {
   costAmount: number; // 원가 × 수량
   fee: number; // 수수료
   shipping: number; // 배송비 (주문 내 상품 수로 배분)
-  margin: number; // 순마진
+  margin: number; // 순마진 (광고비 미포함)
   marginRate: number; // 마진율 (%)
   isCalculable: boolean; // 판매가/원가 설정 여부
 };
@@ -58,10 +59,8 @@ export function calculateMargin(input: MarginInput): MarginResult {
   // 배송비 판단
   let shipping = shippingCost;
   if (isAnyFreeShipping) {
-    // 같은 주문 내 어떤 상품이든 무료배송 조건 충족
     shipping = 0;
   } else if (freeShippingMin !== null && orderTotal >= freeShippingMin) {
-    // 이 상품 자체의 무료배송 조건 충족
     shipping = 0;
   }
 
