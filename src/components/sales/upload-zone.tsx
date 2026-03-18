@@ -3,7 +3,23 @@
 import { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Upload, FileSpreadsheet, CheckCircle, XCircle } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { toast } from 'sonner';
+
+type NewProduct = {
+  id: string;
+  name: string;
+  optionInfo: string;
+  sellingPrice: string | null;
+  costPrice: string | null;
+  shippingCost: string;
+  freeShippingMin: string | null;
+};
 
 type UploadResult = {
   summary: {
@@ -12,6 +28,14 @@ type UploadResult = {
     errors: number;
     duplicates: number;
   };
+  newProducts: NewProduct[];
+};
+
+type PriceInput = {
+  sellingPrice: string;
+  costPrice: string;
+  shippingCost: string;
+  freeShippingMin: string;
 };
 
 export function UploadZone({
@@ -23,6 +47,14 @@ export function UploadZone({
 }) {
   const [uploading, setUploading] = useState(false);
   const [result, setResult] = useState<UploadResult | null>(null);
+
+  // 신규 상품 가격 설정 팝업
+  const [showPriceDialog, setShowPriceDialog] = useState(false);
+  const [newProducts, setNewProducts] = useState<NewProduct[]>([]);
+  const [priceInputs, setPriceInputs] = useState<Record<string, PriceInput>>(
+    {},
+  );
+  const [saving, setSaving] = useState(false);
 
   const onDrop = useCallback(
     async (acceptedFiles: File[]) => {
@@ -52,10 +84,26 @@ export function UploadZone({
           throw new Error(err.error || '업로드 실패');
         }
 
-        const data = await res.json();
+        const data: UploadResult = await res.json();
         setResult(data);
         toast.success(`${data.summary.success}건 업로드 완료`);
         onUploadComplete();
+
+        // 신규 상품이 있으면 가격 설정 팝업 표시
+        if (data.newProducts && data.newProducts.length > 0) {
+          setNewProducts(data.newProducts);
+          const inputs: Record<string, PriceInput> = {};
+          for (const p of data.newProducts) {
+            inputs[p.id] = {
+              sellingPrice: '',
+              costPrice: '',
+              shippingCost: '3000',
+              freeShippingMin: '30000',
+            };
+          }
+          setPriceInputs(inputs);
+          setShowPriceDialog(true);
+        }
       } catch (err) {
         toast.error(err instanceof Error ? err.message : '업로드 중 오류 발생');
       } finally {
@@ -64,6 +112,59 @@ export function UploadZone({
     },
     [channelId, onUploadComplete],
   );
+
+  const updatePrice = (
+    productId: string,
+    field: keyof PriceInput,
+    value: string,
+  ) => {
+    setPriceInputs((prev) => ({
+      ...prev,
+      [productId]: { ...prev[productId], [field]: value },
+    }));
+  };
+
+  const handleSavePrices = async () => {
+    setSaving(true);
+    let savedCount = 0;
+
+    try {
+      for (const product of newProducts) {
+        const input = priceInputs[product.id];
+        if (!input) continue;
+
+        // 판매가나 원가가 입력된 경우에만 저장
+        if (input.sellingPrice || input.costPrice) {
+          const res = await fetch(`/api/products/${product.id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              sellingPrice: input.sellingPrice
+                ? parseFloat(input.sellingPrice)
+                : null,
+              costPrice: input.costPrice
+                ? parseFloat(input.costPrice)
+                : null,
+              shippingCost: parseFloat(input.shippingCost) || 0,
+              freeShippingMin: input.freeShippingMin
+                ? parseFloat(input.freeShippingMin)
+                : null,
+            }),
+          });
+          if (res.ok) savedCount++;
+        }
+      }
+
+      if (savedCount > 0) {
+        toast.success(`${savedCount}개 상품 가격이 설정되었습니다`);
+      }
+      setShowPriceDialog(false);
+    } catch {
+      toast.error('가격 저장 중 오류가 발생했습니다');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -130,6 +231,116 @@ export function UploadZone({
           </div>
         </div>
       )}
+
+      {/* 신규 상품 가격 설정 팝업 */}
+      <Dialog open={showPriceDialog} onOpenChange={setShowPriceDialog}>
+        <DialogContent className="sm:max-w-[640px] max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>신규 상품 가격 설정</DialogTitle>
+            <p className="text-sm text-muted-foreground">
+              새로 등록된 상품 {newProducts.length}개의 판매가/원가를
+              설정해주세요. 나중에 상품 관리에서도 수정할 수 있습니다.
+            </p>
+          </DialogHeader>
+          <div className="space-y-4">
+            {newProducts.map((product) => (
+              <div
+                key={product.id}
+                className="rounded-lg border border-border p-4 space-y-3"
+              >
+                <div>
+                  <p className="text-sm font-medium truncate">
+                    {product.name}
+                  </p>
+                  {product.optionInfo && (
+                    <p className="text-xs text-muted-foreground truncate">
+                      옵션: {product.optionInfo}
+                    </p>
+                  )}
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-xs text-muted-foreground">
+                      판매가 (원)
+                    </label>
+                    <input
+                      type="number"
+                      value={priceInputs[product.id]?.sellingPrice || ''}
+                      onChange={(e) =>
+                        updatePrice(product.id, 'sellingPrice', e.target.value)
+                      }
+                      placeholder="0"
+                      className="w-full rounded-lg border border-input bg-background px-3 py-1.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-ring"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs text-muted-foreground">
+                      원가 (원)
+                    </label>
+                    <input
+                      type="number"
+                      value={priceInputs[product.id]?.costPrice || ''}
+                      onChange={(e) =>
+                        updatePrice(product.id, 'costPrice', e.target.value)
+                      }
+                      placeholder="0"
+                      className="w-full rounded-lg border border-input bg-background px-3 py-1.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-ring"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs text-muted-foreground">
+                      기본 배송비 (원)
+                    </label>
+                    <input
+                      type="number"
+                      value={priceInputs[product.id]?.shippingCost || ''}
+                      onChange={(e) =>
+                        updatePrice(product.id, 'shippingCost', e.target.value)
+                      }
+                      placeholder="3000"
+                      className="w-full rounded-lg border border-input bg-background px-3 py-1.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-ring"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs text-muted-foreground">
+                      무료배송 기준 (원)
+                    </label>
+                    <input
+                      type="number"
+                      value={priceInputs[product.id]?.freeShippingMin || ''}
+                      onChange={(e) =>
+                        updatePrice(
+                          product.id,
+                          'freeShippingMin',
+                          e.target.value,
+                        )
+                      }
+                      placeholder="비워두면 조건 없음"
+                      className="w-full rounded-lg border border-input bg-background px-3 py-1.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-ring"
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                onClick={() => setShowPriceDialog(false)}
+                className="rounded-lg border border-input px-4 py-2 text-sm hover:bg-muted"
+              >
+                나중에 설정
+              </button>
+              <button
+                onClick={handleSavePrices}
+                disabled={saving}
+                className="rounded-lg bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+              >
+                {saving ? '저장 중...' : '저장'}
+              </button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

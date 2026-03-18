@@ -36,19 +36,27 @@ export async function POST(request: NextRequest) {
 
     let successCount = 0;
     const uploadErrors = [...errors];
+    const newProductIds = new Set<string>();
 
     for (const order of parsedOrders) {
       try {
-        // 상품 자동 생성 (upsert)
-        const product = await prisma.product.upsert({
+        // 상품 조회 후 없으면 생성 (신규 상품 추적용)
+        let product = await prisma.product.findUnique({
           where: { productKey: order.productKey },
-          update: {},
-          create: {
-            name: order.productName,
-            optionInfo: order.optionInfo,
-            productKey: order.productKey,
-          },
         });
+        const isNew = !product;
+        if (!product) {
+          product = await prisma.product.create({
+            data: {
+              name: order.productName,
+              optionInfo: order.optionInfo,
+              productKey: order.productKey,
+            },
+          });
+        }
+        if (isNew) {
+          newProductIds.add(product.id);
+        }
 
         // 주문 생성 (중복 무시)
         await prisma.order.create({
@@ -103,6 +111,23 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // 신규 상품 목록 조회 (가격 미설정 상품)
+    const newProducts =
+      newProductIds.size > 0
+        ? await prisma.product.findMany({
+            where: { id: { in: [...newProductIds] } },
+            select: {
+              id: true,
+              name: true,
+              optionInfo: true,
+              sellingPrice: true,
+              costPrice: true,
+              shippingCost: true,
+              freeShippingMin: true,
+            },
+          })
+        : [];
+
     return NextResponse.json({
       upload: updatedUpload,
       summary: {
@@ -112,6 +137,7 @@ export async function POST(request: NextRequest) {
         duplicates: uploadErrors.filter((e) => e.message.startsWith('중복'))
           .length,
       },
+      newProducts,
     });
   } catch (err) {
     console.error('Upload error:', err);

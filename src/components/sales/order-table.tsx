@@ -10,6 +10,16 @@ import {
   TableRow,
 } from '@/components/ui/table';
 
+type MarginData = {
+  salesAmount: number;
+  costAmount: number;
+  fee: number;
+  shipping: number;
+  margin: number;
+  marginRate: number;
+  isCalculable: boolean;
+};
+
 type Order = {
   id: string;
   productOrderNumber: string;
@@ -21,6 +31,7 @@ type Order = {
   quantity: number;
   buyerName: string | null;
   claimStatus: string | null;
+  margin: MarginData;
 };
 
 export function OrderTable({ refreshKey }: { refreshKey: number }) {
@@ -66,7 +77,7 @@ export function OrderTable({ refreshKey }: { refreshKey: number }) {
         </div>
       </div>
 
-      <div className="rounded-xl border border-border">
+      <div className="rounded-xl border border-border overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
@@ -75,15 +86,17 @@ export function OrderTable({ refreshKey }: { refreshKey: number }) {
               <TableHead>상품명</TableHead>
               <TableHead>옵션</TableHead>
               <TableHead className="text-center">수량</TableHead>
+              <TableHead className="text-right">판매금액</TableHead>
+              <TableHead className="text-right">마진</TableHead>
+              <TableHead className="text-center">마진율</TableHead>
               <TableHead>상태</TableHead>
-              <TableHead>구매자</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {orders.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={7}
+                  colSpan={9}
                   className="h-32 text-center text-muted-foreground"
                 >
                   주문 데이터가 없습니다
@@ -107,10 +120,46 @@ export function OrderTable({ refreshKey }: { refreshKey: number }) {
                   <TableCell className="text-center">
                     {order.quantity}
                   </TableCell>
+                  <TableCell className="text-right font-mono text-sm">
+                    {order.margin.isCalculable ? (
+                      `₩${order.margin.salesAmount.toLocaleString()}`
+                    ) : (
+                      <span className="text-orange-500 text-xs">미설정</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-right font-mono text-sm">
+                    {order.margin.isCalculable ? (
+                      <span
+                        className={
+                          order.margin.margin >= 0
+                            ? 'text-green-600 dark:text-green-400'
+                            : 'text-red-600 dark:text-red-400'
+                        }
+                      >
+                        ₩{order.margin.margin.toLocaleString()}
+                      </span>
+                    ) : (
+                      <span className="text-orange-500 text-xs">미설정</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-center font-mono text-sm">
+                    {order.margin.isCalculable ? (
+                      <span
+                        className={
+                          order.margin.marginRate >= 0
+                            ? 'text-green-600 dark:text-green-400'
+                            : 'text-red-600 dark:text-red-400'
+                        }
+                      >
+                        {order.margin.marginRate.toFixed(1)}%
+                      </span>
+                    ) : (
+                      '-'
+                    )}
+                  </TableCell>
                   <TableCell>
                     <OrderStatusBadge status={order.orderStatus} />
                   </TableCell>
-                  <TableCell>{order.buyerName || '-'}</TableCell>
                 </TableRow>
               ))
             )}
