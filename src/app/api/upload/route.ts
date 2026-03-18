@@ -34,6 +34,15 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // 기본값 설정 조회
+    const defaultSettings = await prisma.setting.findMany({
+      where: { key: { in: ['defaultShippingCost', 'defaultFreeShippingMin'] } },
+    });
+    const defaults: Record<string, string> = {};
+    for (const s of defaultSettings) {
+      defaults[s.key] = s.value;
+    }
+
     let successCount = 0;
     const uploadErrors = [...errors];
     const newProductIds = new Set<string>();
@@ -46,11 +55,20 @@ export async function POST(request: NextRequest) {
         });
         const isNew = !product;
         if (!product) {
+          const shippingCost = defaults.defaultShippingCost
+            ? parseFloat(defaults.defaultShippingCost)
+            : 0;
+          const freeShippingMin = defaults.defaultFreeShippingMin
+            ? parseFloat(defaults.defaultFreeShippingMin)
+            : null;
+
           product = await prisma.product.create({
             data: {
               name: order.productName,
               optionInfo: order.optionInfo,
               productKey: order.productKey,
+              shippingCost,
+              freeShippingMin,
             },
           });
         }
