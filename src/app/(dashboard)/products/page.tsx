@@ -23,6 +23,8 @@ type Product = {
   optionInfo: string;
   costPrice: string | null;
   sellingPrice: string | null;
+  shippingCost: string;
+  freeShippingMin: string | null;
   memo: string | null;
   isActive: boolean;
   createdAt: string;
@@ -47,6 +49,8 @@ export default function ProductsPage() {
   const [editProduct, setEditProduct] = useState<Product | null>(null);
   const [editSellingPrice, setEditSellingPrice] = useState('');
   const [editCostPrice, setEditCostPrice] = useState('');
+  const [editShippingCost, setEditShippingCost] = useState('');
+  const [editFreeShippingMin, setEditFreeShippingMin] = useState('');
   const [editMemo, setEditMemo] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -82,6 +86,8 @@ export default function ProductsPage() {
     setEditProduct(product);
     setEditSellingPrice(product.sellingPrice ? String(product.sellingPrice) : '');
     setEditCostPrice(product.costPrice ? String(product.costPrice) : '');
+    setEditShippingCost(String(product.shippingCost));
+    setEditFreeShippingMin(product.freeShippingMin ? String(product.freeShippingMin) : '');
     setEditMemo(product.memo || '');
   };
 
@@ -95,6 +101,8 @@ export default function ProductsPage() {
         body: JSON.stringify({
           sellingPrice: editSellingPrice ? parseFloat(editSellingPrice) : null,
           costPrice: editCostPrice ? parseFloat(editCostPrice) : null,
+          shippingCost: parseFloat(editShippingCost) || 0,
+          freeShippingMin: editFreeShippingMin ? parseFloat(editFreeShippingMin) : null,
           memo: editMemo || null,
         }),
       });
@@ -327,6 +335,30 @@ export default function ProductsPage() {
                   placeholder="원가를 입력하세요"
                   className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-ring"
                 />
+              </div>
+
+              {/* 배송비 */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium">기본 배송비 (원)</label>
+                  <input
+                    type="number"
+                    value={editShippingCost}
+                    onChange={(e) => setEditShippingCost(e.target.value)}
+                    placeholder="0"
+                    className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-ring"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium">무료배송 기준 (원)</label>
+                  <input
+                    type="number"
+                    value={editFreeShippingMin}
+                    onChange={(e) => setEditFreeShippingMin(e.target.value)}
+                    placeholder="비워두면 조건 없음"
+                    className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-ring"
+                  />
+                </div>
               </div>
 
               {/* 마진 미리보기 */}
