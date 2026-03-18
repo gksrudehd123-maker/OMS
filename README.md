@@ -394,8 +394,8 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 - [x] 주문 목록 조회 (검색, 상태 필터, 날짜 필터, 페이지네이션)
 - [x] Prisma DB 스키마 설계 (Product, Order, Channel, Upload, Category)
 - [x] Supabase PostgreSQL 연동
-- [ ] 상품 수정/삭제 기능
-- [ ] 판매가/원가 직접 설정 기능 (상품+옵션별 고정값)
+- [x] 상품 수정/삭제 기능 (편집 다이얼로그, 비활성화/활성화)
+- [x] 판매가/원가 직접 설정 기능 (상품+옵션별 고정값, 마진 미리보기)
 - [ ] 쿠팡 등 추가 플랫폼 엑셀 파서
 
 ### Phase 4 - 대시보드 및 시각화
