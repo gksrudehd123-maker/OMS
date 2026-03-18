@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import {
   Table,
   TableBody,
@@ -9,6 +9,13 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { toast } from 'sonner';
 
 type Product = {
   id: string;
@@ -16,6 +23,7 @@ type Product = {
   optionInfo: string;
   costPrice: string | null;
   sellingPrice: string | null;
+  memo: string | null;
   isActive: boolean;
   createdAt: string;
   _count: { orders: number };
@@ -35,13 +43,20 @@ export default function ProductsPage() {
   const [channelId, setChannelId] = useState('');
   const limit = 20;
 
+  // 편집 다이얼로그
+  const [editProduct, setEditProduct] = useState<Product | null>(null);
+  const [editSellingPrice, setEditSellingPrice] = useState('');
+  const [editCostPrice, setEditCostPrice] = useState('');
+  const [editMemo, setEditMemo] = useState('');
+  const [saving, setSaving] = useState(false);
+
   useEffect(() => {
     fetch('/api/channels')
       .then((res) => res.json())
       .then(setChannels);
   }, []);
 
-  useEffect(() => {
+  const fetchProducts = useCallback(() => {
     const params = new URLSearchParams({
       page: String(page),
       limit: String(limit),
@@ -57,14 +72,89 @@ export default function ProductsPage() {
       });
   }, [page, search, channelId]);
 
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
+
   const totalPages = Math.ceil(total / limit);
+
+  const openEdit = (product: Product) => {
+    setEditProduct(product);
+    setEditSellingPrice(product.sellingPrice ? String(product.sellingPrice) : '');
+    setEditCostPrice(product.costPrice ? String(product.costPrice) : '');
+    setEditMemo(product.memo || '');
+  };
+
+  const handleSave = async () => {
+    if (!editProduct) return;
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/products/${editProduct.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sellingPrice: editSellingPrice ? parseFloat(editSellingPrice) : null,
+          costPrice: editCostPrice ? parseFloat(editCostPrice) : null,
+          memo: editMemo || null,
+        }),
+      });
+      if (!res.ok) throw new Error('저장 실패');
+      toast.success('상품 정보가 저장되었습니다');
+      setEditProduct(null);
+      fetchProducts();
+    } catch {
+      toast.error('저장 중 오류가 발생했습니다');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeactivate = async () => {
+    if (!editProduct) return;
+    if (!confirm(`"${editProduct.name}" 상품을 비활성화하시겠습니까?`)) return;
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/products/${editProduct.id}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) throw new Error('삭제 실패');
+      toast.success('상품이 비활성화되었습니다');
+      setEditProduct(null);
+      fetchProducts();
+    } catch {
+      toast.error('처리 중 오류가 발생했습니다');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleActivate = async () => {
+    if (!editProduct) return;
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/products/${editProduct.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isActive: true }),
+      });
+      if (!res.ok) throw new Error('활성화 실패');
+      toast.success('상품이 활성화되었습니다');
+      setEditProduct(null);
+      fetchProducts();
+    } catch {
+      toast.error('처리 중 오류가 발생했습니다');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold">상품 관리</h1>
         <p className="text-sm text-muted-foreground">
-          엑셀 업로드 시 자동 등록된 상품 목록입니다
+          엑셀 업로드 시 자동 등록된 상품 목록입니다. 행을 클릭하여
+          판매가/원가를 설정하세요.
         </p>
       </div>
 
@@ -126,7 +216,11 @@ export default function ProductsPage() {
                 </TableRow>
               ) : (
                 products.map((product) => (
-                  <TableRow key={product.id}>
+                  <TableRow
+                    key={product.id}
+                    className="cursor-pointer hover:bg-muted/50"
+                    onClick={() => openEdit(product)}
+                  >
                     <TableCell className="max-w-[250px] truncate font-medium">
                       {product.name}
                     </TableCell>
@@ -136,12 +230,12 @@ export default function ProductsPage() {
                     <TableCell className="text-right font-mono">
                       {product.sellingPrice
                         ? `₩${Number(product.sellingPrice).toLocaleString()}`
-                        : '-'}
+                        : <span className="text-orange-500">미설정</span>}
                     </TableCell>
                     <TableCell className="text-right font-mono">
                       {product.costPrice
                         ? `₩${Number(product.costPrice).toLocaleString()}`
-                        : '-'}
+                        : <span className="text-orange-500">미설정</span>}
                     </TableCell>
                     <TableCell className="text-center">
                       {product._count.orders}
@@ -186,6 +280,136 @@ export default function ProductsPage() {
           </div>
         )}
       </div>
+
+      {/* 상품 편집 다이얼로그 */}
+      <Dialog
+        open={!!editProduct}
+        onOpenChange={(open) => !open && setEditProduct(null)}
+      >
+        <DialogContent className="sm:max-w-[480px]">
+          <DialogHeader>
+            <DialogTitle>상품 정보 수정</DialogTitle>
+          </DialogHeader>
+          {editProduct && (
+            <div className="space-y-4">
+              {/* 상품 기본 정보 (읽기 전용) */}
+              <div className="rounded-lg bg-muted/50 p-3 space-y-1">
+                <p className="text-sm font-medium">{editProduct.name}</p>
+                {editProduct.optionInfo && (
+                  <p className="text-xs text-muted-foreground">
+                    옵션: {editProduct.optionInfo}
+                  </p>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  주문수: {editProduct._count.orders}건
+                </p>
+              </div>
+
+              {/* 판매가 */}
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">판매가 (원)</label>
+                <input
+                  type="number"
+                  value={editSellingPrice}
+                  onChange={(e) => setEditSellingPrice(e.target.value)}
+                  placeholder="판매가를 입력하세요"
+                  className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+              </div>
+
+              {/* 원가 */}
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">원가 (원)</label>
+                <input
+                  type="number"
+                  value={editCostPrice}
+                  onChange={(e) => setEditCostPrice(e.target.value)}
+                  placeholder="원가를 입력하세요"
+                  className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+              </div>
+
+              {/* 마진 미리보기 */}
+              {editSellingPrice && editCostPrice && (
+                <div className="rounded-lg border border-border p-3">
+                  <p className="text-xs text-muted-foreground mb-1">
+                    예상 마진
+                  </p>
+                  <div className="flex items-center gap-3">
+                    <span className="font-mono text-sm font-medium">
+                      ₩
+                      {(
+                        parseFloat(editSellingPrice) -
+                        parseFloat(editCostPrice)
+                      ).toLocaleString()}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      (
+                      {(
+                        ((parseFloat(editSellingPrice) -
+                          parseFloat(editCostPrice)) /
+                          parseFloat(editSellingPrice)) *
+                        100
+                      ).toFixed(1)}
+                      %)
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* 메모 */}
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">메모</label>
+                <textarea
+                  value={editMemo}
+                  onChange={(e) => setEditMemo(e.target.value)}
+                  placeholder="메모를 입력하세요 (선택)"
+                  rows={2}
+                  className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+                />
+              </div>
+
+              {/* 버튼 */}
+              <div className="flex items-center justify-between pt-2">
+                <div>
+                  {editProduct.isActive ? (
+                    <button
+                      onClick={handleDeactivate}
+                      disabled={saving}
+                      className="rounded-lg px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950 disabled:opacity-50"
+                    >
+                      비활성화
+                    </button>
+                  ) : (
+                    <button
+                      onClick={handleActivate}
+                      disabled={saving}
+                      className="rounded-lg px-3 py-2 text-sm text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-950 disabled:opacity-50"
+                    >
+                      활성화
+                    </button>
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setEditProduct(null)}
+                    className="rounded-lg border border-input px-4 py-2 text-sm hover:bg-muted"
+                  >
+                    취소
+                  </button>
+                  <button
+                    onClick={handleSave}
+                    disabled={saving}
+                    className="rounded-lg bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                  >
+                    {saving ? '저장 중...' : '저장'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
