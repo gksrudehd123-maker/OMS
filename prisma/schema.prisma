@@ -3,8 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 enum Role {
@@ -20,6 +21,7 @@ model User {
   role      Role     @default(USER)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  uploads   Upload[]
 
   @@map("users")
 }
@@ -34,50 +36,91 @@ model Category {
 }
 
 model Product {
-  id           String        @id @default(cuid())
+  id           String    @id @default(cuid())
   name         String
-  sku          String        @unique
-  costPrice    Decimal       @db.Decimal(12, 2)
-  sellingPrice Decimal       @db.Decimal(12, 2)
+  optionInfo   String    @default("")
+  productKey   String    @unique
   categoryId   String?
-  category     Category?     @relation(fields: [categoryId], references: [id])
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  salesRecords SalesRecord[]
+  category     Category? @relation(fields: [categoryId], references: [id])
+  costPrice    Decimal?  @db.Decimal(12, 2)
+  sellingPrice Decimal?  @db.Decimal(12, 2)
+  memo         String?
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  orders       Order[]
 
+  @@index([name])
   @@map("products")
 }
 
 model Channel {
-  id           String        @id @default(cuid())
-  name         String        @unique
-  feeRate      Decimal       @db.Decimal(5, 2)
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  salesRecords SalesRecord[]
+  id        String   @id @default(cuid())
+  name      String   @unique
+  code      String   @unique
+  feeRate   Decimal  @db.Decimal(5, 2)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  orders    Order[]
+  uploads   Upload[]
 
   @@map("channels")
 }
 
-model SalesRecord {
+model Upload {
   id           String   @id @default(cuid())
-  productId    String
-  product      Product  @relation(fields: [productId], references: [id])
+  fileName     String
   channelId    String
   channel      Channel  @relation(fields: [channelId], references: [id])
-  quantity     Int
-  salesAmount  Decimal  @db.Decimal(12, 2)
-  costAmount   Decimal  @db.Decimal(12, 2)
-  channelFee   Decimal  @db.Decimal(12, 2)
-  shippingCost Decimal  @db.Decimal(12, 2)
-  margin       Decimal  @db.Decimal(12, 2)
-  marginRate   Decimal  @db.Decimal(5, 2)
-  salesDate    DateTime @db.Date
+  uploadedById String?
+  uploadedBy   User?    @relation(fields: [uploadedById], references: [id])
+  totalRows    Int      @default(0)
+  successRows  Int      @default(0)
+  errorRows    Int      @default(0)
+  errors       Json?
   createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  orders       Order[]
 
-  @@index([salesDate])
+  @@index([createdAt])
+  @@map("uploads")
+}
+
+model Order {
+  id                 String   @id @default(cuid())
+  productOrderNumber String
+  orderNumber        String
+  orderDate          DateTime
+  orderStatus        String
+  deliveryAttribute  String?
+  fulfillmentCompany String?
+  claimStatus        String?
+  quantityClaim      String?
+  channelProductId   String?
+  productName        String
+  optionInfo         String   @default("")
+  quantity           Int
+  buyerName          String?
+  buyerId            String?
+  recipientName      String?
+  subscriptionRound  String?
+  subscriptionSeq    String?
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+  channelId String
+  channel   Channel @relation(fields: [channelId], references: [id])
+  uploadId  String
+  upload    Upload  @relation(fields: [uploadId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([productOrderNumber, channelId])
+  @@index([orderDate])
+  @@index([orderNumber])
   @@index([productId])
   @@index([channelId])
-  @@map("sales_records")
+  @@index([uploadId])
+  @@map("orders")
 }

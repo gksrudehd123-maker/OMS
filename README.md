@@ -48,7 +48,10 @@
 | **Data Fetching** | TanStack Query | 5.x | 서버 상태 관리 및 캐싱 |
 | **Form** | React Hook Form + Zod | - | 폼 관리 및 유효성 검증 |
 | **Table** | TanStack Table | 8.x | 데이터 테이블 처리 |
-| **Excel** | SheetJS (xlsx) | - | 엑셀 파일 파싱/생성 |
+| **Excel Parse** | xlsx-populate | - | 엑셀 파일 읽기/파싱 |
+| **Excel Decrypt** | Python msoffcrypto | - | 암호화된 엑셀 복호화 |
+| **Upload** | react-dropzone | - | 드래그 앤 드롭 파일 업로드 |
+| **Toast** | sonner | - | 알림 토스트 UI |
 
 ### 개발 도구
 
@@ -233,7 +236,7 @@ C:/git/
 | 구분 | 서비스 | 설명 |
 |------|--------|------|
 | **Frontend + API** | Vercel | Next.js 최적화 배포 플랫폼 |
-| **Database** | Supabase (PostgreSQL) | 매니지드 PostgreSQL 서비스 |
+| **Database** | Supabase (PostgreSQL) | 매니지드 PostgreSQL (서울 리전) |
 | **File Storage** | Vercel Blob | 엑셀 업로드 파일 저장 |
 | **Monitoring** | Vercel Analytics | 성능 모니터링 |
 
@@ -377,18 +380,23 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 - [x] 환경 변수 설정 (.env.example)
 
 ### Phase 2 - 인증 및 레이아웃
-- [ ] NextAuth.js 설정 (이메일/비밀번호 인증)
-- [ ] 로그인 / 회원가입 페이지
+- [ ] NextAuth.js 설정 (추후 필요 시 — 현재 1인 사용)
+- [ ] 로그인 / 회원가입 페이지 (추후 필요 시)
 - [x] 대시보드 레이아웃 (사이드바 + 상단바)
 - [x] 반응형 사이드바 네비게이션
 - [x] 다크 모드 토글
 
 ### Phase 3 - 핵심 데이터 관리
-- [ ] 상품 CRUD (등록/조회/수정/삭제)
-- [ ] 판매 채널 관리
-- [ ] 매출 데이터 입력 (수동)
-- [ ] 엑셀 파일 업로드 및 파싱
-- [ ] 원가/수수료/배송비 관리
+- [x] 판매 채널 관리 (등록/목록/주문수 표시)
+- [x] 엑셀 파일 업로드 및 파싱 (스마트스토어 — 암호화 엑셀 지원)
+- [x] 상품 자동 등록 (엑셀 업로드 시 상품명+옵션정보 기준 자동 생성)
+- [x] 상품 목록 조회 (검색, 채널별 필터, 페이지네이션)
+- [x] 주문 목록 조회 (검색, 상태 필터, 날짜 필터, 페이지네이션)
+- [x] Prisma DB 스키마 설계 (Product, Order, Channel, Upload, Category)
+- [x] Supabase PostgreSQL 연동
+- [ ] 상품 수정/삭제 기능
+- [ ] 판매가/원가 직접 설정 기능 (상품+옵션별 고정값)
+- [ ] 쿠팡 등 추가 플랫폼 엑셀 파서
 
 ### Phase 4 - 대시보드 및 시각화
 - [ ] KPI 카드 컴포넌트 (매출, 마진, 마진율)
@@ -399,9 +407,11 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 - [ ] 데이터 테이블 (정렬, 필터, 페이지네이션)
 
 ### Phase 5 - 마진 자동화
+- [ ] 상품+옵션별 판매가/원가 설정 UI
 - [ ] 마진 자동 계산 로직 구현
 - [ ] 채널별 수수료율 자동 적용
 - [ ] 배송비 계산 로직
+- [ ] 업로드 시 신규 상품+옵션 감지 → 고정값 설정 팝업
 - [ ] 마진 알림 (목표 마진율 미달 시)
 
 ### Phase 6 - 리포트 및 내보내기
