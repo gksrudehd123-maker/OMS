@@ -1,0 +1,1 @@
+approveBuildsPackages: prisma,@prisma/engines,unrs-resolver

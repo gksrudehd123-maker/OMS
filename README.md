@@ -368,20 +368,20 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 ## TODO 리스트
 
 ### Phase 1 - 프로젝트 초기 설정
-- [ ] Next.js 프로젝트 생성 (TypeScript, App Router)
-- [ ] Tailwind CSS + shadcn/ui 설정
-- [ ] Pretendard / Inter 폰트 설정
-- [ ] ESLint + Prettier 설정
-- [ ] Prisma 초기 설정 및 DB 스키마 작성
-- [ ] 프로젝트 디렉토리 구조 생성
-- [ ] 환경 변수 설정 (.env.example)
+- [x] Next.js 프로젝트 생성 (TypeScript, App Router)
+- [x] Tailwind CSS + shadcn/ui 설정
+- [x] Pretendard / Inter 폰트 설정
+- [x] ESLint + Prettier 설정
+- [x] Prisma 초기 설정 및 DB 스키마 작성
+- [x] 프로젝트 디렉토리 구조 생성
+- [x] 환경 변수 설정 (.env.example)
 
 ### Phase 2 - 인증 및 레이아웃
 - [ ] NextAuth.js 설정 (이메일/비밀번호 인증)
 - [ ] 로그인 / 회원가입 페이지
-- [ ] 대시보드 레이아웃 (사이드바 + 상단바)
-- [ ] 반응형 사이드바 네비게이션
-- [ ] 다크 모드 토글
+- [x] 대시보드 레이아웃 (사이드바 + 상단바)
+- [x] 반응형 사이드바 네비게이션
+- [x] 다크 모드 토글
 
 ### Phase 3 - 핵심 데이터 관리
 - [ ] 상품 CRUD (등록/조회/수정/삭제)

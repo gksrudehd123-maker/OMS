@@ -1,0 +1,83 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  USER
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      Role     @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
+model Category {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  createdAt DateTime  @default(now())
+  products  Product[]
+
+  @@map("categories")
+}
+
+model Product {
+  id           String        @id @default(cuid())
+  name         String
+  sku          String        @unique
+  costPrice    Decimal       @db.Decimal(12, 2)
+  sellingPrice Decimal       @db.Decimal(12, 2)
+  categoryId   String?
+  category     Category?     @relation(fields: [categoryId], references: [id])
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  salesRecords SalesRecord[]
+
+  @@map("products")
+}
+
+model Channel {
+  id           String        @id @default(cuid())
+  name         String        @unique
+  feeRate      Decimal       @db.Decimal(5, 2)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  salesRecords SalesRecord[]
+
+  @@map("channels")
+}
+
+model SalesRecord {
+  id           String   @id @default(cuid())
+  productId    String
+  product      Product  @relation(fields: [productId], references: [id])
+  channelId    String
+  channel      Channel  @relation(fields: [channelId], references: [id])
+  quantity     Int
+  salesAmount  Decimal  @db.Decimal(12, 2)
+  costAmount   Decimal  @db.Decimal(12, 2)
+  channelFee   Decimal  @db.Decimal(12, 2)
+  shippingCost Decimal  @db.Decimal(12, 2)
+  margin       Decimal  @db.Decimal(12, 2)
+  marginRate   Decimal  @db.Decimal(5, 2)
+  salesDate    DateTime @db.Date
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([salesDate])
+  @@index([productId])
+  @@index([channelId])
+  @@map("sales_records")
+}
