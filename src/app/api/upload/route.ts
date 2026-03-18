@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { parseSmartstoreExcel } from '@/lib/excel/smartstore-parser';
+import { parseCoupangExcel } from '@/lib/excel/coupang-parser';
 import { processOrders } from '@/lib/services/order-processor';
+import { validateExcelFormat } from '@/lib/excel/validate-format';
+
+// 채널 코드로 파서 분기
+const COUPANG_CHANNEL_CODES = ['coupang_wing', 'coupang_rocket_growth', 'coupang_rocket_delivery'];
 
 export async function POST(request: NextRequest) {
   try {
@@ -19,8 +24,37 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // 채널 정보 조회 (파서 분기용)
+    const channel = await prisma.channel.findUnique({
+      where: { id: channelId },
+      select: { code: true },
+    });
+    if (!channel) {
+      return NextResponse.json(
+        { error: '존재하지 않는 채널입니다' },
+        { status: 400 },
+      );
+    }
+
     const buffer = Buffer.from(await file.arrayBuffer());
-    const { orders: parsedOrders, errors } = await parseSmartstoreExcel(buffer);
+
+    // 채널 코드에 따라 파서 선택 (대소문자 무시)
+    const isCoupang = COUPANG_CHANNEL_CODES.includes(
+      channel.code.toLowerCase(),
+    );
+
+    // 채널-엑셀 양식 검증
+    const validation = await validateExcelFormat(buffer, isCoupang);
+    if (!validation.valid) {
+      return NextResponse.json(
+        { error: validation.error },
+        { status: 400 },
+      );
+    }
+
+    const { orders: parsedOrders, errors } = isCoupang
+      ? await parseCoupangExcel(buffer)
+      : await parseSmartstoreExcel(buffer);
 
     // Upload 레코드 생성
     const upload = await prisma.upload.create({

@@ -44,6 +44,7 @@ model Product {
   category        Category? @relation(fields: [categoryId], references: [id])
   costPrice       Decimal?  @db.Decimal(12, 2)
   sellingPrice    Decimal?  @db.Decimal(12, 2)
+  feeRate         Decimal?  @db.Decimal(5, 2)
   shippingCost    Decimal   @default(0) @db.Decimal(10, 2)
   freeShippingMin Decimal?  @db.Decimal(10, 2)
   memo            String?

@@ -23,6 +23,7 @@ type Product = {
   optionInfo: string;
   costPrice: string | null;
   sellingPrice: string | null;
+  feeRate: string | null;
   shippingCost: string;
   freeShippingMin: string | null;
   memo: string | null;
@@ -49,6 +50,7 @@ export default function ProductsPage() {
   const [editProduct, setEditProduct] = useState<Product | null>(null);
   const [editSellingPrice, setEditSellingPrice] = useState('');
   const [editCostPrice, setEditCostPrice] = useState('');
+  const [editFeeRate, setEditFeeRate] = useState('');
   const [editShippingCost, setEditShippingCost] = useState('');
   const [editFreeShippingMin, setEditFreeShippingMin] = useState('');
   const [editMemo, setEditMemo] = useState('');
@@ -86,6 +88,7 @@ export default function ProductsPage() {
     setEditProduct(product);
     setEditSellingPrice(product.sellingPrice ? String(product.sellingPrice) : '');
     setEditCostPrice(product.costPrice ? String(product.costPrice) : '');
+    setEditFeeRate(product.feeRate ? String(product.feeRate) : '');
     setEditShippingCost(String(product.shippingCost));
     setEditFreeShippingMin(product.freeShippingMin ? String(product.freeShippingMin) : '');
     setEditMemo(product.memo || '');
@@ -101,6 +104,7 @@ export default function ProductsPage() {
         body: JSON.stringify({
           sellingPrice: editSellingPrice ? parseFloat(editSellingPrice) : null,
           costPrice: editCostPrice ? parseFloat(editCostPrice) : null,
+          feeRate: editFeeRate ? parseFloat(editFeeRate) : null,
           shippingCost: parseFloat(editShippingCost) || 0,
           freeShippingMin: editFreeShippingMin ? parseFloat(editFreeShippingMin) : null,
           memo: editMemo || null,
@@ -335,6 +339,24 @@ export default function ProductsPage() {
                   placeholder="원가를 입력하세요"
                   className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-ring"
                 />
+              </div>
+
+              {/* 개별 수수료 */}
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">
+                  개별 수수료율 (%)
+                </label>
+                <input
+                  type="number"
+                  step="0.1"
+                  value={editFeeRate}
+                  onChange={(e) => setEditFeeRate(e.target.value)}
+                  placeholder="비워두면 채널 기본 수수료 적용"
+                  className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+                <p className="text-xs text-muted-foreground">
+                  쿠팡 카테고리별 수수료 등 채널 기본 수수료와 다를 때 입력
+                </p>
               </div>
 
               {/* 배송비 */}

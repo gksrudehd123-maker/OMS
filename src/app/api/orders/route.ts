@@ -92,6 +92,9 @@ export async function GET(request: NextRequest) {
         : null,
       quantity: order.quantity,
       feeRate: Number(order.channel.feeRate),
+      productFeeRate: order.product.feeRate
+        ? Number(order.product.feeRate)
+        : null,
       shippingCost: Number(order.product.shippingCost),
       freeShippingMin: order.product.freeShippingMin
         ? Number(order.product.freeShippingMin)

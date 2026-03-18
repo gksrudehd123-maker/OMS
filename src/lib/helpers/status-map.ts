@@ -16,6 +16,9 @@ export const ORDER_STATUS_KO_TO_EN: Record<string, string> = {
   취소: 'CANCELED',
   반품: 'RETURNED',
   교환: 'EXCHANGED',
+  // 쿠팡 주문 상태
+  출고: 'DELIVERING',
+  출고완료: 'DELIVERING',
 };
 
 export const ORDER_STATUS_EN_TO_KO: Record<string, string> = {
@@ -40,6 +43,10 @@ export const DELIVERY_ATTR_KO_TO_EN: Record<string, string> = {
   도착보장: 'ARRIVAL_GUARANTEE',
   당일발송: 'TODAY',
   새벽배송: 'DAWN',
+  // 쿠팡 배송 유형
+  '판매자 배송': 'NORMAL',
+  로켓배송: 'ROCKET',
+  로켓그로스: 'ROCKET_GROWTH',
 };
 
 export const DELIVERY_ATTR_EN_TO_KO: Record<string, string> = {
@@ -47,6 +54,8 @@ export const DELIVERY_ATTR_EN_TO_KO: Record<string, string> = {
   TODAY: '오늘출발',
   ARRIVAL_GUARANTEE: '도착보장',
   DAWN: '새벽배송',
+  ROCKET: '로켓배송',
+  ROCKET_GROWTH: '로켓그로스',
 };
 
 /**

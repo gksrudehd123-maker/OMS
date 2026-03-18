@@ -12,6 +12,7 @@ export type MarginInput = {
   costPrice: number | null;
   quantity: number;
   feeRate: number; // 채널 수수료율 (%)
+  productFeeRate: number | null; // 상품별 수수료율 (%) - 설정 시 채널 수수료 대신 사용
   shippingCost: number; // 상품 기본 배송비
   freeShippingMin: number | null; // 무료배송 기준금액
   orderTotal: number; // 같은 주문번호 합산금액
@@ -34,6 +35,7 @@ export function calculateMargin(input: MarginInput): MarginResult {
     costPrice,
     quantity,
     feeRate,
+    productFeeRate,
     shippingCost,
     freeShippingMin,
     orderTotal,
@@ -54,7 +56,8 @@ export function calculateMargin(input: MarginInput): MarginResult {
 
   const salesAmount = sellingPrice * quantity;
   const costAmount = costPrice * quantity;
-  const fee = Math.round(salesAmount * (feeRate / 100));
+  const effectiveFeeRate = productFeeRate !== null ? productFeeRate : feeRate;
+  const fee = Math.round(salesAmount * (effectiveFeeRate / 100));
 
   // 배송비 판단
   let shipping = shippingCost;

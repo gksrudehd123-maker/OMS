@@ -82,6 +82,12 @@ export async function GET(request: NextRequest) {
     { date: string; sales: number; margin: number; orders: number }
   > = {};
 
+  // 채널별 집계
+  const channelMap: Record<
+    string,
+    { name: string; sales: number; margin: number; orders: number }
+  > = {};
+
   // 상품별 마진 집계
   const productMarginMap: Record<
     string,
@@ -104,6 +110,9 @@ export async function GET(request: NextRequest) {
         : null,
       quantity: order.quantity,
       feeRate: Number(order.channel.feeRate),
+      productFeeRate: order.product.feeRate
+        ? Number(order.product.feeRate)
+        : null,
       shippingCost: Number(order.product.shippingCost),
       freeShippingMin: order.product.freeShippingMin
         ? Number(order.product.freeShippingMin)
@@ -127,6 +136,22 @@ export async function GET(request: NextRequest) {
     if (margin.isCalculable) {
       dailyMap[dateKey].sales += margin.salesAmount;
       dailyMap[dateKey].margin += margin.margin;
+    }
+
+    // 채널별 집계
+    const chId = order.channelId;
+    if (!channelMap[chId]) {
+      channelMap[chId] = {
+        name: order.channel.name,
+        sales: 0,
+        margin: 0,
+        orders: 0,
+      };
+    }
+    channelMap[chId].orders++;
+    if (margin.isCalculable) {
+      channelMap[chId].sales += margin.salesAmount;
+      channelMap[chId].margin += margin.margin;
     }
 
     // 상품별 집계
@@ -155,6 +180,14 @@ export async function GET(request: NextRequest) {
     a.date.localeCompare(b.date),
   );
 
+  // 채널별 데이터 (매출 내림차순)
+  const channelData = Object.values(channelMap)
+    .map((ch) => ({
+      ...ch,
+      marginRate: ch.sales > 0 ? (ch.margin / ch.sales) * 100 : 0,
+    }))
+    .sort((a, b) => b.sales - a.sales);
+
   // 상품별 마진 순위 Top 10
   const productMarginRank = Object.values(productMarginMap)
     .map((p) => ({
@@ -175,6 +208,7 @@ export async function GET(request: NextRequest) {
       calculableCount,
     },
     dailyData,
+    channelData,
     productMarginRank,
   });
 }

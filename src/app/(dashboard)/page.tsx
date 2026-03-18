@@ -20,6 +20,7 @@ import {
   Tooltip,
   ResponsiveContainer,
   Cell,
+  Legend,
 } from 'recharts';
 
 type KPI = {
@@ -38,6 +39,14 @@ type DailyData = {
   orders: number;
 };
 
+type ChannelData = {
+  name: string;
+  sales: number;
+  margin: number;
+  marginRate: number;
+  orders: number;
+};
+
 type ProductMargin = {
   name: string;
   optionInfo: string;
@@ -51,6 +60,7 @@ type ProductMargin = {
 type DashboardData = {
   kpi: KPI;
   dailyData: DailyData[];
+  channelData: ChannelData[];
   productMarginRank: ProductMargin[];
 };
 
@@ -267,10 +277,63 @@ export default function DashboardPage() {
       {/* 하단 차트 영역 */}
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
-          <h2 className="text-lg font-semibold">채널별 매출</h2>
-          <div className="mt-4 flex h-48 items-center justify-center text-muted-foreground text-sm">
-            채널 추가 시 활성화됩니다
-          </div>
+          <h2 className="text-lg font-semibold">채널별 매출/마진</h2>
+          {data?.channelData && data.channelData.length > 0 ? (
+            <div className="mt-4 h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={data.channelData}>
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    className="stroke-border"
+                  />
+                  <XAxis
+                    dataKey="name"
+                    tick={{ fill: '#9CA3AF', fontSize: 11 }}
+                  />
+                  <YAxis
+                    tickFormatter={formatCurrency}
+                    tick={{ fill: '#9CA3AF', fontSize: 11 }}
+                  />
+                  <Tooltip
+                    content={({ active, payload }) => {
+                      if (!active || !payload?.length) return null;
+                      const d = payload[0].payload as ChannelData;
+                      return (
+                        <div className="rounded-lg border border-border bg-card p-3 shadow-md">
+                          <p className="text-sm font-medium">{d.name}</p>
+                          <div className="mt-2 space-y-1 font-mono text-sm">
+                            <p className="text-blue-500">
+                              매출: ₩{d.sales.toLocaleString()}
+                            </p>
+                            <p className="text-green-500">
+                              마진: ₩{d.margin.toLocaleString()}
+                            </p>
+                            <p className="text-muted-foreground">
+                              마진율: {d.marginRate.toFixed(1)}%
+                            </p>
+                            <p className="text-muted-foreground">
+                              주문수: {d.orders}건
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    }}
+                  />
+                  <Legend
+                    formatter={(value: string) =>
+                      value === 'sales' ? '매출' : '마진'
+                    }
+                  />
+                  <Bar dataKey="sales" fill="#3B82F6" radius={[4, 4, 0, 0]} name="sales" />
+                  <Bar dataKey="margin" fill="#22C55E" radius={[4, 4, 0, 0]} name="margin" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          ) : (
+            <div className="mt-4 flex h-48 items-center justify-center text-muted-foreground text-sm">
+              데이터가 없습니다
+            </div>
+          )}
         </div>
         <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
           <h2 className="text-lg font-semibold">상품별 마진 Top 10</h2>
