@@ -441,6 +441,7 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 ### Phase 7 - 배포 및 최적화
 - [x] Vercel 배포 설정 (https://oms-dun.vercel.app/ — 대시보드/조회용, API 동기화는 로컬만)
 - [x] Python 의존성 제거 (엑셀 복호화: msoffcrypto → xlsx-populate 자체 암호 해제)
+- [x] 환경별 UI 분기 (NEXT_PUBLIC_HIDE_API_SYNC 환경 변수로 Vercel에서는 API 동기화 UI 숨김)
 - [ ] 성능 최적화 (캐싱, 이미지 등)
 - [ ] SEO 및 메타 태그 설정
 - [ ] 에러 모니터링 설정

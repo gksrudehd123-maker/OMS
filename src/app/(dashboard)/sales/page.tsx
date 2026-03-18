@@ -90,49 +90,51 @@ export default function SalesPage() {
         </p>
       </div>
 
-      {/* API 동기화 영역 */}
-      <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
-        <h2 className="text-lg font-semibold">스마트스토어 API 동기화</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          네이버 커머스 API로 주문 데이터를 자동으로 가져옵니다
-        </p>
-        <div className="mt-4 flex flex-wrap items-end gap-3">
-          <div>
-            <label className="mb-1 block text-xs font-medium text-muted-foreground">
-              시작일
-            </label>
-            <input
-              type="date"
-              value={syncFrom}
-              onChange={(e) => setSyncFrom(e.target.value)}
-              className="rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-            />
+      {/* API 동기화 영역 (로컬 환경에서만 표시) */}
+      {!process.env.NEXT_PUBLIC_HIDE_API_SYNC && (
+        <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+          <h2 className="text-lg font-semibold">스마트스토어 API 동기화</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            네이버 커머스 API로 주문 데이터를 자동으로 가져옵니다
+          </p>
+          <div className="mt-4 flex flex-wrap items-end gap-3">
+            <div>
+              <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                시작일
+              </label>
+              <input
+                type="date"
+                value={syncFrom}
+                onChange={(e) => setSyncFrom(e.target.value)}
+                className="rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                종료일
+              </label>
+              <input
+                type="date"
+                value={syncTo}
+                onChange={(e) => setSyncTo(e.target.value)}
+                className="rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+            <button
+              onClick={handleSync}
+              disabled={syncing}
+              className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:opacity-50"
+            >
+              {syncing ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <RefreshCw className="h-4 w-4" />
+              )}
+              {syncing ? '동기화 중...' : 'API 동기화'}
+            </button>
           </div>
-          <div>
-            <label className="mb-1 block text-xs font-medium text-muted-foreground">
-              종료일
-            </label>
-            <input
-              type="date"
-              value={syncTo}
-              onChange={(e) => setSyncTo(e.target.value)}
-              className="rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-            />
-          </div>
-          <button
-            onClick={handleSync}
-            disabled={syncing}
-            className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:opacity-50"
-          >
-            {syncing ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <RefreshCw className="h-4 w-4" />
-            )}
-            {syncing ? '동기화 중...' : 'API 동기화'}
-          </button>
         </div>
-      </div>
+      )}
 
       {/* 엑셀 업로드 영역 */}
       <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
