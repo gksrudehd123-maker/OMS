@@ -464,7 +464,7 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 - [x] 쿠팡 연동 (3개 하위 채널: 윙/로켓그로스/로켓배송 — 각각 별도 채널로 매출 분리 관리)
   - [x] 쿠팡 윙 엑셀 파서 (등록상품명+등록옵션명 기반 productKey, 주문상태 자동 추론)
   - [x] 채널 코드 기반 파서 자동 분기 (coupang_wing/coupang_rocket_growth/coupang_rocket_delivery)
-  - [ ] 쿠팡 Wing API 연동 (API 키 발급 완료, 윙만 API 조회 가능 — 로켓그로스/로켓배송은 엑셀만)
+  - ~~쿠팡 Wing API 연동~~ (IP 제한 + 플레리오토 서비스 충돌로 사용 불가 → 엑셀 업로드로 대체)
   - [ ] 쿠팡 로켓그로스/로켓배송 엑셀 파서 (샘플 파일 확보 후 추가)
 
 ### Phase 10 - Notion 연동 (CS 관리)
