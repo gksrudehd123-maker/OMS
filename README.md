@@ -4,73 +4,67 @@
 
 ---
 
-## 📋 목차
-
-1. [프로젝트 개요](#프로젝트-개요)
-2. [개발 환경](#개발-환경)
-3. [시스템 아키텍처](#시스템-아키텍처)
-4. [배포 환경](#배포-환경)
-5. [디자인 가이드](#디자인-가이드)
-6. [TODO 리스트](#todo-리스트)
-
----
-
 ## 프로젝트 개요
 
-온라인 커머스 채널(쿠팡, 네이버, 11번가 등)의 매출 데이터를 통합 관리하고, 마진율을 자동 계산하여 실시간 대시보드로 시각화하는 시스템입니다.
+온라인 커머스 채널(스마트스토어, 쿠팡 등)의 매출 데이터를 통합 관리하고, 마진율을 자동 계산하여 실시간 대시보드로 시각화하는 시스템입니다.
 
 ### 핵심 기능
 
-- **매출 대시보드**: 일별/주별/월별 매출 현황 시각화
-- **마진 자동 계산**: 원가, 수수료, 배송비 등을 반영한 순마진 자동 산출
-- **채널별 분석**: 판매 채널별 매출/마진 비교 분석
-- **상품별 분석**: 상품 단위 수익성 분석
-- **데이터 관리**: 엑셀 업로드 및 수동 입력 지원
-- **리포트 생성**: PDF/엑셀 형태의 리포트 다운로드
+- **매출 대시보드**: 일별 매출/마진 추이, KPI 카드, 채널별 비교 차트
+- **마진 자동 계산**: 원가, 수수료, 배송비를 반영한 순마진 자동 산출
+- **채널별 분석**: 판매 채널별 매출/마진 비교 (스마트스토어, 쿠팡 윙 등)
+- **상품별 분석**: 상품 단위 수익성 분석 및 마진 Top 10
+- **데이터 수집**: 엑셀 업로드 + 네이버 API 자동 동기화
+- **광고비 관리**: 채널+날짜별 광고비 입력, 기간 총합에서 차감
+- **리포트 생성**: PDF/엑셀 리포트 다운로드
 
 ---
 
-## 개발 환경
+## 기술 스택
 
-### 기술 스택
+### 사용 중
 
-| 구분 | 기술 | 버전 | 설명 |
-|------|------|------|------|
-| **Framework** | Next.js | 14.x | React 기반 풀스택 프레임워크 (App Router) |
-| **Language** | TypeScript | 5.x | 타입 안정성 확보 |
-| **UI Library** | shadcn/ui | latest | Radix UI 기반 컴포넌트 라이브러리 |
-| **Styling** | Tailwind CSS | 3.x | 유틸리티 기반 CSS 프레임워크 |
-| **Charts** | Recharts | 2.x | React 차트 라이브러리 |
-| **Database** | PostgreSQL | 16.x | 관계형 데이터베이스 |
-| **ORM** | Prisma | 5.x | Type-safe 데이터베이스 ORM |
-| **Auth** | NextAuth.js | 5.x | 인증/인가 처리 |
-| **State** | Zustand | 4.x | 경량 상태 관리 |
-| **Data Fetching** | TanStack Query | 5.x | 서버 상태 관리 및 캐싱 |
-| **Form** | React Hook Form + Zod | - | 폼 관리 및 유효성 검증 |
-| **Table** | TanStack Table | 8.x | 데이터 테이블 처리 |
-| **Excel Parse** | xlsx-populate | - | 엑셀 파일 읽기/파싱 |
-| **Excel Decrypt** | xlsx-populate (자체 암호 해제) | - | 암호화된 엑셀 복호화 (Python 의존성 제거) |
-| **Upload** | react-dropzone | - | 드래그 앤 드롭 파일 업로드 |
-| **Toast** | sonner | - | 알림 토스트 UI |
+| 구분 | 기술 | 설명 |
+|------|------|------|
+| **Framework** | Next.js 14 (App Router) | React 기반 풀스택 프레임워크 |
+| **Language** | TypeScript 5 | 타입 안정성 확보 |
+| **Styling** | Tailwind CSS 3 + shadcn/ui | 유틸리티 CSS + Radix UI 기반 컴포넌트 |
+| **Charts** | Recharts 3 | 매출/마진 추이, 채널별 비교, 상품별 순위 차트 |
+| **Database** | PostgreSQL (Supabase) | 매니지드 PostgreSQL (서울 리전) |
+| **ORM** | Prisma 5 | Type-safe 데이터베이스 ORM |
+| **Excel** | xlsx-populate | 엑셀 파싱 + 암호화 엑셀 복호화 (Python 의존성 없음) |
+| **Upload** | react-dropzone | 드래그 앤 드롭 파일 업로드 |
+| **PDF** | jspdf + html2canvas-pro | PDF 리포트 생성 (한글 지원) |
+| **Toast** | sonner | 알림 토스트 UI |
+| **Theme** | next-themes | 다크모드/라이트모드/시스템 연동 |
 
 ### 개발 도구
 
 | 도구 | 용도 |
 |------|------|
 | **pnpm** | 패키지 매니저 |
-| **ESLint** | 코드 린팅 |
-| **Prettier** | 코드 포맷팅 |
-| **Husky** | Git Hooks 관리 |
-| **Jest + Testing Library** | 단위/통합 테스트 |
+| **ESLint + Prettier** | 코드 린팅 및 포맷팅 |
+| **Prisma CLI** | DB 마이그레이션 및 스키마 관리 |
 
-### 로컬 개발 환경 요구사항
+### 설치된 but 미적용 (향후 도입 예정)
+
+| 기술 | 용도 | 적용 시점 |
+|------|------|-----------|
+| TanStack Query | 서버 상태 캐싱/중복 요청 방지 | Phase 7 성능 최적화 |
+| TanStack Table | 고급 데이터 테이블 | 필요 시 |
+| Zod | 폼 유효성 검증 | 필요 시 |
+
+---
+
+## 로컬 실행
+
+### 요구사항
 
 - Node.js 20.x LTS 이상
 - pnpm 9.x 이상
-- PostgreSQL 16.x
-- Git 2.x 이상
+- PostgreSQL 16.x (또는 Supabase)
 
-### 로컬 실행
+### 실행
 
 ```bash
 # 의존성 설치
@@ -86,404 +80,227 @@ pnpm prisma migrate dev
 pnpm dev
 ```
 
+### 환경 변수
+
+```env
+# Database (Supabase)
+DATABASE_URL=postgresql://...
+DIRECT_URL=postgresql://...
+
+# App
+NEXT_PUBLIC_APP_NAME=OMS
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+NEXT_PUBLIC_HIDE_API_SYNC=false    # true: Vercel에서 API 동기화 UI 숨김
+
+# 네이버 커머스 API (스마트스토어 자동 동기화)
+NAVER_CLIENT_ID=...
+NAVER_CLIENT_SECRET=...
+
+# 쿠팡 API (현재 미사용 — IP 제한)
+COUPANG_ACCESS_KEY=...
+COUPANG_SECRET_KEY=...
+```
+
 ---
 
-## 시스템 아키텍처
-
-### 전체 구조
+## 디렉토리 구조
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                      Client (Browser)                   │
-│                    Next.js App Router                    │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌────────┐  │
-│  │Dashboard │  │ Products │  │ Reports  │  │Settings│  │
-│  │  Pages   │  │  Pages   │  │  Pages   │  │ Pages  │  │
-│  └────┬─────┘  └────┬─────┘  └────┬─────┘  └───┬────┘  │
-│       └──────────────┴──────────────┴───────────┘       │
-│                          │                               │
-│              ┌───────────┴───────────┐                   │
-│              │   Zustand + TanStack  │                   │
-│              │    (State & Cache)    │                   │
-│              └───────────┬───────────┘                   │
-└──────────────────────────┼───────────────────────────────┘
-                           │ HTTP (REST API)
-┌──────────────────────────┼───────────────────────────────┐
-│                   Server (Next.js API)                   │
-│  ┌───────────────────────┴────────────────────────────┐  │
-│  │              API Route Handlers                    │  │
-│  │        /api/sales  /api/products  /api/reports     │  │
-│  └───────────────────────┬────────────────────────────┘  │
-│                          │                               │
-│  ┌───────────┐  ┌────────┴────────┐  ┌────────────────┐  │
-│  │ NextAuth  │  │  Business Logic │  │  Excel Parser  │  │
-│  │  (Auth)   │  │   (Services)    │  │  (SheetJS)     │  │
-│  └───────────┘  └────────┬────────┘  └────────────────┘  │
-│                          │                               │
-│              ┌───────────┴───────────┐                   │
-│              │    Prisma ORM Client  │                   │
-│              └───────────┬───────────┘                   │
-└──────────────────────────┼───────────────────────────────┘
-                           │
-               ┌───────────┴───────────┐
-               │     PostgreSQL DB     │
-               │  ┌─────┐ ┌─────────┐ │
-               │  │Sales│ │Products │ │
-               │  ├─────┤ ├─────────┤ │
-               │  │Costs│ │Channels │ │
-               │  ├─────┤ ├─────────┤ │
-               │  │Fees │ │ Users   │ │
-               │  └─────┘ └─────────┘ │
-               └───────────────────────┘
-```
-
-### 디렉토리 구조
-
-```
-C:/git/
-├── public/                    # 정적 파일
+OMS/
+├── public/                         # 정적 파일
+├── scripts/                        # 자동화 스크립트
+│   ├── auto-sync.bat               # Windows 작업 스케줄러용 자동 동기화
+│   ├── sync-log.txt                # 동기화 실행 로그
+│   └── decrypt-xlsx.py             # (레거시) 엑셀 복호화 스크립트
+├── prisma/
+│   ├── schema.prisma               # DB 스키마
+│   └── migrations/                 # 마이그레이션 파일
 ├── src/
-│   ├── app/                   # Next.js App Router
-│   │   ├── (auth)/            # 인증 관련 페이지
-│   │   │   ├── login/
-│   │   │   └── register/
-│   │   ├── (dashboard)/       # 대시보드 레이아웃 그룹
-│   │   │   ├── page.tsx       # 메인 대시보드
-│   │   │   ├── sales/         # 매출 관리
-│   │   │   ├── products/      # 상품 관리
-│   │   │   ├── margins/       # 마진 분석
-│   │   │   ├── channels/      # 채널 분석
-│   │   │   ├── reports/       # 리포트
-│   │   │   └── settings/      # 설정
-│   │   ├── api/               # API Route Handlers
-│   │   │   ├── auth/
-│   │   │   ├── sales/
-│   │   │   ├── products/
-│   │   │   ├── margins/
-│   │   │   ├── channels/
-│   │   │   ├── reports/
-│   │   │   └── upload/
+│   ├── app/
+│   │   ├── (dashboard)/            # 대시보드 레이아웃 그룹
+│   │   │   ├── page.tsx            # 메인 대시보드
+│   │   │   ├── sales/              # 매출 관리 (업로드 + API 동기화)
+│   │   │   ├── products/           # 상품 관리
+│   │   │   ├── channels/           # 채널 관리
+│   │   │   ├── ad-costs/           # 광고비 관리
+│   │   │   ├── reports/            # 리포트
+│   │   │   ├── margins/            # 마진 분석
+│   │   │   └── settings/           # 설정
+│   │   ├── api/                    # API Route Handlers
+│   │   │   ├── dashboard/          # 대시보드 KPI + 차트 데이터
+│   │   │   ├── orders/             # 주문 조회
+│   │   │   ├── products/           # 상품 CRUD
+│   │   │   ├── channels/           # 채널 CRUD
+│   │   │   ├── upload/             # 엑셀 업로드 + 이력 관리
+│   │   │   ├── sync/smartstore/    # 스마트스토어 API 동기화
+│   │   │   ├── ad-costs/           # 광고비 CRUD
+│   │   │   ├── report/             # 리포트 데이터
+│   │   │   └── settings/           # 설정 API
 │   │   ├── layout.tsx
 │   │   └── globals.css
-│   ├── components/            # 공통 컴포넌트
-│   │   ├── ui/                # shadcn/ui 컴포넌트
-│   │   ├── charts/            # 차트 컴포넌트
-│   │   ├── layout/            # 레이아웃 컴포넌트
-│   │   └── data-table/        # 테이블 컴포넌트
-│   ├── lib/                   # 유틸리티 및 설정
-│   │   ├── prisma.ts          # Prisma 클라이언트
-│   │   ├── utils.ts           # 공통 유틸
-│   │   └── constants.ts       # 상수 정의
-│   ├── services/              # 비즈니스 로직
-│   │   ├── sales.service.ts
-│   │   ├── product.service.ts
-│   │   ├── margin.service.ts
-│   │   └── report.service.ts
-│   ├── stores/                # Zustand 스토어
-│   ├── types/                 # TypeScript 타입 정의
-│   └── hooks/                 # 커스텀 훅
-├── prisma/
-│   ├── schema.prisma          # DB 스키마
-│   ├── migrations/            # 마이그레이션 파일
-│   └── seed.ts                # 시드 데이터
+│   ├── components/
+│   │   ├── ui/                     # shadcn/ui + 공통 UI (skeleton, progress-bar 등)
+│   │   ├── layout/                 # 사이드바, 헤더
+│   │   ├── common/                 # 날짜 필터 등 공통 컴포넌트
+│   │   ├── sales/                  # 주문 테이블, 업로드 존
+│   │   └── providers/              # Theme, Query Provider
+│   └── lib/
+│       ├── prisma.ts               # Prisma 클라이언트
+│       ├── utils.ts                # 공통 유틸
+│       ├── constants.ts            # 상수 정의
+│       ├── excel/                  # 엑셀 파서
+│       │   ├── smartstore-parser.ts
+│       │   ├── coupang-parser.ts
+│       │   ├── column-map.ts       # 채널별 컬럼 매핑
+│       │   └── validate-format.ts  # 업로드 양식 검증
+│       ├── helpers/                # 비즈니스 로직 헬퍼
+│       │   ├── margin-calc.ts      # 마진 계산
+│       │   ├── product-key.ts      # 상품키 생성
+│       │   └── status-map.ts       # 주문 상태 매핑
+│       ├── naver/
+│       │   └── commerce-api.ts     # 네이버 커머스 API 클라이언트
+│       └── services/
+│           └── order-processor.ts  # 공통 주문 처리 (업로드 + API 공유)
 ├── .env.example
-├── .eslintrc.json
-├── tailwind.config.ts
-├── tsconfig.json
 ├── package.json
 └── README.md
 ```
 
-### 데이터 모델 (ERD 개요)
+---
+
+## 데이터 모델
 
 ```
 ┌──────────────┐     ┌──────────────┐     ┌──────────────┐
-│    User      │     │   Product    │     │   Channel    │
+│   Product    │     │   Channel    │     │    AdCost    │
 ├──────────────┤     ├──────────────┤     ├──────────────┤
 │ id           │     │ id           │     │ id           │
-│ email        │     │ name         │     │ name         │
-│ password     │     │ sku          │     │ feeRate      │
-│ name         │     │ costPrice    │     │ createdAt    │
-│ role         │     │ sellingPrice │     └──────┬───────┘
-│ createdAt    │     │ categoryId   │            │
-└──────────────┘     │ createdAt    │            │
-                     └──────┬───────┘            │
-                            │                    │
-                     ┌──────┴────────────────────┴──┐
-                     │          SalesRecord          │
-                     ├──────────────────────────────┤
-                     │ id                            │
-                     │ productId (FK)                │
-                     │ channelId (FK)                │
-                     │ quantity                      │
-                     │ salesAmount                   │
-                     │ costAmount                    │
-                     │ channelFee                    │
-                     │ shippingCost                  │
-                     │ margin (자동 계산)             │
-                     │ marginRate (자동 계산)         │
-                     │ salesDate                     │
-                     │ createdAt                     │
-                     └──────────────────────────────┘
+│ name         │     │ name         │     │ channelId FK │
+│ optionInfo   │     │ code         │     │ date         │
+│ productKey   │     │ feeRate      │     │ cost         │
+│ costPrice    │     │ isActive     │     │ memo         │
+│ sellingPrice │     └──────┬───────┘     └──────────────┘
+│ feeRate      │            │
+│ shippingCost │            │
+│ freeShipMin  │     ┌──────┴──────┐
+│ isActive     │     │   Upload    │
+└──────┬───────┘     ├─────────────┤
+       │             │ id          │
+       │             │ fileName    │
+       │             │ channelId FK│
+       │             │ totalRows   │
+       │             │ successRows │
+       │             │ errorRows   │
+       │             └──────┬──────┘
+       │                    │
+┌──────┴────────────────────┴──┐     ┌──────────────┐
+│           Order              │     │   Setting    │
+├──────────────────────────────┤     ├──────────────┤
+│ id                           │     │ key          │
+│ productOrderNumber           │     │ value        │
+│ orderNumber                  │     └──────────────┘
+│ orderDate                    │
+│ orderStatus                  │
+│ productName / optionInfo     │
+│ quantity                     │
+│ productId FK                 │
+│ channelId FK                 │
+│ uploadId FK (CASCADE)        │
+└──────────────────────────────┘
 ```
 
 ---
 
 ## 배포 환경
 
-### 인프라 구성
-
 | 구분 | 서비스 | 설명 |
 |------|--------|------|
-| **Frontend + API** | Vercel | Next.js 최적화 배포 플랫폼 |
-| **Database** | Supabase (PostgreSQL) | 매니지드 PostgreSQL (서울 리전) |
-| **File Storage** | Vercel Blob | 엑셀 업로드 파일 저장 |
-| **Monitoring** | Vercel Analytics | 성능 모니터링 |
-
-### 배포 파이프라인
+| **Frontend + API** | Vercel | https://oms-dun.vercel.app/ (대시보드/조회용) |
+| **Database** | Supabase | 매니지드 PostgreSQL (서울 리전) |
+| **자동 동기화** | Windows 작업 스케줄러 | 로컬 PC에서 매일 09:00 실행 (네이버 API IP 제한) |
 
 ```
-GitHub Push → Vercel Auto Deploy
-  ├── main branch    → Production  (https://oms.vercel.app)
-  ├── develop branch → Preview     (https://oms-dev.vercel.app)
-  └── feature/*      → Preview     (PR별 자동 생성)
+GitHub Push → Vercel Auto Deploy (main branch → Production)
 ```
 
-### 환경 변수
-
-```env
-# Database
-DATABASE_URL=postgresql://user:password@host:5432/oms
-
-# NextAuth
-NEXTAUTH_SECRET=your-secret-key
-NEXTAUTH_URL=http://localhost:3000
-
-# App
-NEXT_PUBLIC_APP_NAME=OMS
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-```
-
-### 브랜치 전략
-
-| 브랜치 | 용도 |
-|--------|------|
-| `main` | 프로덕션 배포 |
-| `develop` | 개발 통합 브랜치 |
-| `feature/*` | 기능 개발 |
-| `fix/*` | 버그 수정 |
-
----
-
-## 디자인 가이드
-
-### 컬러 시스템
-
-| 용도 | Light Mode | Dark Mode | CSS Variable |
-|------|-----------|-----------|--------------|
-| **Primary** | `#2563EB` (Blue 600) | `#3B82F6` (Blue 500) | `--primary` |
-| **Secondary** | `#64748B` (Slate 500) | `#94A3B8` (Slate 400) | `--secondary` |
-| **Accent** | `#8B5CF6` (Violet 500) | `#A78BFA` (Violet 400) | `--accent` |
-| **Success** | `#16A34A` (Green 600) | `#22C55E` (Green 500) | `--success` |
-| **Warning** | `#EA580C` (Orange 600) | `#F97316` (Orange 500) | `--warning` |
-| **Danger** | `#DC2626` (Red 600) | `#EF4444` (Red 500) | `--danger` |
-| **Background** | `#FFFFFF` | `#0F172A` (Slate 900) | `--background` |
-| **Surface** | `#F8FAFC` (Slate 50) | `#1E293B` (Slate 800) | `--surface` |
-| **Border** | `#E2E8F0` (Slate 200) | `#334155` (Slate 700) | `--border` |
-| **Text Primary** | `#0F172A` (Slate 900) | `#F8FAFC` (Slate 50) | `--foreground` |
-| **Text Secondary** | `#64748B` (Slate 500) | `#94A3B8` (Slate 400) | `--muted-foreground` |
-
-### 타이포그래피
-
-| 요소 | 폰트 | 크기 | 굵기 |
-|------|------|------|------|
-| **H1** | Pretendard | 30px (1.875rem) | Bold (700) |
-| **H2** | Pretendard | 24px (1.5rem) | Semibold (600) |
-| **H3** | Pretendard | 20px (1.25rem) | Semibold (600) |
-| **Body** | Pretendard | 14px (0.875rem) | Regular (400) |
-| **Caption** | Pretendard | 12px (0.75rem) | Regular (400) |
-| **숫자/금액** | Inter | 각 요소와 동일 | Medium (500) |
-
-### 간격 (Spacing)
-
-```
-4px  (0.25rem) - xs   : 아이콘 내부 간격
-8px  (0.5rem)  - sm   : 요소 내부 패딩
-12px (0.75rem) - md   : 컴포넌트 간 간격
-16px (1rem)    - lg   : 섹션 내부 패딩
-24px (1.5rem)  - xl   : 카드 패딩
-32px (2rem)    - 2xl  : 섹션 간 간격
-```
-
-### 반응형 브레이크포인트
-
-| 이름 | 크기 | 대상 |
-|------|------|------|
-| `sm` | 640px | 모바일 |
-| `md` | 768px | 태블릿 |
-| `lg` | 1024px | 소형 데스크탑 |
-| `xl` | 1280px | 데스크탑 |
-| `2xl` | 1536px | 와이드 스크린 |
-
-### 대시보드 레이아웃
-
-```
-┌────────────────────────────────────────────────────┐
-│  Logo    Navigation Tabs           User │ Settings │
-├────┬───────────────────────────────────────────────┤
-│    │  Page Title              Date Filter  Export  │
-│ S  │──────────────────────────────────────────────│
-│ I  │  ┌─ KPI Card─┐ ┌─ KPI Card─┐ ┌─ KPI Card─┐ │
-│ D  │  │ 총 매출   │ │ 순 마진   │ │ 마진율    │ │
-│ E  │  │ ₩12.5M   │ │ ₩3.2M    │ │ 25.6%     │ │
-│ B  │  │ ▲ 12.5%  │ │ ▲ 8.3%   │ │ ▼ 2.1%   │ │
-│ A  │  └──────────┘ └──────────┘ └──────────┘   │
-│ R  │──────────────────────────────────────────────│
-│    │  ┌─ 매출 추이 차트 (Line/Bar) ──────────────┐ │
-│ N  │  │                                          │ │
-│ A  │  │          [Chart Area]                    │ │
-│ V  │  │                                          │ │
-│    │  └──────────────────────────────────────────┘ │
-│    │──────────────────────────────────────────────│
-│    │  ┌─ 채널별 매출 ────┐ ┌─ 상품별 마진 Top 10─┐ │
-│    │  │   [Pie Chart]   │ │   [Bar Chart]       │ │
-│    │  └─────────────────┘ └─────────────────────┘ │
-│    │──────────────────────────────────────────────│
-│    │  ┌─ 데이터 테이블 ──────────────────────────┐ │
-│    │  │ Search  Filter  Columns        Export   │ │
-│    │  │─────────────────────────────────────────│ │
-│    │  │ SKU │ 상품명 │ 채널 │ 매출 │ 마진 │ ... │ │
-│    │  └──────────────────────────────────────────┘ │
-└────┴───────────────────────────────────────────────┘
-```
-
-### 컴포넌트 스타일 가이드
-
-- **카드**: `rounded-xl`, `shadow-sm`, `border` 적용. hover 시 `shadow-md` 전환
-- **버튼**: Primary(파랑), Secondary(회색), Danger(빨강) 3단계. `rounded-lg` 적용
-- **입력 필드**: `rounded-lg`, `border`, focus 시 `ring-2 ring-primary` 적용
-- **테이블**: 행 hover 시 배경색 변경, 짝수 행 줄무늬 없음 (깔끔한 스타일)
-- **차트**: 브랜드 컬러 팔레트 사용, 툴팁에 금액 포맷(₩) 적용
-- **다크 모드**: 시스템 설정 연동 + 수동 토글 지원
+> **참고**: 네이버/쿠팡 API는 IP 화이트리스트 제한으로 Vercel에서 호출 불가.
+> API 동기화는 로컬 환경에서만 가능하며, Vercel에서는 `NEXT_PUBLIC_HIDE_API_SYNC=true`로 관련 UI를 숨김 처리.
 
 ---
 
 ## TODO 리스트
 
-### Phase 1 - 프로젝트 초기 설정
-- [x] Next.js 프로젝트 생성 (TypeScript, App Router)
-- [x] Tailwind CSS + shadcn/ui 설정
-- [x] Pretendard / Inter 폰트 설정
-- [x] ESLint + Prettier 설정
-- [x] Prisma 초기 설정 및 DB 스키마 작성
-- [x] 프로젝트 디렉토리 구조 생성
-- [x] 환경 변수 설정 (.env.example)
+### Phase 1~4 - 초기 설정 + 핵심 기능 (완료)
+- [x] Next.js + TypeScript + Tailwind CSS + shadcn/ui 프로젝트 설정
+- [x] Prisma + Supabase PostgreSQL 연동
+- [x] 대시보드 레이아웃 (사이드바 + 상단바 + 다크 모드)
+- [x] 판매 채널 관리 (등록/수정/활성화/비활성화)
+- [x] 엑셀 업로드 및 파싱 (스마트스토어 — 암호화 엑셀 지원)
+- [x] 쿠팡 윙 엑셀 파서 (등록상품명+등록옵션명 기반, 주문상태 자동 추론)
+- [x] 업로드 시 채널-엑셀 양식 자동 검증 (헤더 시그니처 기반)
+- [x] 상품 자동 등록 + 수정/삭제 + 판매가/원가 설정
+- [x] 주문 목록 조회 (검색, 페이지네이션)
+- [x] KPI 카드 (총 매출, 총 마진, 평균 마진율, 총 광고비, 총 주문수)
+- [x] 매출/마진 추이 차트 + 채널별 비교 차트 + 상품별 마진 Top 10
+- [x] 날짜 범위 필터 (프리셋 버튼 + 직접 입력)
 
-### Phase 2 - 인증 및 레이아웃
-- [ ] 인증/권한 관리 → Phase 8로 이동
-- [x] 대시보드 레이아웃 (사이드바 + 상단바)
-- [x] 반응형 사이드바 네비게이션
-- [x] 다크 모드 토글
-
-### Phase 3 - 핵심 데이터 관리
-- [x] 판매 채널 관리 (등록/목록/주문수 표시)
-- [x] 엑셀 파일 업로드 및 파싱 (스마트스토어 — 암호화 엑셀 지원)
-- [x] 상품 자동 등록 (엑셀 업로드 시 상품명+옵션정보 기준 자동 생성)
-- [x] 상품 목록 조회 (검색, 채널별 필터, 페이지네이션)
-- [x] 주문 목록 조회 (검색, 상태 필터, 날짜 필터, 페이지네이션)
-- [x] Prisma DB 스키마 설계 (Product, Order, Channel, Upload, Category)
-- [x] Supabase PostgreSQL 연동
-- [x] 상품 수정/삭제 기능 (편집 다이얼로그, 비활성화/활성화)
-- [x] 판매가/원가 직접 설정 기능 (상품+옵션별 고정값, 마진 미리보기)
-- [x] 쿠팡 윙 엑셀 파서 (등록상품명+등록옵션명 기반 productKey, 주문상태 자동 추론)
-- [x] 업로드 시 채널-엑셀 양식 자동 검증 (스마트스토어 파일을 쿠팡 채널에 업로드 시 차단)
-- [ ] 쿠팡 로켓그로스/로켓배송 엑셀 파서 (샘플 파일 확보 후 추가)
-
-### Phase 4 - 대시보드 및 시각화
-- [x] KPI 카드 컴포넌트 (총 매출, 총 마진, 평균 마진율, 총 주문수)
-- [x] 매출/마진 추이 차트 (일별 AreaChart)
-- [x] 상품별 마진 순위 차트 (Top 10 가로 BarChart)
-- [x] 날짜 범위 필터 (시작일/종료일 + 초기화)
-- [x] 채널별 매출/마진 비교 차트 (그룹 BarChart, 호버 시 마진율/주문수 표시)
-
-### Phase 5 - 마진 자동화
-- [x] 마진 자동 계산 로직 (판매가 - 원가 - 수수료 - 배송비, 주문 테이블에 마진/마진율 표시)
-- [x] 채널별 수수료율 설정 (채널 등록/수정 시 수수료율 입력, 스마트스토어 6%)
-- [x] 상품별 개별 수수료율 설정 (쿠팡 카테고리별 수수료 대응 — 채널 기본 수수료 대신 상품별 수수료 우선 적용)
-  - 쿠팡 기본 수수료 10.8%, 카테고리별로 4%~10.9% 차이 → 상품 관리에서 개별 설정
-- [x] 배송비 설정 (상품별 기본 배송비 + 조건부 무료배송 기준금액)
-  - 같은 주문번호 기준 합산금액으로 무료배송 판단
-  - 한 주문 내 어떤 상품이든 무료배송 조건 충족 시 전체 무료배송
-- [x] 업로드 시 신규 상품+옵션 감지 → 고정값 설정 팝업
-- [x] 업로드 시 채널-엑셀 양식 불일치 검증 (헤더 시그니처 기반 자동 감지, 파서 실행 전 차단)
+### Phase 5 - 마진 자동화 (완료)
+- [x] 마진 자동 계산 (판매가 - 원가 - 수수료 - 배송비)
+- [x] 채널별 수수료율 설정 + 상품별 개별 수수료율 오버라이드 (쿠팡 카테고리별 대응)
+- [x] 배송비 설정 (상품별 기본 배송비 + 조건부 무료배송)
+- [x] 광고비 관리 (채널+날짜별 입력, 기간 총합에서 차감)
 - [ ] 마진 알림 (목표 마진율 미달 시 — 우선순위 낮음)
-- [x] 광고비 관리
-  - 채널+날짜별 광고비 수동 입력 (AdCost 모델, upsert 방식)
-  - 대시보드 KPI에 총 광고비 카드 추가, 기간 총 마진에서 광고비 총액 차감
-  - 광고비 관리 전용 페이지 (/ad-costs — 입력/조회/삭제, 기간 필터)
-  - 개별 주문 마진은 광고비 미포함, 기간 총합에서만 차감 (직관적 구조)
-  - 향후 네이버/쿠팡 광고 리포트 엑셀 파싱 기능 추가 예정
 
-### Phase 6 - 리포트 및 내보내기
+### Phase 6 - 리포트 (완료)
 - [x] 리포트 전용 페이지 (기간 선택 → 조회 → 미리보기)
-- [x] 엑셀 리포트 다운로드 (요약/일별 매출/상품별 실적 3시트, SheetJS)
-- [x] PDF 리포트 다운로드 (html2canvas 화면 캡처 방식, 한글 완벽 지원)
-- [x] 리포트 차트 (매출/마진 추이, 매출 구성 비율 파이차트, 상품별 마진 Top 5)
-- [ ] 채널별 비교 리포트 (채널 추가 시 구현)
+- [x] 엑셀 리포트 다운로드 (요약/일별/상품별 3시트)
+- [x] PDF 리포트 다운로드 (html2canvas 캡처, 한글 지원)
+- [x] 리포트 차트 (매출/마진 추이, 매출 구성 비율 파이, 상품별 마진 Top 5)
+- [ ] 채널별 비교 리포트
 - [ ] 매주/매월 자동 리포트 생성
 
-### 설정 페이지 (각 Phase 진행 시 구현)
-- [x] 테마 설정 (다크모드/라이트모드/시스템 연동 전환)
-- [x] 기본값 설정 (신규 상품 기본 배송비, 기본 무료배송 기준금액 — Setting 모델, API, 업로드 시 자동 적용)
-- [x] 채널 관리 바로가기 (채널 요약 카드 + 채널 관리 페이지 이동)
-- [x] 데이터 관리 (업로드 이력 테이블 조회, 업로드별 삭제 — 관련 주문 Cascade 삭제)
-- [ ] 프로필 설정 (사용자 이름, 비밀번호 변경 — Phase 8 인증 후)
-- [ ] 알림 설정 (마진 알림 기준값 — Phase 5 마진 알림 구현 시)
-- [ ] Notion 연동 설정 (API 키 입력, 연결 DB 선택 — Phase 10)
-
 ### Phase 7 - 배포 및 최적화
-- [x] Vercel 배포 설정 (https://oms-dun.vercel.app/ — 대시보드/조회용, API 동기화는 로컬만)
-- [x] Python 의존성 제거 (엑셀 복호화: msoffcrypto → xlsx-populate 자체 암호 해제)
-- [x] 환경별 UI 분기 (NEXT_PUBLIC_HIDE_API_SYNC 환경 변수로 Vercel에서는 API 동기화 UI 숨김)
-- [x] 로딩 UX 개선 (전 페이지 적용)
-  - ProgressBar: 페이지 상단 얇은 애니메이션 프로그레스바 (YouTube/GitHub 스타일)
-  - Skeleton UI: 데이터 로딩 중 펄스 애니메이션 플레이스홀더 (KPI 카드, 테이블 행, 차트 영역, 채널 카드 등)
-  - 적용 페이지: 대시보드, 상품관리, 주문내역, 광고비관리, 리포트, 채널관리, 설정
+- [x] Vercel 배포 (https://oms-dun.vercel.app/)
+- [x] Python 의존성 제거 (xlsx-populate 자체 암호 해제)
+- [x] 환경별 UI 분기 (Vercel에서 API 동기화 UI 숨김)
+- [x] 로딩 UX (전 페이지 ProgressBar + Skeleton UI)
 - [ ] 성능 최적화
-  - [ ] TanStack Query 도입 (자동 캐싱, 중복 요청 방지, 백그라운드 리프레시 — 페이지 전환 시 불필요한 재호출 방지)
-  - [ ] DB 쿼리 최적화 (Prisma groupBy/aggregate로 DB 레벨 집계, 주요 컬럼 인덱스 추가 — Order.orderDate, Order.channelId)
-  - [ ] API 응답 캐싱 (대시보드 KPI, 채널 목록 등 Cache-Control 헤더 설정, Next.js revalidate 옵션)
-  - [ ] 번들 사이즈 최적화 (next/dynamic으로 차트 컴포넌트 lazy load — recharts, xlsx, jspdf 등)
-- [ ] SEO 및 메타 태그 설정 (내부 관리 도구라 우선순위 낮음)
-- [ ] 에러 모니터링 설정
-  - [ ] Sentry 연동 (@sentry/nextjs — 프론트엔드/API 에러 자동 수집, 코드 라인 추적, Slack 알림)
-  - [ ] Vercel Analytics 활성화 (페이지별 로딩 시간, Web Vitals 측정 — 클릭 한 번으로 활성화 가능)
+  - [ ] TanStack Query 도입 (캐싱, 중복 요청 방지)
+  - [ ] DB 쿼리 최적화 (Prisma groupBy/aggregate, 인덱스 추가)
+  - [ ] API 응답 캐싱 (Cache-Control, revalidate)
+  - [ ] 번들 사이즈 최적화 (next/dynamic lazy load)
+- [ ] 에러 모니터링
+  - [ ] Sentry 연동 (프론트엔드/API 에러 수집, Slack 알림)
+  - [ ] Vercel Analytics 활성화
 
 ### Phase 8 - 인증 및 권한 관리
 - [ ] NextAuth.js 설정
 - [ ] 로그인 / 회원가입 페이지
-- [ ] 역할 기반 접근 제어 (OWNER/MANAGER: 전체 데이터, STAFF: 마진/원가 차단)
+- [ ] 역할 기반 접근 제어 (OWNER/MANAGER: 전체, STAFF: 마진/원가 차단)
 
-### Phase 9 - 매출 데이터 자동 수집
-- [x] 네이버 커머스 API 연동 (스마트스토어 주문 자동 수집 — OAuth 토큰, 조건형 상품주문 조회, 페이지네이션)
-- [x] 공통 주문 처리 로직 분리 (엑셀 업로드 + API 동기화 공유 — order-processor 서비스)
-- [x] 매출관리 페이지 API 동기화 UI (기간 선택 → 동기화 버튼, 24시간 제한 자동 분할)
-- [x] 엑셀 수동 업로드와 API 자동 수집 병행 지원
-- [x] 주문 상태/배송 속성 영문 코드 통일 (엑셀 한글 → 영문 변환, 화면 표시 시 한글 매핑)
-- [x] 자동 주문 수집 스케줄링 (GET 엔드포인트 + Windows 작업 스케줄러 등록 완료, 매일 09:00 자동 실행)
+### Phase 9 - 매출 데이터 자동 수집 (대부분 완료)
+- [x] 네이버 커머스 API 연동 (스마트스토어 주문 자동 수집)
+- [x] 공통 주문 처리 로직 분리 (엑셀 + API 공유 — order-processor)
+- [x] 매출관리 페이지 API 동기화 UI (기간 선택, 24시간 자동 분할)
+- [x] 주문 상태/배송 속성 영문 코드 통일
+- [x] 자동 주문 수집 스케줄링 (Windows 작업 스케줄러 등록 완료, 매일 09:00)
   - 작업 이름: OMS_AutoSync, 실행: `scripts/auto-sync.bat`, 로그: `scripts/sync-log.txt`
-- [x] 쿠팡 연동 (3개 하위 채널: 윙/로켓그로스/로켓배송 — 각각 별도 채널로 매출 분리 관리)
-  - [x] 쿠팡 윙 엑셀 파서 (등록상품명+등록옵션명 기반 productKey, 주문상태 자동 추론)
-  - [x] 채널 코드 기반 파서 자동 분기 (coupang_wing/coupang_rocket_growth/coupang_rocket_delivery)
-  - ~~쿠팡 Wing API 연동~~ (IP 제한 + 플레리오토 서비스 충돌로 사용 불가 → 엑셀 업로드로 대체)
-  - [ ] 쿠팡 로켓그로스/로켓배송 엑셀 파서 (샘플 파일 확보 후 추가)
+- [x] 쿠팡 윙 엑셀 파서 + 채널 코드 기반 파서 자동 분기
+- ~~쿠팡 Wing API 연동~~ (IP 제한 + 플레리오토 충돌 → 엑셀 업로드로 대체)
+- [ ] 쿠팡 로켓그로스/로켓배송 엑셀 파서 (샘플 파일 확보 후 추가)
 
 ### Phase 10 - Notion 연동 (CS 관리)
-- [ ] Notion API Integration 설정 (API 키 발급)
-- [ ] CS 데이터베이스 조회 (노션 DB → OMS 화면에 목록 표시)
-- [ ] CS 건 등록/수정 (OMS에서 직접 노션 DB에 추가/수정)
-- [ ] 처리 상태 변경 (대기중 → 처리완료 등 양방향 동기화)
-- [ ] CS 전용 페이지 (사이드바 메뉴 추가)
+- [ ] Notion API Integration 설정
+- [ ] CS 데이터베이스 조회/등록/수정 (양방향 동기화)
+- [ ] CS 전용 페이지
+
+### 설정 페이지
+- [x] 테마 설정 (다크/라이트/시스템)
+- [x] 기본값 설정 (기본 배송비, 무료배송 기준금액)
+- [x] 채널 관리 바로가기
+- [x] 데이터 관리 (업로드 이력 조회/삭제)
+- [ ] 프로필 설정 (Phase 8 이후)
+- [ ] Notion 연동 설정 (Phase 10)
 
 ---
 
