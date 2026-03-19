@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Store, Plus } from 'lucide-react';
 import { ProgressBar } from '@/components/ui/progress-bar';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -22,60 +23,70 @@ type Channel = {
 };
 
 export default function ChannelsPage() {
-  const [channels, setChannels] = useState<Channel[]>([]);
+  const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
   const [feeRate, setFeeRate] = useState('');
 
-  const [loading, setLoading] = useState(true);
-
   // 편집 다이얼로그
   const [editChannel, setEditChannel] = useState<Channel | null>(null);
   const [editName, setEditName] = useState('');
   const [editFeeRate, setEditFeeRate] = useState('');
-  const [saving, setSaving] = useState(false);
 
-  const fetchChannels = () => {
-    setLoading(true);
-    fetch('/api/channels')
-      .then((res) => res.json())
-      .then(setChannels)
-      .finally(() => setLoading(false));
-  };
+  const { data: channels = [], isLoading: loading } = useQuery<Channel[]>({
+    queryKey: ['channels'],
+    queryFn: async () => {
+      const res = await fetch('/api/channels');
+      return res.json();
+    },
+  });
 
-  useEffect(() => {
-    fetchChannels();
-  }, []);
-
-  const handleCreate = async () => {
-    if (!name || !code) {
-      toast.error('채널명과 코드를 입력해주세요');
-      return;
-    }
-
-    const res = await fetch('/api/channels', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name,
-        code: code.toUpperCase(),
-        feeRate: parseFloat(feeRate) || 0,
-      }),
-    });
-
-    if (res.ok) {
+  const createMutation = useMutation({
+    mutationFn: async (body: { name: string; code: string; feeRate: number }) => {
+      const res = await fetch('/api/channels', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || '등록 실패');
+      }
+      return res.json();
+    },
+    onSuccess: () => {
       toast.success('채널이 등록되었습니다');
       setName('');
       setCode('');
       setFeeRate('');
       setShowForm(false);
-      fetchChannels();
-    } else {
-      const err = await res.json();
-      toast.error(err.error || '등록 실패');
-    }
-  };
+      queryClient.invalidateQueries({ queryKey: ['channels'] });
+    },
+    onError: (err: Error) => {
+      toast.error(err.message);
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, body }: { id: string; body: Record<string, unknown> }) => {
+      const res = await fetch(`/api/channels/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) throw new Error('저장 실패');
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['channels'] });
+    },
+    onError: () => {
+      toast.error('처리 중 오류가 발생했습니다');
+    },
+  });
+
+  const saving = updateMutation.isPending;
 
   const openEdit = (ch: Channel) => {
     setEditChannel(ch);
@@ -83,51 +94,42 @@ export default function ChannelsPage() {
     setEditFeeRate(String(ch.feeRate));
   };
 
-  const handleSave = async () => {
-    if (!editChannel) return;
-    setSaving(true);
-    try {
-      const res = await fetch(`/api/channels/${editChannel.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: editName,
-          feeRate: parseFloat(editFeeRate) || 0,
-        }),
-      });
-      if (!res.ok) throw new Error('저장 실패');
-      toast.success('채널 정보가 수정되었습니다');
-      setEditChannel(null);
-      fetchChannels();
-    } catch {
-      toast.error('수정 중 오류가 발생했습니다');
-    } finally {
-      setSaving(false);
+  const handleCreate = () => {
+    if (!name || !code) {
+      toast.error('채널명과 코드를 입력해주세요');
+      return;
     }
+    createMutation.mutate({
+      name,
+      code: code.toUpperCase(),
+      feeRate: parseFloat(feeRate) || 0,
+    });
   };
 
-  const handleToggleActive = async () => {
+  const handleSave = () => {
     if (!editChannel) return;
-    setSaving(true);
-    try {
-      const res = await fetch(`/api/channels/${editChannel.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isActive: !editChannel.isActive }),
-      });
-      if (!res.ok) throw new Error('변경 실패');
-      toast.success(
-        editChannel.isActive
-          ? '채널이 비활성화되었습니다'
-          : '채널이 활성화되었습니다',
-      );
-      setEditChannel(null);
-      fetchChannels();
-    } catch {
-      toast.error('처리 중 오류가 발생했습니다');
-    } finally {
-      setSaving(false);
-    }
+    updateMutation.mutate(
+      { id: editChannel.id, body: { name: editName, feeRate: parseFloat(editFeeRate) || 0 } },
+      {
+        onSuccess: () => {
+          toast.success('채널 정보가 수정되었습니다');
+          setEditChannel(null);
+        },
+      },
+    );
+  };
+
+  const handleToggleActive = () => {
+    if (!editChannel) return;
+    updateMutation.mutate(
+      { id: editChannel.id, body: { isActive: !editChannel.isActive } },
+      {
+        onSuccess: () => {
+          toast.success(editChannel.isActive ? '채널이 비활성화되었습니다' : '채널이 활성화되었습니다');
+          setEditChannel(null);
+        },
+      },
+    );
   };
 
   return (

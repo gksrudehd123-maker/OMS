@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
   ShoppingCart,
   TrendingUp,
@@ -67,22 +68,19 @@ type DashboardData = {
 };
 
 export default function DashboardPage() {
-  const [data, setData] = useState<DashboardData | null>(null);
-  const [loading, setLoading] = useState(true);
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
 
-  useEffect(() => {
-    setLoading(true);
-    const params = new URLSearchParams();
-    if (from) params.set('from', from);
-    if (to) params.set('to', to);
-
-    fetch(`/api/dashboard?${params}`)
-      .then((res) => res.json())
-      .then(setData)
-      .finally(() => setLoading(false));
-  }, [from, to]);
+  const { data, isLoading: loading } = useQuery<DashboardData>({
+    queryKey: ['dashboard', from, to],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (from) params.set('from', from);
+      if (to) params.set('to', to);
+      const res = await fetch(`/api/dashboard?${params}`);
+      return res.json();
+    },
+  });
 
   const kpi = data?.kpi;
   const dailyData = data?.dailyData || [];

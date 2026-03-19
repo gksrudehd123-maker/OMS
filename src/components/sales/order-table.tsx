@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
   Table,
   TableBody,
@@ -36,30 +37,25 @@ type Order = {
 };
 
 export function OrderTable({ refreshKey }: { refreshKey: number }) {
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
-  const [loading, setLoading] = useState(true);
   const limit = 20;
 
-  useEffect(() => {
-    setLoading(true);
-    const params = new URLSearchParams({
-      page: String(page),
-      limit: String(limit),
-      ...(search && { search }),
-    });
+  const { data, isLoading: loading } = useQuery<{ orders: Order[]; total: number }>({
+    queryKey: ['orders', page, search, refreshKey],
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        page: String(page),
+        limit: String(limit),
+        ...(search && { search }),
+      });
+      const res = await fetch(`/api/orders?${params}`);
+      return res.json();
+    },
+  });
 
-    fetch(`/api/orders?${params}`)
-      .then((res) => res.json())
-      .then((data) => {
-        setOrders(data.orders);
-        setTotal(data.total);
-      })
-      .finally(() => setLoading(false));
-  }, [page, search, refreshKey]);
-
+  const orders = data?.orders ?? [];
+  const total = data?.total ?? 0;
   const totalPages = Math.ceil(total / limit);
 
   return (

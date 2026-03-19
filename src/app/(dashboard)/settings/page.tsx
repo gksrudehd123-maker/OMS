@@ -1,7 +1,8 @@
 'use client';
 
 import { useTheme } from 'next-themes';
-import { useCallback, useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import {
   Sun,
@@ -62,16 +63,14 @@ type UploadRecord = {
 
 export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
+  const [mounted, setMounted] = useState(() => {
+    if (typeof window !== 'undefined') return true;
+    return false;
+  });
   const router = useRouter();
-
-  // 채널 관리 state
-  const [channels, setChannels] = useState<Channel[]>([]);
-  const [loadingChannels, setLoadingChannels] = useState(true);
+  const queryClient = useQueryClient();
 
   // 데이터 관리 state
-  const [uploads, setUploads] = useState<UploadRecord[]>([]);
-  const [loadingUploads, setLoadingUploads] = useState(true);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
 
@@ -80,54 +79,41 @@ export default function SettingsPage() {
   const [defaultFreeShippingMin, setDefaultFreeShippingMin] = useState('');
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [loadingDefaults, setLoadingDefaults] = useState(true);
+  const [settingsInitialized, setSettingsInitialized] = useState(false);
 
-  const loadSettings = useCallback(async () => {
-    try {
+  const { isLoading: loadingDefaults } = useQuery({
+    queryKey: ['settings'],
+    queryFn: async () => {
       const res = await fetch('/api/settings');
-      if (res.ok) {
-        const data = await res.json();
+      if (!res.ok) return null;
+      const data = await res.json();
+      if (!settingsInitialized) {
         if (data.defaultShippingCost) setDefaultShippingCost(data.defaultShippingCost);
         if (data.defaultFreeShippingMin) setDefaultFreeShippingMin(data.defaultFreeShippingMin);
+        setSettingsInitialized(true);
       }
-    } catch {
-      // ignore
-    } finally {
-      setLoadingDefaults(false);
-    }
-  }, []);
+      return data;
+    },
+  });
 
-  const loadChannels = useCallback(async () => {
-    try {
+  const { data: channels = [], isLoading: loadingChannels } = useQuery<Channel[]>({
+    queryKey: ['channels'],
+    queryFn: async () => {
       const res = await fetch('/api/channels');
-      if (res.ok) setChannels(await res.json());
-    } catch {
-      // ignore
-    } finally {
-      setLoadingChannels(false);
-    }
-  }, []);
+      return res.json();
+    },
+  });
 
-  const loadUploads = useCallback(async () => {
-    try {
+  const { data: uploadsData, isLoading: loadingUploads } = useQuery<{ uploads: UploadRecord[] }>({
+    queryKey: ['uploads'],
+    queryFn: async () => {
       const res = await fetch('/api/upload?limit=50');
-      if (res.ok) {
-        const data = await res.json();
-        setUploads(data.uploads || []);
-      }
-    } catch {
-      // ignore
-    } finally {
-      setLoadingUploads(false);
-    }
-  }, []);
+      if (!res.ok) return { uploads: [] };
+      return res.json();
+    },
+  });
 
-  useEffect(() => {
-    setMounted(true);
-    loadSettings();
-    loadChannels();
-    loadUploads();
-  }, [loadSettings, loadChannels, loadUploads]);
+  const uploads = uploadsData?.uploads ?? [];
 
   const handleSaveDefaults = async () => {
     setSaving(true);
@@ -157,8 +143,8 @@ export default function SettingsPage() {
     try {
       const res = await fetch(`/api/upload/${uploadId}`, { method: 'DELETE' });
       if (res.ok) {
-        setUploads((prev) => prev.filter((u) => u.id !== uploadId));
         setShowDeleteConfirm(null);
+        queryClient.invalidateQueries({ queryKey: ['uploads'] });
       } else {
         alert('삭제에 실패했습니다');
       }

@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Table,
   TableBody,
@@ -40,9 +41,7 @@ type Channel = {
 };
 
 export default function ProductsPage() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [channels, setChannels] = useState<Channel[]>([]);
-  const [total, setTotal] = useState(0);
+  const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [channelId, setChannelId] = useState('');
@@ -56,38 +55,54 @@ export default function ProductsPage() {
   const [editShippingCost, setEditShippingCost] = useState('');
   const [editFreeShippingMin, setEditFreeShippingMin] = useState('');
   const [editMemo, setEditMemo] = useState('');
-  const [saving, setSaving] = useState(false);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetch('/api/channels')
-      .then((res) => res.json())
-      .then(setChannels);
-  }, []);
+  const { data: channels = [] } = useQuery<Channel[]>({
+    queryKey: ['channels'],
+    queryFn: async () => {
+      const res = await fetch('/api/channels');
+      return res.json();
+    },
+  });
 
-  const fetchProducts = useCallback(() => {
-    setLoading(true);
-    const params = new URLSearchParams({
-      page: String(page),
-      limit: String(limit),
-      ...(search && { search }),
-      ...(channelId && { channelId }),
-    });
+  const { data: productsData, isLoading: loading } = useQuery<{ products: Product[]; total: number }>({
+    queryKey: ['products', page, search, channelId],
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        page: String(page),
+        limit: String(limit),
+        ...(search && { search }),
+        ...(channelId && { channelId }),
+      });
+      const res = await fetch(`/api/products?${params}`);
+      return res.json();
+    },
+  });
 
-    fetch(`/api/products?${params}`)
-      .then((res) => res.json())
-      .then((data) => {
-        setProducts(data.products);
-        setTotal(data.total);
-      })
-      .finally(() => setLoading(false));
-  }, [page, search, channelId]);
-
-  useEffect(() => {
-    fetchProducts();
-  }, [fetchProducts]);
-
+  const products = productsData?.products ?? [];
+  const total = productsData?.total ?? 0;
   const totalPages = Math.ceil(total / limit);
+
+  const productMutation = useMutation({
+    mutationFn: async ({ id, method, body }: { id: string; method: string; body?: Record<string, unknown> }) => {
+      const res = await fetch(`/api/products/${id}`, {
+        method,
+        ...(body && {
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        }),
+      });
+      if (!res.ok) throw new Error('요청 실패');
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+    },
+    onError: () => {
+      toast.error('처리 중 오류가 발생했습니다');
+    },
+  });
+
+  const saving = productMutation.isPending;
 
   const openEdit = (product: Product) => {
     setEditProduct(product);
@@ -99,70 +114,55 @@ export default function ProductsPage() {
     setEditMemo(product.memo || '');
   };
 
-  const handleSave = async () => {
+  const handleSave = () => {
     if (!editProduct) return;
-    setSaving(true);
-    try {
-      const res = await fetch(`/api/products/${editProduct.id}`, {
+    productMutation.mutate(
+      {
+        id: editProduct.id,
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+        body: {
           sellingPrice: editSellingPrice ? parseFloat(editSellingPrice) : null,
           costPrice: editCostPrice ? parseFloat(editCostPrice) : null,
           feeRate: editFeeRate ? parseFloat(editFeeRate) : null,
           shippingCost: parseFloat(editShippingCost) || 0,
           freeShippingMin: editFreeShippingMin ? parseFloat(editFreeShippingMin) : null,
           memo: editMemo || null,
-        }),
-      });
-      if (!res.ok) throw new Error('저장 실패');
-      toast.success('상품 정보가 저장되었습니다');
-      setEditProduct(null);
-      fetchProducts();
-    } catch {
-      toast.error('저장 중 오류가 발생했습니다');
-    } finally {
-      setSaving(false);
-    }
+        },
+      },
+      {
+        onSuccess: () => {
+          toast.success('상품 정보가 저장되었습니다');
+          setEditProduct(null);
+        },
+      },
+    );
   };
 
-  const handleDeactivate = async () => {
+  const handleDeactivate = () => {
     if (!editProduct) return;
     if (!confirm(`"${editProduct.name}" 상품을 비활성화하시겠습니까?`)) return;
-    setSaving(true);
-    try {
-      const res = await fetch(`/api/products/${editProduct.id}`, {
-        method: 'DELETE',
-      });
-      if (!res.ok) throw new Error('삭제 실패');
-      toast.success('상품이 비활성화되었습니다');
-      setEditProduct(null);
-      fetchProducts();
-    } catch {
-      toast.error('처리 중 오류가 발생했습니다');
-    } finally {
-      setSaving(false);
-    }
+    productMutation.mutate(
+      { id: editProduct.id, method: 'DELETE' },
+      {
+        onSuccess: () => {
+          toast.success('상품이 비활성화되었습니다');
+          setEditProduct(null);
+        },
+      },
+    );
   };
 
-  const handleActivate = async () => {
+  const handleActivate = () => {
     if (!editProduct) return;
-    setSaving(true);
-    try {
-      const res = await fetch(`/api/products/${editProduct.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isActive: true }),
-      });
-      if (!res.ok) throw new Error('활성화 실패');
-      toast.success('상품이 활성화되었습니다');
-      setEditProduct(null);
-      fetchProducts();
-    } catch {
-      toast.error('처리 중 오류가 발생했습니다');
-    } finally {
-      setSaving(false);
-    }
+    productMutation.mutate(
+      { id: editProduct.id, method: 'PATCH', body: { isActive: true } },
+      {
+        onSuccess: () => {
+          toast.success('상품이 활성화되었습니다');
+          setEditProduct(null);
+        },
+      },
+    );
   };
 
   return (

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Toaster, toast } from 'sonner';
 import { Plus, Trash2, Megaphone } from 'lucide-react';
 import { ProgressBar } from '@/components/ui/progress-bar';
@@ -21,106 +22,107 @@ type AdCost = {
 };
 
 export default function AdCostsPage() {
-  const [channels, setChannels] = useState<Channel[]>([]);
-  const [adCosts, setAdCosts] = useState<AdCost[]>([]);
-  const [totalCost, setTotalCost] = useState(0);
+  const queryClient = useQueryClient();
 
   // 필터
-  const [filterFrom, setFilterFrom] = useState('');
-  const [filterTo, setFilterTo] = useState('');
+  const now = new Date();
+  const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+  const [filterFrom, setFilterFrom] = useState(firstDay.toISOString().split('T')[0]);
+  const [filterTo, setFilterTo] = useState(now.toISOString().split('T')[0]);
   const [filterChannel, setFilterChannel] = useState('');
 
   // 입력 폼
   const [formChannel, setFormChannel] = useState('');
-  const [formDate, setFormDate] = useState('');
+  const [formDate, setFormDate] = useState(now.toISOString().split('T')[0]);
   const [formCost, setFormCost] = useState('');
   const [formMemo, setFormMemo] = useState('');
-  const [saving, setSaving] = useState(false);
-  const [loading, setLoading] = useState(true);
+
+  const { data: channels = [] } = useQuery<Channel[]>({
+    queryKey: ['channels'],
+    queryFn: async () => {
+      const res = await fetch('/api/channels');
+      return res.json();
+    },
+  });
 
   useEffect(() => {
-    fetch('/api/channels')
-      .then((res) => res.json())
-      .then((data) => {
-        setChannels(data);
-        if (data.length > 0) setFormChannel(data[0].id);
+    if (channels.length > 0 && !formChannel) {
+      setFormChannel(channels[0].id);
+    }
+  }, [channels, formChannel]);
+
+  const { data: adCostsData, isLoading: loading } = useQuery<{ adCosts: AdCost[]; totalCost: number }>({
+    queryKey: ['adCosts', filterFrom, filterTo, filterChannel],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (filterFrom) params.set('from', filterFrom);
+      if (filterTo) params.set('to', filterTo);
+      if (filterChannel) params.set('channelId', filterChannel);
+      const res = await fetch(`/api/ad-costs?${params}`);
+      return res.json();
+    },
+  });
+
+  const adCosts = adCostsData?.adCosts ?? [];
+  const totalCost = adCostsData?.totalCost ?? 0;
+
+  const createMutation = useMutation({
+    mutationFn: async (body: { channelId: string; date: string; cost: string; memo: string | null }) => {
+      const res = await fetch('/api/ad-costs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
       });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || '저장 실패');
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      toast.success('광고비가 저장되었습니다');
+      setFormCost('');
+      setFormMemo('');
+      queryClient.invalidateQueries({ queryKey: ['adCosts'] });
+    },
+    onError: (err: Error) => {
+      toast.error(err.message);
+    },
+  });
 
-    // 기본 필터: 이번 달
-    const now = new Date();
-    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-    setFilterFrom(firstDay.toISOString().split('T')[0]);
-    setFilterTo(now.toISOString().split('T')[0]);
-    setFormDate(now.toISOString().split('T')[0]);
-  }, []);
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await fetch(`/api/ad-costs?id=${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('삭제 실패');
+    },
+    onSuccess: () => {
+      toast.success('삭제되었습니다');
+      queryClient.invalidateQueries({ queryKey: ['adCosts'] });
+    },
+    onError: () => {
+      toast.error('삭제 실패');
+    },
+  });
 
-  useEffect(() => {
-    fetchAdCosts();
-  }, [filterFrom, filterTo, filterChannel]);
-
-  const fetchAdCosts = () => {
-    setLoading(true);
-    const params = new URLSearchParams();
-    if (filterFrom) params.set('from', filterFrom);
-    if (filterTo) params.set('to', filterTo);
-    if (filterChannel) params.set('channelId', filterChannel);
-
-    fetch(`/api/ad-costs?${params}`)
-      .then((res) => res.json())
-      .then((data) => {
-        setAdCosts(data.adCosts);
-        setTotalCost(data.totalCost);
-      })
-      .finally(() => setLoading(false));
-  };
-
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     if (!formChannel || !formDate || !formCost) {
       toast.error('채널, 날짜, 광고비를 모두 입력해주세요');
       return;
     }
-
-    setSaving(true);
-    try {
-      const res = await fetch('/api/ad-costs', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          channelId: formChannel,
-          date: formDate,
-          cost: formCost,
-          memo: formMemo || null,
-        }),
-      });
-
-      if (!res.ok) {
-        const data = await res.json();
-        toast.error(data.error || '저장 실패');
-        return;
-      }
-
-      toast.success('광고비가 저장되었습니다');
-      setFormCost('');
-      setFormMemo('');
-      fetchAdCosts();
-    } catch {
-      toast.error('저장 중 오류가 발생했습니다');
-    } finally {
-      setSaving(false);
-    }
+    createMutation.mutate({
+      channelId: formChannel,
+      date: formDate,
+      cost: formCost,
+      memo: formMemo || null,
+    });
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = (id: string) => {
     if (!confirm('이 광고비 내역을 삭제하시겠습니까?')) return;
-
-    const res = await fetch(`/api/ad-costs?id=${id}`, { method: 'DELETE' });
-    if (res.ok) {
-      toast.success('삭제되었습니다');
-      fetchAdCosts();
-    } else {
-      toast.error('삭제 실패');
-    }
+    deleteMutation.mutate(id);
   };
+
+  const saving = createMutation.isPending;
 
   return (
     <div className="space-y-6">
