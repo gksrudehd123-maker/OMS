@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { UploadZone } from '@/components/sales/upload-zone';
 import { OrderTable } from '@/components/sales/order-table';
+import { DailySalesTable } from '@/components/sales/daily-sales-table';
 import { Toaster, toast } from 'sonner';
 import { RefreshCw, Loader2 } from 'lucide-react';
 
@@ -22,6 +23,9 @@ export default function SalesPage() {
   const [syncFrom, setSyncFrom] = useState('');
   const [syncTo, setSyncTo] = useState('');
 
+  // RG 판매 날짜
+  const [salesDate, setSalesDate] = useState('');
+
   useEffect(() => {
     fetch('/api/channels')
       .then((res) => res.json())
@@ -36,9 +40,15 @@ export default function SalesPage() {
     yesterday.setDate(yesterday.getDate() - 1);
     setSyncTo(formatDate(today));
     setSyncFrom(formatDate(yesterday));
+    setSalesDate(formatDate(yesterday));
   }, []);
 
   const formatDate = (d: Date) => d.toISOString().split('T')[0];
+
+  const selectedChannelCode =
+    channels.find((ch) => ch.id === selectedChannel)?.code || '';
+  const isRocketGrowth =
+    selectedChannelCode.toLowerCase() === 'coupang_rocket_growth';
 
   const handleSync = async () => {
     if (!syncFrom || !syncTo) {
@@ -138,7 +148,7 @@ export default function SalesPage() {
 
       {/* 엑셀 업로드 영역 */}
       <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
-        <div className="mb-4 flex items-center gap-4">
+        <div className="mb-4 flex flex-wrap items-center gap-4">
           <h2 className="text-lg font-semibold">엑셀 업로드</h2>
           <select
             value={selectedChannel}
@@ -154,16 +164,35 @@ export default function SalesPage() {
               </option>
             ))}
           </select>
+          {isRocketGrowth && (
+            <div>
+              <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                판매 날짜
+              </label>
+              <input
+                type="date"
+                value={salesDate}
+                onChange={(e) => setSalesDate(e.target.value)}
+                className="rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+          )}
         </div>
         <UploadZone
           channelId={selectedChannel}
+          channelCode={selectedChannelCode}
+          salesDate={isRocketGrowth ? salesDate : undefined}
           onUploadComplete={() => setRefreshKey((k) => k + 1)}
         />
       </div>
 
-      {/* 주문 목록 */}
+      {/* 주문/판매 목록 */}
       <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
-        <OrderTable refreshKey={refreshKey} />
+        {isRocketGrowth ? (
+          <DailySalesTable channelId={selectedChannel} refreshKey={refreshKey} />
+        ) : (
+          <OrderTable refreshKey={refreshKey} />
+        )}
       </div>
     </div>
   );

@@ -12,11 +12,66 @@
 
 - **매출 대시보드**: 일별 매출/마진 추이, KPI 카드, 채널별 비교 차트
 - **마진 자동 계산**: 원가, 수수료, 배송비를 반영한 순마진 자동 산출
-- **채널별 분석**: 판매 채널별 매출/마진 비교 (스마트스토어, 쿠팡 윙 등)
+- **채널별 분석**: 판매 채널별 매출/마진 비교 (스마트스토어, 쿠팡 윙, 쿠팡 로켓그로스)
 - **상품별 분석**: 상품 단위 수익성 분석 및 마진 Top 10
 - **데이터 수집**: 엑셀 업로드 + 네이버 API 자동 동기화
 - **광고비 관리**: 채널+날짜별 광고비 입력, 기간 총합에서 차감
 - **리포트 생성**: PDF/엑셀 리포트 다운로드
+
+---
+
+## 지원 채널 및 데이터 구조
+
+### 채널별 데이터 수집 방식
+
+| 채널 | 수집 방식 | 데이터 유형 | DB 테이블 |
+|------|-----------|-------------|-----------|
+| **스마트스토어** | 엑셀 업로드 + API 자동 동기화 | 주문 단건 | `Order` |
+| **쿠팡 윙** | 엑셀 업로드 (DeliveryList) | 주문 단건 | `Order` |
+| **쿠팡 로켓그로스** | 엑셀 업로드 (Statistics) | 일별 상품 집계 | `DailySales` |
+
+### DB 테이블 분리 설계
+
+로켓그로스는 쿠팡 판매자센터에서 주문 단건이 아닌 **일별 상품별 판매 집계** 데이터만 제공합니다 (주문번호, 구매자, 배송상태 없음). 따라서 기존 `Order` 테이블에 넣지 않고 `DailySales` 테이블로 분리했습니다.
+
+- **Order**: 주문 단건 데이터를 저장하는 채널 (스마트스토어, 쿠팡 윙)
+- **DailySales**: 일별 집계 데이터를 저장하는 채널 (쿠팡 로켓그로스)
+- 대시보드/리포트에서는 **두 테이블을 합산**하여 KPI, 차트, 상품별 마진에 표시
+- 매출 관리에서는 **선택된 채널에 따라 OrderTable / DailySalesTable 전환** 표시
+- 향후 새 채널 추가 시: 주문 단건 구조 → `Order`, 집계 구조 → `DailySales`
+
+### 엑셀 파서별 처리 흐름
+
+```
+스마트스토어 (.xlsx)  → smartstore-parser  → order-processor    → Order 테이블
+쿠팡 윙 (.xlsx)       → coupang-parser     → order-processor    → Order 테이블
+로켓그로스 (.xlsx)    → rocketgrowth-parser → dailysales-processor → DailySales 테이블
+```
+
+### 마진 계산 방식
+
+**스마트스토어 / 쿠팡 윙** (margin-calc.ts)
+```
+마진 = (판매가 × 수량) - (원가 × 수량) - 수수료 - 배송비
+수수료 = 판매금액 × 수수료율
+배송비 = 같은 주문번호 합산금액 기준 조건부 무료배송 판단
+```
+
+**쿠팡 로켓그로스** (rg-margin-calc.ts, VAT 포함)
+```
+할인쿠폰 = 판매자할인쿠폰 × 판매수량
+판매수수료 = ROUND((순판매금액 - 할인쿠폰) × 수수료율, 0)
+판매수수료VAT = ROUND(판매수수료 × 10%, 0)
+정산대상액 = 순판매금액 - 판매수수료 - 판매수수료VAT - 할인쿠폰
+입출고배송비 = 판매수량 × 입출고배송비(개당)
+입출고VAT = ROUND(입출고배송비 × 10%, 0)
+지급액 = 정산대상액 - 입출고배송비 - 입출고VAT
+원가 = 원가(개당) × 판매수량
+부가세 = (순매출-쿠폰) - (순매출-쿠폰)/1.1 - (원가-원가/1.1) - 판매수수료VAT - 입출고VAT
+마진 = 지급액 - 원가 - 부가세
+```
+
+> **참고**: RG 순판매금액은 엑셀에서 오는 확정값이므로, 원가/수수료 미설정 시에도 **매출은 항상 합산**됩니다. 마진은 원가/수수료율/입출고배송비가 모두 설정된 경우에만 계산됩니다.
 
 ---
 
@@ -128,14 +183,15 @@ OMS/
 │   │   │   ├── margins/            # 마진 분석
 │   │   │   └── settings/           # 설정
 │   │   ├── api/                    # API Route Handlers
-│   │   │   ├── dashboard/          # 대시보드 KPI + 차트 데이터
-│   │   │   ├── orders/             # 주문 조회
-│   │   │   ├── products/           # 상품 CRUD
+│   │   │   ├── dashboard/          # 대시보드 KPI + 차트 데이터 (Order + DailySales 합산)
+│   │   │   ├── orders/             # 주문 조회 (스마트스토어/쿠팡 윙)
+│   │   │   ├── daily-sales/        # 판매 조회 (쿠팡 로켓그로스)
+│   │   │   ├── products/           # 상품 CRUD (RG 전용 필드 포함)
 │   │   │   ├── channels/           # 채널 CRUD
-│   │   │   ├── upload/             # 엑셀 업로드 + 이력 관리
+│   │   │   ├── upload/             # 엑셀 업로드 (3-way 분기: 스마트스토어/쿠팡윙/로켓그로스)
 │   │   │   ├── sync/smartstore/    # 스마트스토어 API 동기화
 │   │   │   ├── ad-costs/           # 광고비 CRUD
-│   │   │   ├── report/             # 리포트 데이터
+│   │   │   ├── report/             # 리포트 데이터 (Order + DailySales 합산)
 │   │   │   └── settings/           # 설정 API
 │   │   ├── global-error.tsx        # Sentry 에러 바운더리 (자동 에러 보고)
 │   │   ├── layout.tsx
@@ -146,25 +202,28 @@ OMS/
 │   │   ├── ui/                     # shadcn/ui + 공통 UI (skeleton, progress-bar 등)
 │   │   ├── layout/                 # 사이드바, 헤더
 │   │   ├── common/                 # 날짜 필터 등 공통 컴포넌트
-│   │   ├── sales/                  # 주문 테이블, 업로드 존
+│   │   ├── sales/                  # 주문 테이블, DailySales 테이블, 업로드 존
 │   │   └── providers/              # Theme, Query Provider
 │   └── lib/
 │       ├── prisma.ts               # Prisma 클라이언트
 │       ├── utils.ts                # 공통 유틸
 │       ├── constants.ts            # 상수 정의
 │       ├── excel/                  # 엑셀 파서
-│       │   ├── smartstore-parser.ts
-│       │   ├── coupang-parser.ts
-│       │   ├── column-map.ts       # 채널별 컬럼 매핑
-│       │   └── validate-format.ts  # 업로드 양식 검증
+│       │   ├── smartstore-parser.ts  # 스마트스토어 주문조회 엑셀
+│       │   ├── coupang-parser.ts     # 쿠팡 윙 DeliveryList 엑셀
+│       │   ├── rocketgrowth-parser.ts # 쿠팡 로켓그로스 Statistics 엑셀
+│       │   ├── column-map.ts         # 채널별 컬럼 매핑 (스마트스토어/쿠팡윙/로켓그로스)
+│       │   └── validate-format.ts    # 업로드 양식 검증 (3-way: 스마트스토어/쿠팡/로켓그로스)
 │       ├── helpers/                # 비즈니스 로직 헬퍼
-│       │   ├── margin-calc.ts      # 마진 계산
+│       │   ├── margin-calc.ts      # 마진 계산 (스마트스토어/쿠팡 윙)
+│       │   ├── rg-margin-calc.ts   # 마진 계산 (로켓그로스, VAT 포함)
 │       │   ├── product-key.ts      # 상품키 생성
 │       │   └── status-map.ts       # 주문 상태 매핑
 │       ├── naver/
 │       │   └── commerce-api.ts     # 네이버 커머스 API 클라이언트
 │       └── services/
-│           └── order-processor.ts  # 공통 주문 처리 (업로드 + API 공유)
+│           ├── order-processor.ts       # 주문 처리 (스마트스토어/쿠팡 윙)
+│           └── dailysales-processor.ts  # 판매 처리 (로켓그로스)
 ├── .env.example
 ├── package.json
 └── README.md
@@ -175,43 +234,66 @@ OMS/
 ## 데이터 모델
 
 ```
-┌──────────────┐     ┌──────────────┐     ┌──────────────┐
-│   Product    │     │   Channel    │     │    AdCost    │
-├──────────────┤     ├──────────────┤     ├──────────────┤
-│ id           │     │ id           │     │ id           │
-│ name         │     │ name         │     │ channelId FK │
-│ optionInfo   │     │ code         │     │ date         │
-│ productKey   │     │ feeRate      │     │ cost         │
-│ costPrice    │     │ isActive     │     │ memo         │
-│ sellingPrice │     └──────┬───────┘     └──────────────┘
-│ feeRate      │            │
-│ shippingCost │            │
-│ freeShipMin  │     ┌──────┴──────┐
-│ isActive     │     │   Upload    │
-└──────┬───────┘     ├─────────────┤
-       │             │ id          │
-       │             │ fileName    │
-       │             │ channelId FK│
-       │             │ totalRows   │
-       │             │ successRows │
-       │             │ errorRows   │
-       │             └──────┬──────┘
-       │                    │
-┌──────┴────────────────────┴──┐     ┌──────────────┐
-│           Order              │     │   Setting    │
-├──────────────────────────────┤     ├──────────────┤
-│ id                           │     │ key          │
-│ productOrderNumber           │     │ value        │
-│ orderNumber                  │     └──────────────┘
-│ orderDate                    │
-│ orderStatus                  │
-│ productName / optionInfo     │
-│ quantity                     │
-│ productId FK                 │
-│ channelId FK                 │
-│ uploadId FK (CASCADE)        │
-└──────────────────────────────┘
+┌──────────────────┐     ┌──────────────┐     ┌──────────────┐
+│     Product       │     │   Channel    │     │    AdCost    │
+├──────────────────┤     ├──────────────┤     ├──────────────┤
+│ id                │     │ id           │     │ id           │
+│ name              │     │ name         │     │ channelId FK │
+│ optionInfo        │     │ code         │     │ date         │
+│ productKey        │     │ feeRate      │     │ cost         │
+│ costPrice         │     │ isActive     │     │ memo         │
+│ sellingPrice      │     └──────┬───────┘     └──────────────┘
+│ feeRate           │            │
+│ shippingCost      │            │
+│ freeShipMin       │     ┌──────┴──────┐
+│ couponDiscount ★  │     │   Upload    │
+│ fulfillmentFee ★  │     ├─────────────┤
+│ isActive          │     │ id          │
+└──────┬────────────┘     │ fileName    │
+       │                  │ channelId FK│
+       │                  │ totalRows   │
+       │                  │ successRows │
+       │                  │ errorRows   │
+       │                  └──┬──────┬───┘
+       │                     │      │
+┌──────┴─────────────────────┴──┐  ┌┴──────────────────────────────┐
+│           Order               │  │         DailySales ★          │
+│  (스마트스토어, 쿠팡 윙)      │  │     (쿠팡 로켓그로스)         │
+├───────────────────────────────┤  ├────────────────────────────────┤
+│ id                            │  │ id                             │
+│ productOrderNumber            │  │ date                           │
+│ orderNumber                   │  │ optionId                       │
+│ orderDate                     │  │ exposureProductId              │
+│ orderStatus                   │  │ optionName                     │
+│ productName / optionInfo      │  │ salesAmount (순 판매 금액)     │
+│ quantity                      │  │ salesQuantity (순 판매 수량)   │
+│ buyerName / recipientName     │  │ totalAmount / cancelAmount     │
+│ productId FK                  │  │ itemWinnerRate                 │
+│ channelId FK                  │  │ productId FK                   │
+│ uploadId FK (CASCADE)         │  │ channelId FK                   │
+└───────────────────────────────┘  │ uploadId FK (CASCADE)          │
+                                   └────────────────────────────────┘
+★ = 로켓그로스 전용 필드          ★ = 로켓그로스 전용 테이블
+
+┌──────────────┐
+│   Setting    │
+├──────────────┤
+│ key          │
+│ value        │
+└──────────────┘
 ```
+
+### Product 모델 필드 용도
+
+| 필드 | 스마트스토어/쿠팡 윙 | 쿠팡 로켓그로스 |
+|------|---------------------|----------------|
+| `costPrice` | 원가 | 원가 |
+| `sellingPrice` | 판매가 | 사용 안 함 (엑셀에서 판매금액 제공) |
+| `feeRate` | 개별 수수료율 (채널 기본 수수료 오버라이드) | 판매수수료율 (10.8%, 7.8% 등) |
+| `shippingCost` | 기본 배송비 | 사용 안 함 |
+| `freeShippingMin` | 무료배송 기준금액 | 사용 안 함 |
+| `couponDiscount` | 사용 안 함 | 판매자할인쿠폰 (개당) |
+| `fulfillmentFee` | 사용 안 함 | 입출고배송비 (개당) |
 
 ---
 
@@ -307,6 +389,7 @@ const { data, isLoading } = useQuery({
 | **광고비** (`ad-costs/page.tsx`) | `useQuery` + `useMutation` | 광고비 내역 조회 + 등록/삭제 |
 | **설정** (`settings/page.tsx`) | `useQuery` x3 | 기본값 설정, 채널 목록, 업로드 이력을 각각 독립적으로 조회 |
 | **주문 테이블** (`order-table.tsx`) | `useQuery` | 주문 목록 페이지네이션 + 검색 |
+| **판매 테이블** (`daily-sales-table.tsx`) | `useQuery` | 로켓그로스 판매 목록 페이지네이션 + 검색 |
 
 ### QueryProvider 전역 설정
 
@@ -379,7 +462,8 @@ GitHub Push → Vercel Auto Deploy (main branch → Production)
 - [x] 판매 채널 관리 (등록/수정/활성화/비활성화)
 - [x] 엑셀 업로드 및 파싱 (스마트스토어 — 암호화 엑셀 지원)
 - [x] 쿠팡 윙 엑셀 파서 (등록상품명+등록옵션명 기반, 주문상태 자동 추론)
-- [x] 업로드 시 채널-엑셀 양식 자동 검증 (헤더 시그니처 기반)
+- [x] 쿠팡 로켓그로스 엑셀 파서 (DailySales 모델, VAT 포함 마진 계산)
+- [x] 업로드 시 채널-엑셀 양식 자동 검증 (3-way: 스마트스토어/쿠팡/로켓그로스)
 - [x] 상품 자동 등록 + 수정/삭제 + 판매가/원가 설정
 - [x] 주문 목록 조회 (검색, 페이지네이션)
 - [x] KPI 카드 (총 매출, 총 마진, 평균 마진율, 총 광고비, 총 주문수)
@@ -388,6 +472,7 @@ GitHub Push → Vercel Auto Deploy (main branch → Production)
 
 ### Phase 5 - 마진 자동화 (완료)
 - [x] 마진 자동 계산 (판매가 - 원가 - 수수료 - 배송비)
+- [x] 로켓그로스 마진 자동 계산 (VAT 포함, 수수료/입출고배송비/할인쿠폰 반영)
 - [x] 채널별 수수료율 설정 + 상품별 개별 수수료율 오버라이드 (쿠팡 카테고리별 대응)
 - [x] 배송비 설정 (상품별 기본 배송비 + 조건부 무료배송)
 - [x] 광고비 관리 (채널+날짜별 입력, 기간 총합에서 차감)
@@ -427,8 +512,9 @@ GitHub Push → Vercel Auto Deploy (main branch → Production)
 - [x] 자동 주문 수집 스케줄링 (Windows 작업 스케줄러 등록 완료, 매일 09:00)
   - 작업 이름: OMS_AutoSync, 실행: `scripts/auto-sync.bat`, 로그: `scripts/sync-log.txt`
 - [x] 쿠팡 윙 엑셀 파서 + 채널 코드 기반 파서 자동 분기
+- [x] 쿠팡 로켓그로스 엑셀 파서 + DailySales 모델 + 전 화면 통합
 - ~~쿠팡 Wing API 연동~~ (IP 제한 + 플레리오토 충돌 → 엑셀 업로드로 대체)
-- [ ] 쿠팡 로켓그로스/로켓배송 엑셀 파서 (샘플 파일 확보 후 추가)
+- [ ] 쿠팡 로켓배송 엑셀 파서 (샘플 파일 확보 후 추가)
 
 ### Phase 10 - Notion 연동 (CS 관리)
 - [ ] Notion API Integration 설정

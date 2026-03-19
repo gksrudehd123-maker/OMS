@@ -19,7 +19,7 @@ type Channel = {
   code: string;
   feeRate: string;
   isActive: boolean;
-  _count: { orders: number };
+  _count: { orders: number; dailySales: number };
 };
 
 export default function ChannelsPage() {
@@ -266,7 +266,7 @@ export default function ChannelsPage() {
                 <div>
                   <span className="text-muted-foreground">총 주문수</span>
                   <p className="font-mono font-medium">
-                    {ch._count.orders}건
+                    {ch._count.orders + ch._count.dailySales}건
                   </p>
                 </div>
               </div>
@@ -317,7 +317,7 @@ export default function ChannelsPage() {
               <div className="rounded-lg bg-muted/50 p-3 text-sm">
                 <span className="text-muted-foreground">총 주문수: </span>
                 <span className="font-mono font-medium">
-                  {editChannel._count.orders}건
+                  {editChannel._count.orders + editChannel._count.dailySales}건
                 </span>
               </div>
 

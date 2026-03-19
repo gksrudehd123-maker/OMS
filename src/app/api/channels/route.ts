@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma';
 
 export async function GET() {
   const channels = await prisma.channel.findMany({
-    include: { _count: { select: { orders: true } } },
+    include: { _count: { select: { orders: true, dailySales: true } } },
     orderBy: { createdAt: 'asc' },
   });
 

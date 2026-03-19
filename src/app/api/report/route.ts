@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { calculateMargin } from '@/lib/helpers/margin-calc';
+import { calculateRGMargin } from '@/lib/helpers/rg-margin-calc';
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -25,6 +26,17 @@ export async function GET(request: NextRequest) {
     where,
     include: { product: true, channel: true },
     orderBy: { orderDate: 'asc' },
+  });
+
+  // DailySales 조회 (로켓그로스)
+  const dailySalesRecords = await prisma.dailySales.findMany({
+    where: {
+      date: {
+        gte: new Date(from),
+        lte: new Date(to + 'T23:59:59'),
+      },
+    },
+    include: { product: true, channel: true },
   });
 
   // 주문번호별 합산 및 무료배송 판단
@@ -142,6 +154,67 @@ export async function GET(request: NextRequest) {
     }
   }
 
+  // RG DailySales 합산
+  for (const ds of dailySalesRecords) {
+    const rgm = calculateRGMargin({
+      salesAmount: Number(ds.salesAmount),
+      salesQuantity: ds.salesQuantity,
+      costPrice: ds.product.costPrice ? Number(ds.product.costPrice) : null,
+      feeRate: ds.product.feeRate ? Number(ds.product.feeRate) : null,
+      fulfillmentFee: ds.product.fulfillmentFee
+        ? Number(ds.product.fulfillmentFee)
+        : null,
+      couponDiscount: ds.product.couponDiscount
+        ? Number(ds.product.couponDiscount)
+        : null,
+    });
+
+    const rgSalesAmt = Number(ds.salesAmount);
+
+    // 매출은 항상 합산 (엑셀 확정값)
+    totalSales += rgSalesAmt;
+    if (rgm.isCalculable) {
+      totalMargin += rgm.margin;
+      totalCost += rgm.costAmount;
+      totalFee += rgm.fee + rgm.feeVat;
+      totalShipping += rgm.shippingFee + rgm.shippingVat;
+    }
+
+    // 일별
+    const dateKey = ds.date.toISOString().split('T')[0];
+    if (!dailyMap[dateKey]) {
+      dailyMap[dateKey] = { date: dateKey, sales: 0, margin: 0, orders: 0 };
+    }
+    dailyMap[dateKey].orders += ds.salesQuantity;
+    dailyMap[dateKey].sales += rgSalesAmt;
+    if (rgm.isCalculable) {
+      dailyMap[dateKey].margin += rgm.margin;
+    }
+
+    // 상품별
+    const pid = ds.productId;
+    if (!productMap[pid]) {
+      productMap[pid] = {
+        name: ds.product.name,
+        optionInfo: ds.product.optionInfo,
+        quantity: 0,
+        sales: 0,
+        cost: 0,
+        fee: 0,
+        shipping: 0,
+        margin: 0,
+      };
+    }
+    productMap[pid].quantity += ds.salesQuantity;
+    productMap[pid].sales += rgSalesAmt;
+    if (rgm.isCalculable) {
+      productMap[pid].cost += rgm.costAmount;
+      productMap[pid].fee += rgm.fee + rgm.feeVat;
+      productMap[pid].shipping += rgm.shippingFee + rgm.shippingVat;
+      productMap[pid].margin += rgm.margin;
+    }
+  }
+
   const dailyData = Object.values(dailyMap).sort((a, b) =>
     a.date.localeCompare(b.date),
   );
@@ -149,7 +222,7 @@ export async function GET(request: NextRequest) {
   const productData = Object.values(productMap)
     .map((p) => ({
       ...p,
-      marginRate: p.sales > 0 ? (p.margin / p.sales) * 100 : 0,
+      marginRate: p.sales > 0 ? Math.round((p.margin / p.sales) * 1000) / 10 : 0,
     }))
     .sort((a, b) => b.margin - a.margin);
 
@@ -161,8 +234,8 @@ export async function GET(request: NextRequest) {
       totalFee,
       totalShipping,
       totalMargin,
-      avgMarginRate: totalSales > 0 ? (totalMargin / totalSales) * 100 : 0,
-      totalOrders: orders.length,
+      avgMarginRate: totalSales > 0 ? Math.round((totalMargin / totalSales) * 1000) / 10 : 0,
+      totalOrders: orders.length + dailySalesRecords.length,
     },
     dailyData,
     productData,

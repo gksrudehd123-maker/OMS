@@ -54,3 +54,26 @@ export const COUPANG_REQUIRED_COLUMNS = [
   '등록상품명',
   '구매수(수량)',
 ];
+
+// 쿠팡 로켓그로스 판매통계 엑셀 컬럼 매핑
+export const ROCKETGROWTH_COLUMNS: Record<string, string> = {
+  '노출상품ID': 'exposureProductId',
+  '옵션ID': 'optionId',
+  '옵션명': 'optionName',
+  '상품타입': 'productType',
+  '카테고리': 'categoryName',
+  '아이템위너 비율(%)': 'itemWinnerRate',
+};
+
+// startsWith 매칭이 필요한 컬럼 (헤더에 부연 설명 포함)
+export const ROCKETGROWTH_PREFIX_COLUMNS: Record<string, string> = {
+  '순 판매 금액': 'salesAmount',
+  '순 판매 상품 수': 'salesQuantity',
+  '전체 거래 금액': 'totalAmount',
+  '전체 거래 상품 수': 'totalQuantity',
+  '총 취소 금액': 'cancelAmount',
+  '총 취소 상품 수': 'cancelQuantity',
+  '즉시 취소 상품 수': 'immediateCancelQuantity',
+};
+
+export const ROCKETGROWTH_REQUIRED_COLUMNS = ['옵션ID', '옵션명'];

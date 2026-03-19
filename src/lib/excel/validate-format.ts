@@ -1,16 +1,25 @@
 import XlsxPopulate from 'xlsx-populate';
-import { REQUIRED_COLUMNS, COUPANG_REQUIRED_COLUMNS } from './column-map';
+import { REQUIRED_COLUMNS, COUPANG_REQUIRED_COLUMNS, ROCKETGROWTH_REQUIRED_COLUMNS } from './column-map';
 
 // 스마트스토어 엑셀 고유 헤더 (쿠팡에는 없는 것)
 const SMARTSTORE_SIGNATURE = ['상품주문번호', '주문일시', '주문상태'];
 // 쿠팡 엑셀 고유 헤더 (스마트스토어에는 없는 것)
 const COUPANG_SIGNATURE = ['묶음배송번호', '등록상품명', '노출상품ID'];
 
+export type DetectedFormat = 'smartstore' | 'coupang' | 'rocketgrowth' | 'unknown';
+export type ExpectedFormat = 'smartstore' | 'coupang' | 'rocketgrowth';
+
 export type FormatValidation = {
   valid: boolean;
-  detectedFormat: 'smartstore' | 'coupang' | 'unknown';
-  expectedFormat: 'smartstore' | 'coupang';
+  detectedFormat: DetectedFormat;
+  expectedFormat: ExpectedFormat;
   error?: string;
+};
+
+const FORMAT_NAMES: Record<string, string> = {
+  smartstore: '스마트스토어',
+  coupang: '쿠팡',
+  rocketgrowth: '로켓그로스',
 };
 
 /**
@@ -18,9 +27,18 @@ export type FormatValidation = {
  */
 export async function validateExcelFormat(
   buffer: Buffer,
-  isCoupangChannel: boolean,
+  channelCode: string,
 ): Promise<FormatValidation> {
-  const expectedFormat = isCoupangChannel ? 'coupang' : 'smartstore';
+  let expectedFormat: ExpectedFormat;
+  if (channelCode === 'coupang_rocket_growth') {
+    expectedFormat = 'rocketgrowth';
+  } else if (
+    channelCode.startsWith('coupang_')
+  ) {
+    expectedFormat = 'coupang';
+  } else {
+    expectedFormat = 'smartstore';
+  }
 
   let workbook;
   try {
@@ -68,9 +86,15 @@ export async function validateExcelFormat(
   const hasCoupangHeaders = COUPANG_SIGNATURE.every((col) =>
     headers.includes(col),
   );
+  const hasRGHeaders =
+    headers.includes('옵션ID') &&
+    headers.includes('옵션명') &&
+    headers.some((h) => h.startsWith('아이템위너'));
 
-  let detectedFormat: 'smartstore' | 'coupang' | 'unknown' = 'unknown';
-  if (hasSmartstoreHeaders && !hasCoupangHeaders) {
+  let detectedFormat: DetectedFormat = 'unknown';
+  if (hasRGHeaders && !hasSmartstoreHeaders && !hasCoupangHeaders) {
+    detectedFormat = 'rocketgrowth';
+  } else if (hasSmartstoreHeaders && !hasCoupangHeaders) {
     detectedFormat = 'smartstore';
   } else if (hasCoupangHeaders && !hasSmartstoreHeaders) {
     detectedFormat = 'coupang';
@@ -78,10 +102,8 @@ export async function validateExcelFormat(
 
   // 불일치 검증
   if (detectedFormat !== 'unknown' && detectedFormat !== expectedFormat) {
-    const detectedName =
-      detectedFormat === 'smartstore' ? '스마트스토어' : '쿠팡';
-    const expectedName =
-      expectedFormat === 'smartstore' ? '스마트스토어' : '쿠팡';
+    const detectedName = FORMAT_NAMES[detectedFormat] || detectedFormat;
+    const expectedName = FORMAT_NAMES[expectedFormat] || expectedFormat;
     return {
       valid: false,
       detectedFormat,
@@ -91,9 +113,15 @@ export async function validateExcelFormat(
   }
 
   // 필수 컬럼 체크
-  const requiredCols = isCoupangChannel
-    ? COUPANG_REQUIRED_COLUMNS
-    : REQUIRED_COLUMNS;
+  let requiredCols: string[];
+  if (expectedFormat === 'rocketgrowth') {
+    requiredCols = ROCKETGROWTH_REQUIRED_COLUMNS;
+  } else if (expectedFormat === 'coupang') {
+    requiredCols = COUPANG_REQUIRED_COLUMNS;
+  } else {
+    requiredCols = REQUIRED_COLUMNS;
+  }
+
   const missing = requiredCols.filter((col) => !headers.includes(col));
   if (missing.length > 0) {
     return {

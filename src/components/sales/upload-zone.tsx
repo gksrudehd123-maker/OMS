@@ -15,10 +15,13 @@ type NewProduct = {
   id: string;
   name: string;
   optionInfo: string;
-  sellingPrice: string | null;
-  costPrice: string | null;
-  shippingCost: string;
-  freeShippingMin: string | null;
+  sellingPrice?: string | null;
+  costPrice?: string | null;
+  shippingCost?: string;
+  freeShippingMin?: string | null;
+  feeRate?: string | null;
+  fulfillmentFee?: string | null;
+  couponDiscount?: string | null;
 };
 
 type UploadResult = {
@@ -29,6 +32,7 @@ type UploadResult = {
     duplicates: number;
   };
   newProducts: NewProduct[];
+  isRocketGrowth?: boolean;
 };
 
 type PriceInput = {
@@ -38,11 +42,22 @@ type PriceInput = {
   freeShippingMin: string;
 };
 
+type RGPriceInput = {
+  costPrice: string;
+  feeRate: string;
+  fulfillmentFee: string;
+  couponDiscount: string;
+};
+
 export function UploadZone({
   channelId,
+  channelCode,
+  salesDate,
   onUploadComplete,
 }: {
   channelId: string;
+  channelCode?: string;
+  salesDate?: string;
   onUploadComplete: () => void;
 }) {
   const [uploading, setUploading] = useState(false);
@@ -54,7 +69,14 @@ export function UploadZone({
   const [priceInputs, setPriceInputs] = useState<Record<string, PriceInput>>(
     {},
   );
+  const [rgPriceInputs, setRGPriceInputs] = useState<
+    Record<string, RGPriceInput>
+  >({});
+  const [isRGUpload, setIsRGUpload] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  const isRocketGrowth =
+    channelCode?.toLowerCase() === 'coupang_rocket_growth';
 
   const onDrop = useCallback(
     async (acceptedFiles: File[]) => {
@@ -73,6 +95,9 @@ export function UploadZone({
         const formData = new FormData();
         formData.append('file', file);
         formData.append('channelId', channelId);
+        if (salesDate) {
+          formData.append('salesDate', salesDate);
+        }
 
         const res = await fetch('/api/upload', {
           method: 'POST',
@@ -92,16 +117,32 @@ export function UploadZone({
         // 신규 상품이 있으면 가격 설정 팝업 표시
         if (data.newProducts && data.newProducts.length > 0) {
           setNewProducts(data.newProducts);
-          const inputs: Record<string, PriceInput> = {};
-          for (const p of data.newProducts) {
-            inputs[p.id] = {
-              sellingPrice: '',
-              costPrice: '',
-              shippingCost: '3000',
-              freeShippingMin: '30000',
-            };
+          const isRG = !!data.isRocketGrowth;
+          setIsRGUpload(isRG);
+
+          if (isRG) {
+            const inputs: Record<string, RGPriceInput> = {};
+            for (const p of data.newProducts) {
+              inputs[p.id] = {
+                costPrice: '',
+                feeRate: '',
+                fulfillmentFee: '',
+                couponDiscount: '0',
+              };
+            }
+            setRGPriceInputs(inputs);
+          } else {
+            const inputs: Record<string, PriceInput> = {};
+            for (const p of data.newProducts) {
+              inputs[p.id] = {
+                sellingPrice: '',
+                costPrice: '',
+                shippingCost: '3000',
+                freeShippingMin: '30000',
+              };
+            }
+            setPriceInputs(inputs);
           }
-          setPriceInputs(inputs);
           setShowPriceDialog(true);
         }
       } catch (err) {
@@ -110,7 +151,7 @@ export function UploadZone({
         setUploading(false);
       }
     },
-    [channelId, onUploadComplete],
+    [channelId, salesDate, onUploadComplete],
   );
 
   const updatePrice = (
@@ -124,32 +165,67 @@ export function UploadZone({
     }));
   };
 
+  const updateRGPrice = (
+    productId: string,
+    field: keyof RGPriceInput,
+    value: string,
+  ) => {
+    setRGPriceInputs((prev) => ({
+      ...prev,
+      [productId]: { ...prev[productId], [field]: value },
+    }));
+  };
+
   const handleSavePrices = async () => {
     setSaving(true);
     let savedCount = 0;
 
     try {
       for (const product of newProducts) {
-        const input = priceInputs[product.id];
-        if (!input) continue;
+        if (isRGUpload) {
+          const input = rgPriceInputs[product.id];
+          if (!input) continue;
 
-        // 판매가나 원가가 입력된 경우에만 저장
-        if (input.sellingPrice || input.costPrice) {
-          const res = await fetch(`/api/products/${product.id}`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              sellingPrice: input.sellingPrice
-                ? parseFloat(input.sellingPrice)
-                : null,
-              costPrice: input.costPrice ? parseFloat(input.costPrice) : null,
-              shippingCost: parseFloat(input.shippingCost) || 0,
-              freeShippingMin: input.freeShippingMin
-                ? parseFloat(input.freeShippingMin)
-                : null,
-            }),
-          });
-          if (res.ok) savedCount++;
+          if (input.costPrice || input.feeRate || input.fulfillmentFee) {
+            const res = await fetch(`/api/products/${product.id}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                costPrice: input.costPrice
+                  ? parseFloat(input.costPrice)
+                  : null,
+                feeRate: input.feeRate ? parseFloat(input.feeRate) : null,
+                fulfillmentFee: input.fulfillmentFee
+                  ? parseFloat(input.fulfillmentFee)
+                  : null,
+                couponDiscount: input.couponDiscount
+                  ? parseFloat(input.couponDiscount)
+                  : null,
+              }),
+            });
+            if (res.ok) savedCount++;
+          }
+        } else {
+          const input = priceInputs[product.id];
+          if (!input) continue;
+
+          if (input.sellingPrice || input.costPrice) {
+            const res = await fetch(`/api/products/${product.id}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                sellingPrice: input.sellingPrice
+                  ? parseFloat(input.sellingPrice)
+                  : null,
+                costPrice: input.costPrice ? parseFloat(input.costPrice) : null,
+                shippingCost: parseFloat(input.shippingCost) || 0,
+                freeShippingMin: input.freeShippingMin
+                  ? parseFloat(input.freeShippingMin)
+                  : null,
+              }),
+            });
+            if (res.ok) savedCount++;
+          }
         }
       }
 
@@ -200,7 +276,9 @@ export function UploadZone({
               엑셀 파일을 드래그하거나 클릭하여 업로드
             </p>
             <p className="mt-1 text-xs text-muted-foreground">
-              스마트스토어 주문조회 .xlsx 파일
+              {isRocketGrowth
+                ? '쿠팡 로켓그로스 판매통계 .xlsx 파일'
+                : '스마트스토어 주문조회 .xlsx 파일'}
             </p>
           </>
         )}
@@ -236,8 +314,9 @@ export function UploadZone({
           <DialogHeader>
             <DialogTitle>신규 상품 가격 설정</DialogTitle>
             <p className="text-sm text-muted-foreground">
-              새로 등록된 상품 {newProducts.length}개의 판매가/원가를
-              설정해주세요. 나중에 상품 관리에서도 수정할 수 있습니다.
+              새로 등록된 상품 {newProducts.length}개의{' '}
+              {isRGUpload ? '원가/수수료' : '판매가/원가'}를 설정해주세요.
+              나중에 상품 관리에서도 수정할 수 있습니다.
             </p>
           </DialogHeader>
           <div className="space-y-4">
@@ -254,68 +333,149 @@ export function UploadZone({
                     </p>
                   )}
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <label className="text-xs text-muted-foreground">
-                      판매가 (원)
-                    </label>
-                    <input
-                      type="number"
-                      value={priceInputs[product.id]?.sellingPrice || ''}
-                      onChange={(e) =>
-                        updatePrice(product.id, 'sellingPrice', e.target.value)
-                      }
-                      placeholder="0"
-                      className="w-full rounded-lg border border-input bg-background px-3 py-1.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-ring"
-                    />
+
+                {isRGUpload ? (
+                  /* RG 전용 필드 */
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-xs text-muted-foreground">
+                        원가 (원)
+                      </label>
+                      <input
+                        type="number"
+                        value={rgPriceInputs[product.id]?.costPrice || ''}
+                        onChange={(e) =>
+                          updateRGPrice(product.id, 'costPrice', e.target.value)
+                        }
+                        placeholder="0"
+                        className="w-full rounded-lg border border-input bg-background px-3 py-1.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-ring"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs text-muted-foreground">
+                        판매수수료율 (%)
+                      </label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={rgPriceInputs[product.id]?.feeRate || ''}
+                        onChange={(e) =>
+                          updateRGPrice(product.id, 'feeRate', e.target.value)
+                        }
+                        placeholder="10.8"
+                        className="w-full rounded-lg border border-input bg-background px-3 py-1.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-ring"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs text-muted-foreground">
+                        입출고배송비 (원/개)
+                      </label>
+                      <input
+                        type="number"
+                        value={rgPriceInputs[product.id]?.fulfillmentFee || ''}
+                        onChange={(e) =>
+                          updateRGPrice(
+                            product.id,
+                            'fulfillmentFee',
+                            e.target.value,
+                          )
+                        }
+                        placeholder="0"
+                        className="w-full rounded-lg border border-input bg-background px-3 py-1.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-ring"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs text-muted-foreground">
+                        판매자할인쿠폰 (원/개)
+                      </label>
+                      <input
+                        type="number"
+                        value={rgPriceInputs[product.id]?.couponDiscount || ''}
+                        onChange={(e) =>
+                          updateRGPrice(
+                            product.id,
+                            'couponDiscount',
+                            e.target.value,
+                          )
+                        }
+                        placeholder="0"
+                        className="w-full rounded-lg border border-input bg-background px-3 py-1.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-ring"
+                      />
+                    </div>
                   </div>
-                  <div className="space-y-1">
-                    <label className="text-xs text-muted-foreground">
-                      원가 (원)
-                    </label>
-                    <input
-                      type="number"
-                      value={priceInputs[product.id]?.costPrice || ''}
-                      onChange={(e) =>
-                        updatePrice(product.id, 'costPrice', e.target.value)
-                      }
-                      placeholder="0"
-                      className="w-full rounded-lg border border-input bg-background px-3 py-1.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-ring"
-                    />
+                ) : (
+                  /* 기존 필드 (스마트스토어/쿠팡 윙) */
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-xs text-muted-foreground">
+                        판매가 (원)
+                      </label>
+                      <input
+                        type="number"
+                        value={priceInputs[product.id]?.sellingPrice || ''}
+                        onChange={(e) =>
+                          updatePrice(
+                            product.id,
+                            'sellingPrice',
+                            e.target.value,
+                          )
+                        }
+                        placeholder="0"
+                        className="w-full rounded-lg border border-input bg-background px-3 py-1.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-ring"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs text-muted-foreground">
+                        원가 (원)
+                      </label>
+                      <input
+                        type="number"
+                        value={priceInputs[product.id]?.costPrice || ''}
+                        onChange={(e) =>
+                          updatePrice(product.id, 'costPrice', e.target.value)
+                        }
+                        placeholder="0"
+                        className="w-full rounded-lg border border-input bg-background px-3 py-1.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-ring"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs text-muted-foreground">
+                        기본 배송비 (원)
+                      </label>
+                      <input
+                        type="number"
+                        value={priceInputs[product.id]?.shippingCost || ''}
+                        onChange={(e) =>
+                          updatePrice(
+                            product.id,
+                            'shippingCost',
+                            e.target.value,
+                          )
+                        }
+                        placeholder="3000"
+                        className="w-full rounded-lg border border-input bg-background px-3 py-1.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-ring"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs text-muted-foreground">
+                        무료배송 기준 (원)
+                      </label>
+                      <input
+                        type="number"
+                        value={priceInputs[product.id]?.freeShippingMin || ''}
+                        onChange={(e) =>
+                          updatePrice(
+                            product.id,
+                            'freeShippingMin',
+                            e.target.value,
+                          )
+                        }
+                        placeholder="비워두면 조건 없음"
+                        className="w-full rounded-lg border border-input bg-background px-3 py-1.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-ring"
+                      />
+                    </div>
                   </div>
-                  <div className="space-y-1">
-                    <label className="text-xs text-muted-foreground">
-                      기본 배송비 (원)
-                    </label>
-                    <input
-                      type="number"
-                      value={priceInputs[product.id]?.shippingCost || ''}
-                      onChange={(e) =>
-                        updatePrice(product.id, 'shippingCost', e.target.value)
-                      }
-                      placeholder="3000"
-                      className="w-full rounded-lg border border-input bg-background px-3 py-1.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-ring"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-xs text-muted-foreground">
-                      무료배송 기준 (원)
-                    </label>
-                    <input
-                      type="number"
-                      value={priceInputs[product.id]?.freeShippingMin || ''}
-                      onChange={(e) =>
-                        updatePrice(
-                          product.id,
-                          'freeShippingMin',
-                          e.target.value,
-                        )
-                      }
-                      placeholder="비워두면 조건 없음"
-                      className="w-full rounded-lg border border-input bg-background px-3 py-1.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-ring"
-                    />
-                  </div>
-                </div>
+                )}
               </div>
             ))}
 

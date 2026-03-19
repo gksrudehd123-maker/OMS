@@ -9,7 +9,7 @@ export async function GET(
     where: { id: params.id },
     include: {
       category: true,
-      _count: { select: { orders: true } },
+      _count: { select: { orders: true, dailySales: true } },
     },
   });
 
@@ -29,9 +29,22 @@ export async function PATCH(
 ) {
   const body = await request.json();
 
+  // 허용된 필드만 업데이트
+  const allowedFields = [
+    'sellingPrice', 'costPrice', 'feeRate', 'shippingCost',
+    'freeShippingMin', 'couponDiscount', 'fulfillmentFee',
+    'memo', 'isActive', 'categoryId',
+  ];
+  const data: Record<string, unknown> = {};
+  for (const key of allowedFields) {
+    if (key in body) {
+      data[key] = body[key];
+    }
+  }
+
   const product = await prisma.product.update({
     where: { id: params.id },
-    data: body,
+    data,
   });
 
   return NextResponse.json(product);

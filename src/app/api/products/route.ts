@@ -9,29 +9,38 @@ export async function GET(request: NextRequest) {
   const active = searchParams.get('active');
   const channelId = searchParams.get('channelId') || '';
 
-  const where: Record<string, unknown> = {};
+  const conditions: Record<string, unknown>[] = [];
 
   if (search) {
-    where.OR = [
-      { name: { contains: search, mode: 'insensitive' } },
-      { optionInfo: { contains: search, mode: 'insensitive' } },
-    ];
+    conditions.push({
+      OR: [
+        { name: { contains: search, mode: 'insensitive' } },
+        { optionInfo: { contains: search, mode: 'insensitive' } },
+      ],
+    });
   }
 
   if (active !== null && active !== '') {
-    where.isActive = active === 'true';
+    conditions.push({ isActive: active === 'true' });
   }
 
   if (channelId) {
-    where.orders = { some: { channelId } };
+    conditions.push({
+      OR: [
+        { orders: { some: { channelId } } },
+        { dailySales: { some: { channelId } } },
+      ],
+    });
   }
+
+  const where = conditions.length > 0 ? { AND: conditions } : {};
 
   const [products, total] = await Promise.all([
     prisma.product.findMany({
       where,
       include: {
         category: true,
-        _count: { select: { orders: true } },
+        _count: { select: { orders: true, dailySales: true } },
       },
       orderBy: { createdAt: 'desc' },
       skip: (page - 1) * limit,

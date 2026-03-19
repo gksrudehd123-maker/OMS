@@ -29,10 +29,12 @@ type Product = {
   feeRate: string | null;
   shippingCost: string;
   freeShippingMin: string | null;
+  couponDiscount: string | null;
+  fulfillmentFee: string | null;
   memo: string | null;
   isActive: boolean;
   createdAt: string;
-  _count: { orders: number };
+  _count: { orders: number; dailySales: number };
 };
 
 type Channel = {
@@ -54,6 +56,8 @@ export default function ProductsPage() {
   const [editFeeRate, setEditFeeRate] = useState('');
   const [editShippingCost, setEditShippingCost] = useState('');
   const [editFreeShippingMin, setEditFreeShippingMin] = useState('');
+  const [editCouponDiscount, setEditCouponDiscount] = useState('');
+  const [editFulfillmentFee, setEditFulfillmentFee] = useState('');
   const [editMemo, setEditMemo] = useState('');
 
   const { data: channels = [] } = useQuery<Channel[]>({
@@ -111,8 +115,13 @@ export default function ProductsPage() {
     setEditFeeRate(product.feeRate ? String(product.feeRate) : '');
     setEditShippingCost(String(product.shippingCost));
     setEditFreeShippingMin(product.freeShippingMin ? String(product.freeShippingMin) : '');
+    setEditCouponDiscount(product.couponDiscount ? String(product.couponDiscount) : '');
+    setEditFulfillmentFee(product.fulfillmentFee ? String(product.fulfillmentFee) : '');
     setEditMemo(product.memo || '');
   };
+
+  // RG 상품 여부 (DailySales 데이터가 있는 상품)
+  const isRGProduct = editProduct && editProduct._count.dailySales > 0;
 
   const handleSave = () => {
     if (!editProduct) return;
@@ -126,6 +135,8 @@ export default function ProductsPage() {
           feeRate: editFeeRate ? parseFloat(editFeeRate) : null,
           shippingCost: parseFloat(editShippingCost) || 0,
           freeShippingMin: editFreeShippingMin ? parseFloat(editFreeShippingMin) : null,
+          couponDiscount: editCouponDiscount ? parseFloat(editCouponDiscount) : null,
+          fulfillmentFee: editFulfillmentFee ? parseFloat(editFulfillmentFee) : null,
           memo: editMemo || null,
         },
       },
@@ -266,7 +277,7 @@ export default function ProductsPage() {
                         : <span className="text-orange-500">미설정</span>}
                     </TableCell>
                     <TableCell className="text-center">
-                      {product._count.orders}
+                      {product._count.orders + product._count.dailySales}
                     </TableCell>
                     <TableCell className="text-center">
                       <span
@@ -329,7 +340,7 @@ export default function ProductsPage() {
                   </p>
                 )}
                 <p className="text-xs text-muted-foreground">
-                  주문수: {editProduct._count.orders}건
+                  주문수: {editProduct._count.orders + editProduct._count.dailySales}건
                 </p>
               </div>
 
@@ -398,6 +409,37 @@ export default function ProductsPage() {
                   />
                 </div>
               </div>
+
+              {/* 로켓그로스 전용 필드 */}
+              {isRGProduct && (
+                <div className="space-y-3 rounded-lg border border-orange-200 bg-orange-50/50 p-3 dark:border-orange-800 dark:bg-orange-950/30">
+                  <p className="text-xs font-medium text-orange-700 dark:text-orange-400">
+                    로켓그로스 전용
+                  </p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-medium">입출고배송비 (원/개)</label>
+                      <input
+                        type="number"
+                        value={editFulfillmentFee}
+                        onChange={(e) => setEditFulfillmentFee(e.target.value)}
+                        placeholder="0"
+                        className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-ring"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-medium">판매자할인쿠폰 (원/개)</label>
+                      <input
+                        type="number"
+                        value={editCouponDiscount}
+                        onChange={(e) => setEditCouponDiscount(e.target.value)}
+                        placeholder="0"
+                        className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-ring"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* 마진 미리보기 */}
               {editSellingPrice && editCostPrice && (

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { calculateMargin } from '@/lib/helpers/margin-calc';
+import { calculateRGMargin } from '@/lib/helpers/rg-margin-calc';
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -20,6 +21,19 @@ export async function GET(request: NextRequest) {
     where,
     include: { product: true, channel: true },
     orderBy: { orderDate: 'asc' },
+  });
+
+  // DailySales 조회 (로켓그로스)
+  const dailySalesWhere: Record<string, unknown> = {};
+  if (from || to) {
+    dailySalesWhere.date = {
+      ...(from ? { gte: new Date(from) } : {}),
+      ...(to ? { lte: new Date(to + 'T23:59:59') } : {}),
+    };
+  }
+  const dailySalesRecords = await prisma.dailySales.findMany({
+    where: dailySalesWhere,
+    include: { product: true, channel: true },
   });
 
   // 광고비 조회 (같은 기간)
@@ -172,8 +186,79 @@ export async function GET(request: NextRequest) {
     }
   }
 
+  // RG DailySales 합산
+  let rgSalesCount = 0;
+  for (const ds of dailySalesRecords) {
+    const rgMargin = calculateRGMargin({
+      salesAmount: Number(ds.salesAmount),
+      salesQuantity: ds.salesQuantity,
+      costPrice: ds.product.costPrice ? Number(ds.product.costPrice) : null,
+      feeRate: ds.product.feeRate ? Number(ds.product.feeRate) : null,
+      fulfillmentFee: ds.product.fulfillmentFee
+        ? Number(ds.product.fulfillmentFee)
+        : null,
+      couponDiscount: ds.product.couponDiscount
+        ? Number(ds.product.couponDiscount)
+        : null,
+    });
+
+    rgSalesCount++;
+    const rgSalesAmt = Number(ds.salesAmount);
+
+    // 매출은 항상 합산 (엑셀 확정값)
+    totalSales += rgSalesAmt;
+    if (rgMargin.isCalculable) {
+      totalMargin += rgMargin.margin;
+      calculableCount++;
+    }
+
+    // 일별 집계
+    const dateKey = ds.date.toISOString().split('T')[0];
+    if (!dailyMap[dateKey]) {
+      dailyMap[dateKey] = { date: dateKey, sales: 0, margin: 0, orders: 0 };
+    }
+    dailyMap[dateKey].orders += ds.salesQuantity;
+    dailyMap[dateKey].sales += rgSalesAmt;
+    if (rgMargin.isCalculable) {
+      dailyMap[dateKey].margin += rgMargin.margin;
+    }
+
+    // 채널별 집계
+    const chId = ds.channelId;
+    if (!channelMap[chId]) {
+      channelMap[chId] = {
+        name: ds.channel.name,
+        sales: 0,
+        margin: 0,
+        orders: 0,
+      };
+    }
+    channelMap[chId].orders += ds.salesQuantity;
+    channelMap[chId].sales += rgSalesAmt;
+    if (rgMargin.isCalculable) {
+      channelMap[chId].margin += rgMargin.margin;
+    }
+
+    // 상품별 집계
+    const productId = ds.productId;
+    if (!productMarginMap[productId]) {
+      productMarginMap[productId] = {
+        name: ds.product.name,
+        optionInfo: ds.product.optionInfo,
+        sales: 0,
+        margin: 0,
+        orders: 0,
+      };
+    }
+    productMarginMap[productId].sales += rgSalesAmt;
+    productMarginMap[productId].orders += ds.salesQuantity;
+    if (rgMargin.isCalculable) {
+      productMarginMap[productId].margin += rgMargin.margin;
+    }
+  }
+
   const netMargin = totalMargin - totalAdCostAmount;
-  const avgMarginRate = totalSales > 0 ? (netMargin / totalSales) * 100 : 0;
+  const avgMarginRate = totalSales > 0 ? Math.round((netMargin / totalSales) * 1000) / 10 : 0;
 
   // 일별 데이터 정렬
   const dailyData = Object.values(dailyMap).sort((a, b) =>
@@ -184,7 +269,7 @@ export async function GET(request: NextRequest) {
   const channelData = Object.values(channelMap)
     .map((ch) => ({
       ...ch,
-      marginRate: ch.sales > 0 ? (ch.margin / ch.sales) * 100 : 0,
+      marginRate: ch.sales > 0 ? Math.round((ch.margin / ch.sales) * 1000) / 10 : 0,
     }))
     .sort((a, b) => b.sales - a.sales);
 
@@ -192,7 +277,7 @@ export async function GET(request: NextRequest) {
   const productMarginRank = Object.values(productMarginMap)
     .map((p) => ({
       ...p,
-      marginRate: p.sales > 0 ? (p.margin / p.sales) * 100 : 0,
+      marginRate: p.sales > 0 ? Math.round((p.margin / p.sales) * 1000) / 10 : 0,
       label: p.optionInfo ? `${p.name} (${p.optionInfo})` : p.name,
     }))
     .sort((a, b) => b.margin - a.margin)
@@ -204,7 +289,7 @@ export async function GET(request: NextRequest) {
       totalMargin: netMargin,
       totalAdCost: totalAdCostAmount,
       avgMarginRate,
-      totalOrders,
+      totalOrders: totalOrders + rgSalesCount,
       calculableCount,
     },
     dailyData,

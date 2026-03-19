@@ -48,7 +48,7 @@ type Channel = {
   code: string;
   feeRate: string;
   isActive: boolean;
-  _count: { orders: number };
+  _count: { orders: number; dailySales: number };
 };
 
 type UploadRecord = {
@@ -361,7 +361,7 @@ export default function SettingsPage() {
                 <div className="mt-2 flex items-center gap-4 text-xs text-muted-foreground">
                   <span>코드: {ch.code}</span>
                   <span>수수료: {ch.feeRate}%</span>
-                  <span>주문: {ch._count.orders}건</span>
+                  <span>주문: {ch._count.orders + ch._count.dailySales}건</span>
                 </div>
               </div>
             ))}
