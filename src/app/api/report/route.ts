@@ -215,13 +215,18 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  const dailyData = Object.values(dailyMap).sort((a, b) =>
-    a.date.localeCompare(b.date),
-  );
+  const dailyData = Object.values(dailyMap)
+    .map((d) => ({ ...d, sales: Math.round(d.sales), margin: Math.round(d.margin) }))
+    .sort((a, b) => a.date.localeCompare(b.date));
 
   const productData = Object.values(productMap)
     .map((p) => ({
       ...p,
+      sales: Math.round(p.sales),
+      cost: Math.round(p.cost),
+      fee: Math.round(p.fee),
+      shipping: Math.round(p.shipping),
+      margin: Math.round(p.margin),
       marginRate: p.sales > 0 ? Math.round((p.margin / p.sales) * 1000) / 10 : 0,
     }))
     .sort((a, b) => b.margin - a.margin);
@@ -229,11 +234,11 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({
     period: { from, to },
     kpi: {
-      totalSales,
-      totalCost,
-      totalFee,
-      totalShipping,
-      totalMargin,
+      totalSales: Math.round(totalSales),
+      totalCost: Math.round(totalCost),
+      totalFee: Math.round(totalFee),
+      totalShipping: Math.round(totalShipping),
+      totalMargin: Math.round(totalMargin),
       avgMarginRate: totalSales > 0 ? Math.round((totalMargin / totalSales) * 1000) / 10 : 0,
       totalOrders: orders.length + dailySalesRecords.length,
     },

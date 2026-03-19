@@ -261,14 +261,16 @@ export async function GET(request: NextRequest) {
   const avgMarginRate = totalSales > 0 ? Math.round((netMargin / totalSales) * 1000) / 10 : 0;
 
   // 일별 데이터 정렬
-  const dailyData = Object.values(dailyMap).sort((a, b) =>
-    a.date.localeCompare(b.date),
-  );
+  const dailyData = Object.values(dailyMap)
+    .map((d) => ({ ...d, sales: Math.round(d.sales), margin: Math.round(d.margin) }))
+    .sort((a, b) => a.date.localeCompare(b.date));
 
   // 채널별 데이터 (매출 내림차순)
   const channelData = Object.values(channelMap)
     .map((ch) => ({
       ...ch,
+      sales: Math.round(ch.sales),
+      margin: Math.round(ch.margin),
       marginRate: ch.sales > 0 ? Math.round((ch.margin / ch.sales) * 1000) / 10 : 0,
     }))
     .sort((a, b) => b.sales - a.sales);
@@ -277,6 +279,8 @@ export async function GET(request: NextRequest) {
   const productMarginRank = Object.values(productMarginMap)
     .map((p) => ({
       ...p,
+      sales: Math.round(p.sales),
+      margin: Math.round(p.margin),
       marginRate: p.sales > 0 ? Math.round((p.margin / p.sales) * 1000) / 10 : 0,
       label: p.optionInfo ? `${p.name} (${p.optionInfo})` : p.name,
     }))
@@ -285,9 +289,9 @@ export async function GET(request: NextRequest) {
 
   return NextResponse.json({
     kpi: {
-      totalSales,
-      totalMargin: netMargin,
-      totalAdCost: totalAdCostAmount,
+      totalSales: Math.round(totalSales),
+      totalMargin: Math.round(netMargin),
+      totalAdCost: Math.round(totalAdCostAmount),
       avgMarginRate,
       totalOrders: totalOrders + rgSalesCount,
       calculableCount,
