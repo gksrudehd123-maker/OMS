@@ -451,6 +451,24 @@ GitHub Push → Vercel Auto Deploy (main branch → Production)
 > **참고**: 네이버/쿠팡 API는 IP 화이트리스트 제한으로 Vercel에서 호출 불가.
 > API 동기화는 로컬 환경에서만 가능하며, Vercel에서는 `NEXT_PUBLIC_HIDE_API_SYNC=true`로 관련 UI를 숨김 처리.
 
+### 로컬 네트워크 접속 (같은 공유기)
+
+같은 공유기에 연결된 다른 기기에서 로컬 dev 서버에 접속할 수 있습니다.
+
+```bash
+# 모든 네트워크 인터페이스에서 수신하도록 dev 서버 실행
+npx next dev -H 0.0.0.0
+
+# 이 PC의 IP 확인
+ipconfig | grep "IPv4"
+
+# 다른 기기에서 접속
+# http://{IP주소}:3000 (예: http://192.168.0.9:3000)
+```
+
+> **주의**: 공유기가 바뀌면 IP가 달라집니다. 접속 전 `ipconfig`로 IP 재확인 필요.
+> Windows 방화벽에서 3000 포트가 열려 있어야 합니다 (`netsh advfirewall firewall add rule name="OMS Dev Server" dir=in action=allow protocol=TCP localport=3000`).
+
 ---
 
 ## TODO 리스트
