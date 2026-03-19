@@ -470,7 +470,8 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 - [x] 매출관리 페이지 API 동기화 UI (기간 선택 → 동기화 버튼, 24시간 제한 자동 분할)
 - [x] 엑셀 수동 업로드와 API 자동 수집 병행 지원
 - [x] 주문 상태/배송 속성 영문 코드 통일 (엑셀 한글 → 영문 변환, 화면 표시 시 한글 매핑)
-- [x] 자동 주문 수집 스케줄링 (GET 엔드포인트 + Windows 작업 스케줄러 스크립트, 매일 자동 실행)
+- [x] 자동 주문 수집 스케줄링 (GET 엔드포인트 + Windows 작업 스케줄러 등록 완료, 매일 09:00 자동 실행)
+  - 작업 이름: OMS_AutoSync, 실행: `scripts/auto-sync.bat`, 로그: `scripts/sync-log.txt`
 - [x] 쿠팡 연동 (3개 하위 채널: 윙/로켓그로스/로켓배송 — 각각 별도 채널로 매출 분리 관리)
   - [x] 쿠팡 윙 엑셀 파서 (등록상품명+등록옵션명 기반 productKey, 주문상태 자동 추론)
   - [x] 채널 코드 기반 파서 자동 분기 (coupang_wing/coupang_rocket_growth/coupang_rocket_delivery)
