@@ -151,19 +151,25 @@ export default function ReportsPage() {
       const html2canvas = (await import('html2canvas-pro')).default;
       const { default: jsPDF } = await import('jspdf');
 
-      const pdfWidth = 210;
-      const pdfHeight = 297;
+      const pdfWidth = 297;
+      const pdfHeight = 210;
       const margin = 10;
       const contentWidth = pdfWidth - margin * 2;
 
       const doc = new jsPDF({
-        orientation: 'portrait',
+        orientation: 'landscape',
         unit: 'mm',
         format: 'a4',
       });
 
+      // 캡처용 너비 설정 (가로 A4 비율에 맞게)
+      const captureWidth = 1200;
+      const el = reportRef.current;
+      const originalWidth = el.style.width;
+      el.style.width = `${captureWidth}px`;
+
       // 섹션별 캡처 (data-pdf-section 속성으로 식별)
-      const sections = reportRef.current.querySelectorAll('[data-pdf-section]');
+      const sections = el.querySelectorAll('[data-pdf-section]');
       let isFirstPage = true;
 
       for (const section of Array.from(sections)) {
@@ -171,6 +177,7 @@ export default function ReportsPage() {
           scale: 2,
           useCORS: true,
           backgroundColor: '#ffffff',
+          width: captureWidth,
         });
 
         const imgData = canvas.toDataURL('image/png');
@@ -198,6 +205,9 @@ export default function ReportsPage() {
           }
         }
       }
+
+      // 원래 너비 복원
+      el.style.width = originalWidth;
 
       doc.save(`리포트_${data.period.from}_${data.period.to}.pdf`);
     } finally {
@@ -310,8 +320,9 @@ export default function ReportsPage() {
 
           {/* PDF 캡처 영역 */}
           <div ref={reportRef} className="space-y-6">
-          {/* KPI 요약 */}
-          <div data-pdf-section className="rounded-xl border border-border bg-card p-6 shadow-sm">
+          {/* KPI 요약 + 매출/마진 추이 차트 */}
+          <div data-pdf-section className="space-y-6">
+          <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
             <h2 className="text-lg font-semibold">KPI 요약</h2>
             <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {[
@@ -349,7 +360,7 @@ export default function ReportsPage() {
 
           {/* 매출/마진 추이 차트 */}
           {data.dailyData.length > 0 && (
-            <div data-pdf-section className="rounded-xl border border-border bg-card p-6 shadow-sm">
+            <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
               <h2 className="text-lg font-semibold">매출/마진 추이</h2>
               <div className="mt-4 h-72">
                 <ResponsiveContainer width="100%" height="100%">
@@ -397,9 +408,11 @@ export default function ReportsPage() {
               </div>
             </div>
           )}
+          </div>
 
-          {/* 매출 구성 비율 + 상품별 마진 Top 5 */}
-          <div data-pdf-section className="grid gap-4 lg:grid-cols-2">
+          {/* 채널별 매출 비율 + 상품별 출고 수량 + 일별 매출 */}
+          <div data-pdf-section className="space-y-6">
+          <div className="grid gap-4 lg:grid-cols-2">
             {/* 매출 구성 비율 (파이 차트) */}
             <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
               <h2 className="text-lg font-semibold">채널별 매출 비율</h2>
@@ -500,7 +513,7 @@ export default function ReportsPage() {
           </div>
 
           {/* 일별 매출 테이블 */}
-          <div data-pdf-section className="rounded-xl border border-border bg-card p-6 shadow-sm">
+          <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
             <h2 className="text-lg font-semibold">일별 매출</h2>
             <div className="mt-4 overflow-x-auto">
               <table className="w-full text-sm">
@@ -530,6 +543,7 @@ export default function ReportsPage() {
                 </tbody>
               </table>
             </div>
+          </div>
           </div>
 
           {/* 상품별 실적 테이블 */}
