@@ -50,9 +50,15 @@ type ProductRow = {
   marginRate: number;
 };
 
+type ChannelRow = {
+  name: string;
+  sales: number;
+};
+
 type ReportData = {
   period: { from: string; to: string };
   kpi: ReportKPI;
+  channelData: ChannelRow[];
   dailyData: DailyRow[];
   productData: ProductRow[];
 };
@@ -145,47 +151,52 @@ export default function ReportsPage() {
       const html2canvas = (await import('html2canvas-pro')).default;
       const { default: jsPDF } = await import('jspdf');
 
-      const el = reportRef.current;
-      const canvas = await html2canvas(el, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: '#ffffff',
-      });
-
-      const imgData = canvas.toDataURL('image/png');
-      const imgWidth = canvas.width;
-      const imgHeight = canvas.height;
-
-      // A4 가로 기준
-      const pdfWidth = 297;
-      const pdfHeight = 210;
+      const pdfWidth = 210;
+      const pdfHeight = 297;
       const margin = 10;
       const contentWidth = pdfWidth - margin * 2;
-      const contentHeight = (imgHeight * contentWidth) / imgWidth;
 
       const doc = new jsPDF({
-        orientation: 'landscape',
+        orientation: 'portrait',
         unit: 'mm',
         format: 'a4',
       });
 
-      // 여러 페이지에 걸쳐 출력
-      const pageContentHeight = pdfHeight - margin * 2;
-      let remainingHeight = contentHeight;
-      let yOffset = 0;
+      // 섹션별 캡처 (data-pdf-section 속성으로 식별)
+      const sections = reportRef.current.querySelectorAll('[data-pdf-section]');
+      let isFirstPage = true;
 
-      while (remainingHeight > 0) {
-        if (yOffset > 0) doc.addPage();
-        doc.addImage(
-          imgData,
-          'PNG',
-          margin,
-          margin - yOffset,
-          contentWidth,
-          contentHeight,
-        );
-        remainingHeight -= pageContentHeight;
-        yOffset += pageContentHeight;
+      for (const section of Array.from(sections)) {
+        const canvas = await html2canvas(section as HTMLElement, {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: '#ffffff',
+        });
+
+        const imgData = canvas.toDataURL('image/png');
+        const imgWidth = canvas.width;
+        const imgHeight = canvas.height;
+        const sectionHeight = (imgHeight * contentWidth) / imgWidth;
+
+        if (!isFirstPage) doc.addPage();
+        isFirstPage = false;
+
+        // 섹션이 한 페이지보다 긴 경우 (테이블 등)
+        const pageContentHeight = pdfHeight - margin * 2;
+        if (sectionHeight <= pageContentHeight) {
+          doc.addImage(imgData, 'PNG', margin, margin, contentWidth, sectionHeight);
+        } else {
+          let remainingHeight = sectionHeight;
+          let yOffset = 0;
+          let first = true;
+          while (remainingHeight > 0) {
+            if (!first) doc.addPage();
+            first = false;
+            doc.addImage(imgData, 'PNG', margin, margin - yOffset, contentWidth, sectionHeight);
+            remainingHeight -= pageContentHeight;
+            yOffset += pageContentHeight;
+          }
+        }
       }
 
       doc.save(`리포트_${data.period.from}_${data.period.to}.pdf`);
@@ -207,15 +218,10 @@ export default function ReportsPage() {
     return `${d.getMonth() + 1}/${d.getDate()}`;
   };
 
-  const PIE_COLORS = ['#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6'];
+  const PIE_COLORS = ['#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6', '#10B981', '#EC4899'];
 
-  const costBreakdown = data
-    ? [
-        { name: '원가', value: data.kpi.totalCost },
-        { name: '수수료', value: data.kpi.totalFee },
-        { name: '배송비', value: data.kpi.totalShipping },
-        { name: '마진', value: Math.max(data.kpi.totalMargin, 0) },
-      ]
+  const channelBreakdown = data
+    ? data.channelData.filter((ch) => ch.sales > 0).map((ch) => ({ name: ch.name, value: ch.sales }))
     : [];
 
   return (
@@ -305,7 +311,7 @@ export default function ReportsPage() {
           {/* PDF 캡처 영역 */}
           <div ref={reportRef} className="space-y-6">
           {/* KPI 요약 */}
-          <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+          <div data-pdf-section className="rounded-xl border border-border bg-card p-6 shadow-sm">
             <h2 className="text-lg font-semibold">KPI 요약</h2>
             <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {[
@@ -343,7 +349,7 @@ export default function ReportsPage() {
 
           {/* 매출/마진 추이 차트 */}
           {data.dailyData.length > 0 && (
-            <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+            <div data-pdf-section className="rounded-xl border border-border bg-card p-6 shadow-sm">
               <h2 className="text-lg font-semibold">매출/마진 추이</h2>
               <div className="mt-4 h-72">
                 <ResponsiveContainer width="100%" height="100%">
@@ -393,25 +399,25 @@ export default function ReportsPage() {
           )}
 
           {/* 매출 구성 비율 + 상품별 마진 Top 5 */}
-          <div className="grid gap-4 lg:grid-cols-2">
+          <div data-pdf-section className="grid gap-4 lg:grid-cols-2">
             {/* 매출 구성 비율 (파이 차트) */}
             <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
-              <h2 className="text-lg font-semibold">매출 구성 비율</h2>
-              <div className="mt-4 h-64">
+              <h2 className="text-lg font-semibold">채널별 매출 비율</h2>
+              <div className="mt-4 h-52">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
-                      data={costBreakdown}
+                      data={channelBreakdown}
                       cx="50%"
                       cy="50%"
-                      innerRadius={50}
-                      outerRadius={90}
+                      innerRadius={45}
+                      outerRadius={80}
                       paddingAngle={3}
                       dataKey="value"
                       label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                     >
-                      {costBreakdown.map((_, index) => (
-                        <Cell key={index} fill={PIE_COLORS[index]} />
+                      {channelBreakdown.map((_, index) => (
+                        <Cell key={index} fill={PIE_COLORS[index % PIE_COLORS.length]} />
                       ))}
                     </Pie>
                     <Tooltip
@@ -420,45 +426,72 @@ export default function ReportsPage() {
                   </PieChart>
                 </ResponsiveContainer>
               </div>
+              <div className="mt-3 space-y-1.5">
+                {channelBreakdown.map((item, index) => (
+                  <div key={item.name} className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2">
+                      <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: PIE_COLORS[index % PIE_COLORS.length] }} />
+                      <span className="text-muted-foreground">{item.name}</span>
+                    </div>
+                    <span className="font-mono">{fmt(item.value)}</span>
+                  </div>
+                ))}
+                <div className="flex items-center justify-between border-t border-border pt-1.5 text-sm font-medium">
+                  <span>총 매출</span>
+                  <span className="font-mono">{fmt(data.kpi.totalSales)}</span>
+                </div>
+              </div>
             </div>
 
-            {/* 상품별 마진 Top 5 (가로 바 차트) */}
+            {/* 상품별 출고 수량 Top 5 */}
             <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
-              <h2 className="text-lg font-semibold">상품별 마진 Top 5</h2>
+              <h2 className="text-lg font-semibold">상품별 출고 수량 Top 5</h2>
               <div className="mt-4 h-64">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
-                    data={data.productData.slice(0, 5).map((p) => ({
-                      ...p,
-                      label: p.name.length > 12 ? p.name.slice(0, 12) + '...' : p.name,
-                    }))}
+                    data={(() => {
+                      const grouped: Record<string, { name: string; quantity: number; sales: number }> = {};
+                      for (const p of data.productData) {
+                        if (p.quantity <= 0) continue;
+                        if (!grouped[p.name]) {
+                          grouped[p.name] = { name: p.name, quantity: 0, sales: 0 };
+                        }
+                        grouped[p.name].quantity += p.quantity;
+                        grouped[p.name].sales += p.sales;
+                      }
+                      return Object.values(grouped)
+                        .sort((a, b) => b.quantity - a.quantity)
+                        .slice(0, 5)
+                        .map((p) => ({
+                          ...p,
+                          label: p.name.length > 12 ? p.name.slice(0, 12) + '...' : p.name,
+                        }));
+                    })()}
                     layout="vertical"
                     margin={{ left: 10, right: 20 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" horizontal={false} />
-                    <XAxis type="number" tickFormatter={formatCurrency} tick={{ fill: '#6b7280', fontSize: 11 }} />
+                    <XAxis type="number" tick={{ fill: '#6b7280', fontSize: 11 }} />
                     <YAxis type="category" dataKey="label" width={120} tick={{ fill: '#6b7280', fontSize: 11 }} />
                     <Tooltip
                       content={({ active, payload }) => {
                         if (!active || !payload?.length) return null;
-                        const d = payload[0].payload as ProductRow & { label: string };
+                        const d = payload[0].payload as { name: string; quantity: number; sales: number; label: string };
                         return (
                           <div className="rounded-lg border border-border bg-card p-3 shadow-md max-w-[250px]">
                             <p className="text-xs font-medium truncate">{d.name}</p>
-                            {d.optionInfo && <p className="text-xs text-muted-foreground truncate">{d.optionInfo}</p>}
                             <div className="mt-2 space-y-1 font-mono text-sm">
-                              <p>마진: ₩{d.margin.toLocaleString()}</p>
+                              <p>출고 수량: {d.quantity}개</p>
                               <p>매출: ₩{d.sales.toLocaleString()}</p>
-                              <p>마진율: {(Math.round(d.marginRate * 10) / 10).toFixed(1)}%</p>
                             </div>
                           </div>
                         );
                       }}
                     />
-                    <Bar dataKey="margin" radius={[0, 4, 4, 0]}>
-                      {data.productData.slice(0, 5).map((entry, index) => (
-                        <Cell key={index} fill={entry.margin >= 0 ? `hsl(142, 71%, ${45 - index * 3}%)` : 'hsl(0, 84%, 60%)'} />
-                      ))}
+                    <Bar dataKey="quantity" radius={[0, 4, 4, 0]}>
+                      {Array.from({ length: 5 }).map((_, index) => (
+                          <Cell key={index} fill={`hsl(217, 91%, ${50 + index * 5}%)`} />
+                        ))}
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
@@ -467,7 +500,7 @@ export default function ReportsPage() {
           </div>
 
           {/* 일별 매출 테이블 */}
-          <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+          <div data-pdf-section className="rounded-xl border border-border bg-card p-6 shadow-sm">
             <h2 className="text-lg font-semibold">일별 매출</h2>
             <div className="mt-4 overflow-x-auto">
               <table className="w-full text-sm">
@@ -500,7 +533,7 @@ export default function ReportsPage() {
           </div>
 
           {/* 상품별 실적 테이블 */}
-          <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+          <div data-pdf-section className="rounded-xl border border-border bg-card p-6 shadow-sm">
             <h2 className="text-lg font-semibold">상품별 실적</h2>
             <div className="mt-4 overflow-x-auto">
               <table className="w-full text-sm">
@@ -518,7 +551,7 @@ export default function ReportsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {data.productData.map((row, i) => (
+                  {data.productData.filter((r) => r.quantity > 0).map((row, i) => (
                     <tr key={i} className="border-b border-border/50">
                       <td className="max-w-[200px] truncate py-2">
                         {row.name}

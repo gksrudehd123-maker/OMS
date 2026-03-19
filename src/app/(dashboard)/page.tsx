@@ -359,14 +359,31 @@ export default function DashboardPage() {
           )}
         </div>
         <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
-          <h2 className="text-lg font-semibold">상품별 마진 Top 10</h2>
+          <h2 className="text-lg font-semibold">상품별 출고 수량 Top 10</h2>
           {loading ? (
             <Skeleton className="mt-4 h-[300px] w-full rounded-lg" />
           ) : data?.productMarginRank && data.productMarginRank.length > 0 ? (
             <div className="mt-4 h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
-                  data={data.productMarginRank}
+                  data={(() => {
+                    const grouped: Record<string, { name: string; orders: number; sales: number }> = {};
+                    for (const p of data.productMarginRank) {
+                      if (p.orders <= 0) continue;
+                      if (!grouped[p.name]) {
+                        grouped[p.name] = { name: p.name, orders: 0, sales: 0 };
+                      }
+                      grouped[p.name].orders += p.orders;
+                      grouped[p.name].sales += p.sales;
+                    }
+                    return Object.values(grouped)
+                      .sort((a, b) => b.orders - a.orders)
+                      .slice(0, 10)
+                      .map((p) => ({
+                        ...p,
+                        label: p.name.length > 18 ? p.name.slice(0, 18) + '...' : p.name,
+                      }));
+                  })()}
                   layout="vertical"
                   margin={{ left: 10, right: 20 }}
                 >
@@ -377,7 +394,6 @@ export default function DashboardPage() {
                   />
                   <XAxis
                     type="number"
-                    tickFormatter={formatCurrency}
                     tick={{ fill: '#9CA3AF', fontSize: 11 }}
                   />
                   <YAxis
@@ -385,43 +401,29 @@ export default function DashboardPage() {
                     dataKey="label"
                     width={140}
                     tick={{ fill: '#9CA3AF', fontSize: 11 }}
-                    tickFormatter={(value: string) =>
-                      value.length > 18 ? value.slice(0, 18) + '...' : value
-                    }
                   />
                   <Tooltip
                     content={({ active, payload }) => {
                       if (!active || !payload?.length) return null;
-                      const d = payload[0].payload as ProductMargin;
+                      const d = payload[0].payload as { name: string; orders: number; sales: number };
                       return (
                         <div className="rounded-lg border border-border bg-card p-3 shadow-md max-w-[250px]">
                           <p className="text-xs font-medium truncate">
                             {d.name}
                           </p>
-                          {d.optionInfo && (
-                            <p className="text-xs text-muted-foreground truncate">
-                              {d.optionInfo}
-                            </p>
-                          )}
                           <div className="mt-2 space-y-1 font-mono text-sm">
-                            <p>마진: ₩{d.margin.toLocaleString()}</p>
+                            <p>출고 수량: {d.orders}개</p>
                             <p>매출: ₩{d.sales.toLocaleString()}</p>
-                            <p>마진율: {d.marginRate.toFixed(1)}%</p>
-                            <p>판매수량: {d.orders}개</p>
                           </div>
                         </div>
                       );
                     }}
                   />
-                  <Bar dataKey="margin" radius={[0, 4, 4, 0]}>
-                    {data.productMarginRank.map((entry, index) => (
+                  <Bar dataKey="orders" radius={[0, 4, 4, 0]}>
+                    {Array.from({ length: 10 }).map((_, index) => (
                       <Cell
                         key={index}
-                        fill={
-                          entry.margin >= 0
-                            ? `hsl(142, 71%, ${45 - index * 2}%)`
-                            : 'hsl(0, 84%, 60%)'
-                        }
+                        fill={`hsl(217, 91%, ${50 + index * 3}%)`}
                       />
                     ))}
                   </Bar>

@@ -191,7 +191,7 @@ export default function SalesPage() {
         {isRocketGrowth ? (
           <DailySalesTable channelId={selectedChannel} refreshKey={refreshKey} />
         ) : (
-          <OrderTable refreshKey={refreshKey} />
+          <OrderTable channelId={selectedChannel} refreshKey={refreshKey} />
         )}
       </div>
     </div>

@@ -8,10 +8,15 @@ export async function GET(request: NextRequest) {
   const limit = parseInt(searchParams.get('limit') || '20');
   const search = searchParams.get('search') || '';
   const status = searchParams.get('status') || '';
+  const channelId = searchParams.get('channelId') || '';
   const from = searchParams.get('from');
   const to = searchParams.get('to');
 
   const where: Record<string, unknown> = {};
+
+  if (channelId) {
+    where.channelId = channelId;
+  }
 
   if (search) {
     where.OR = [

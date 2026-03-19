@@ -75,6 +75,12 @@ export async function GET(request: NextRequest) {
     { date: string; sales: number; margin: number; orders: number }
   > = {};
 
+  // 채널별 집계
+  const channelMap: Record<
+    string,
+    { name: string; sales: number }
+  > = {};
+
   // 상품별 집계
   const productMap: Record<
     string,
@@ -117,6 +123,15 @@ export async function GET(request: NextRequest) {
       totalCost += m.costAmount;
       totalFee += m.fee;
       totalShipping += m.shipping;
+    }
+
+    // 채널별
+    const chId = order.channelId;
+    if (!channelMap[chId]) {
+      channelMap[chId] = { name: order.channel.name, sales: 0 };
+    }
+    if (m.isCalculable) {
+      channelMap[chId].sales += m.salesAmount;
     }
 
     // 일별
@@ -180,6 +195,13 @@ export async function GET(request: NextRequest) {
       totalShipping += rgm.shippingFee + rgm.shippingVat;
     }
 
+    // 채널별
+    const dsChId = ds.channelId;
+    if (!channelMap[dsChId]) {
+      channelMap[dsChId] = { name: ds.channel.name, sales: 0 };
+    }
+    channelMap[dsChId].sales += rgSalesAmt;
+
     // 일별
     const dateKey = ds.date.toISOString().split('T')[0];
     if (!dailyMap[dateKey]) {
@@ -215,6 +237,10 @@ export async function GET(request: NextRequest) {
     }
   }
 
+  const channelData = Object.values(channelMap)
+    .map((ch) => ({ ...ch, sales: Math.round(ch.sales) }))
+    .sort((a, b) => b.sales - a.sales);
+
   const dailyData = Object.values(dailyMap)
     .map((d) => ({ ...d, sales: Math.round(d.sales), margin: Math.round(d.margin) }))
     .sort((a, b) => a.date.localeCompare(b.date));
@@ -242,6 +268,7 @@ export async function GET(request: NextRequest) {
       avgMarginRate: totalSales > 0 ? Math.round((totalMargin / totalSales) * 1000) / 10 : 0,
       totalOrders: orders.length + dailySalesRecords.length,
     },
+    channelData,
     dailyData,
     productData,
   });
