@@ -497,6 +497,11 @@ GitHub Push → Vercel Auto Deploy (main branch → Production)
   - [ ] API 응답 캐싱 (Cache-Control, revalidate)
   - [ ] 번들 사이즈 최적화 (next/dynamic lazy load)
 - [x] Sentry 에러 모니터링 (@sentry/nextjs 10 — instrumentation 패턴 적용, Session Replay, 라우터 전환 추적)
+- [ ] 모바일 반응형 UI
+  - [ ] 사이드바 → 햄버거 메뉴 전환
+  - [ ] 테이블 가로 스크롤 처리
+  - [ ] KPI 카드/차트 그리드 반응형
+  - [ ] 다이얼로그/업로드 영역 터치 UX
 - [ ] Vercel Analytics (현재 불필요 — 사용자 1명, 내부 도구. 팀원 추가 시 검토)
 
 ### Phase 8 - 인증 및 권한 관리
