@@ -53,6 +53,12 @@ type ProductRow = {
 type ChannelRow = {
   name: string;
   sales: number;
+  margin: number;
+  cost: number;
+  fee: number;
+  shipping: number;
+  orders: number;
+  marginRate: number;
 };
 
 type ReportData = {
@@ -602,6 +608,61 @@ export default function ReportsPage() {
               </table>
             </div>
           </div>
+
+          {/* 채널별 비교 테이블 */}
+          {data.channelData.length > 0 && (
+          <div data-pdf-section className="rounded-xl border border-border bg-card p-6 shadow-sm">
+            <h2 className="text-lg font-semibold">채널별 비교</h2>
+            <div className="mt-4 overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b text-left text-muted-foreground">
+                    <th className="pb-2 font-medium">채널</th>
+                    <th className="pb-2 text-right font-medium">주문수</th>
+                    <th className="pb-2 text-right font-medium">매출</th>
+                    <th className="pb-2 text-right font-medium">원가</th>
+                    <th className="pb-2 text-right font-medium">수수료</th>
+                    <th className="pb-2 text-right font-medium">배송비</th>
+                    <th className="pb-2 text-right font-medium">마진</th>
+                    <th className="pb-2 text-right font-medium">마진율</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.channelData.map((ch) => (
+                    <tr key={ch.name} className="border-b border-border/50">
+                      <td className="py-2 font-medium">{ch.name}</td>
+                      <td className="py-2 text-right">{ch.orders}건</td>
+                      <td className="py-2 text-right font-mono">{fmt(ch.sales)}</td>
+                      <td className="py-2 text-right font-mono">{fmt(ch.cost)}</td>
+                      <td className="py-2 text-right font-mono">{fmt(ch.fee)}</td>
+                      <td className="py-2 text-right font-mono">{fmt(ch.shipping)}</td>
+                      <td className={`py-2 text-right font-mono ${ch.margin >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {fmt(ch.margin)}
+                      </td>
+                      <td className={`py-2 text-right ${ch.marginRate >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {ch.marginRate.toFixed(1)}%
+                      </td>
+                    </tr>
+                  ))}
+                  <tr className="border-t-2 border-border font-medium">
+                    <td className="py-2">합계</td>
+                    <td className="py-2 text-right">{data.channelData.reduce((s, c) => s + c.orders, 0)}건</td>
+                    <td className="py-2 text-right font-mono">{fmt(data.channelData.reduce((s, c) => s + c.sales, 0))}</td>
+                    <td className="py-2 text-right font-mono">{fmt(data.channelData.reduce((s, c) => s + c.cost, 0))}</td>
+                    <td className="py-2 text-right font-mono">{fmt(data.channelData.reduce((s, c) => s + c.fee, 0))}</td>
+                    <td className="py-2 text-right font-mono">{fmt(data.channelData.reduce((s, c) => s + c.shipping, 0))}</td>
+                    <td className={`py-2 text-right font-mono ${data.kpi.totalMargin >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {fmt(data.kpi.totalMargin)}
+                    </td>
+                    <td className={`py-2 text-right ${data.kpi.avgMarginRate >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {data.kpi.avgMarginRate.toFixed(1)}%
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          )}
           </div>
         </>
       )}

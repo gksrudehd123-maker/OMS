@@ -78,7 +78,7 @@ export async function GET(request: NextRequest) {
   // 채널별 집계
   const channelMap: Record<
     string,
-    { name: string; sales: number }
+    { name: string; sales: number; margin: number; cost: number; fee: number; shipping: number; orders: number }
   > = {};
 
   // 상품별 집계
@@ -128,10 +128,15 @@ export async function GET(request: NextRequest) {
     // 채널별
     const chId = order.channelId;
     if (!channelMap[chId]) {
-      channelMap[chId] = { name: order.channel.name, sales: 0 };
+      channelMap[chId] = { name: order.channel.name, sales: 0, margin: 0, cost: 0, fee: 0, shipping: 0, orders: 0 };
     }
+    channelMap[chId].orders += order.quantity;
     if (m.isCalculable) {
       channelMap[chId].sales += m.salesAmount;
+      channelMap[chId].margin += m.margin;
+      channelMap[chId].cost += m.costAmount;
+      channelMap[chId].fee += m.fee;
+      channelMap[chId].shipping += m.shipping;
     }
 
     // 일별
@@ -198,9 +203,16 @@ export async function GET(request: NextRequest) {
     // 채널별
     const dsChId = ds.channelId;
     if (!channelMap[dsChId]) {
-      channelMap[dsChId] = { name: ds.channel.name, sales: 0 };
+      channelMap[dsChId] = { name: ds.channel.name, sales: 0, margin: 0, cost: 0, fee: 0, shipping: 0, orders: 0 };
     }
     channelMap[dsChId].sales += rgSalesAmt;
+    channelMap[dsChId].orders += ds.salesQuantity;
+    if (rgm.isCalculable) {
+      channelMap[dsChId].margin += rgm.margin;
+      channelMap[dsChId].cost += rgm.costAmount;
+      channelMap[dsChId].fee += rgm.fee + rgm.feeVat;
+      channelMap[dsChId].shipping += rgm.shippingFee + rgm.shippingVat;
+    }
 
     // 일별
     const dateKey = ds.date.toISOString().split('T')[0];
@@ -238,7 +250,15 @@ export async function GET(request: NextRequest) {
   }
 
   const channelData = Object.values(channelMap)
-    .map((ch) => ({ ...ch, sales: Math.round(ch.sales) }))
+    .map((ch) => ({
+      ...ch,
+      sales: Math.round(ch.sales),
+      margin: Math.round(ch.margin),
+      cost: Math.round(ch.cost),
+      fee: Math.round(ch.fee),
+      shipping: Math.round(ch.shipping),
+      marginRate: ch.sales > 0 ? Math.round((ch.margin / ch.sales) * 1000) / 10 : 0,
+    }))
     .sort((a, b) => b.sales - a.sales);
 
   const dailyData = Object.values(dailyMap)
