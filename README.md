@@ -506,7 +506,7 @@ ipconfig | grep "IPv4"
 
 | # | 항목 | 설명 |
 |---|------|------|
-| 9 | API Rate Limiting | 무한 반복 호출에 의한 DB 부하 방어 (ex: `next-rate-limit`, Vercel Edge Config) |
+| ~~9~~ | ~~API Rate Limiting~~ | ✅ 해결 — IP 기반 인메모리 Rate Limiter 적용 (API 분당 60회, 로그인/회원가입 분당 10회) |
 | 10 | 에러 메시지 상세 노출 | API 에러 응답에 내부 정보 포함 가능. 프로덕션에서는 일반 메시지로 대체 권장 |
 | 11 | SessionProvider 갱신 설정 | 토큰 만료 시 자동 갱신 미설정 (NextAuth 기본값 사용) |
 

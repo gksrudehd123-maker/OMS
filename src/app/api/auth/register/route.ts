@@ -2,9 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { hash } from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
 import { requireRole, isError } from '@/lib/auth-guard';
+import { rateLimit } from '@/lib/rate-limit';
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate Limiting (분당 10회 — 브루트포스 방어)
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+    const limited = rateLimit(`register:${ip}`, 10);
+    if (limited) return limited;
+
     // 첫 번째 가입자(OWNER 생성)만 공개 허용, 이후는 OWNER만 사용자 추가 가능
     const userCount = await prisma.user.count();
     if (userCount > 0) {

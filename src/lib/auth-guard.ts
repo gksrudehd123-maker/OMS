@@ -1,6 +1,8 @@
 import { getServerSession } from 'next-auth';
 import { NextResponse } from 'next/server';
+import { headers } from 'next/headers';
 import { authOptions } from '@/lib/auth';
+import { rateLimit } from '@/lib/rate-limit';
 
 type SessionUser = {
   id: string;
@@ -10,8 +12,13 @@ type SessionUser = {
   allowedChannels: string[];
 };
 
-// 인증 확인 — 로그인 필수
+// 인증 확인 — 로그인 필수 + Rate Limiting
 export async function requireAuth(): Promise<SessionUser | NextResponse> {
+  const headersList = headers();
+  const ip = headersList.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+  const limited = rateLimit(ip);
+  if (limited) return limited;
+
   const session = await getServerSession(authOptions);
   if (!session?.user) {
     return NextResponse.json({ error: '로그인이 필요합니다' }, { status: 401 });
