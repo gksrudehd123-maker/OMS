@@ -499,7 +499,7 @@ ipconfig | grep "IPv4"
 |---|------|------|
 | 5 | **보안 헤더 미설정** | next.config.mjs에 CSP, X-Frame-Options, HSTS 등 없음 → XSS, 클릭재킹 취약 |
 | 6 | **빌드 에러 무시** | `ignoreBuildErrors: true`, `ignoreDuringBuilds: true` → 보안 문제가 빌드에서 감지 안 됨 |
-| 7 | **채널 접근 검증 불완전** | dashboard, report만 적용. orders, daily-sales, ad-costs GET에는 미적용 |
+| ~~7~~ | ~~채널 접근 검증 불완전~~ | ✅ 해결 — orders, daily-sales, ad-costs GET에도 checkChannelAccess + getChannelFilter 적용 |
 | 8 | **비밀번호 정책 미흡** | 최소 6자만 검증, 복잡도 요구 없음. 재설정/변경 기능 없음 |
 
 #### 개선 권장 (낮음)

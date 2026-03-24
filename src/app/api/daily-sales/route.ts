@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { calculateRGMargin } from '@/lib/helpers/rg-margin-calc';
-import { requireAuth, isError } from '@/lib/auth-guard';
+import { requireAuth, isError, checkChannelAccess, getChannelFilter } from '@/lib/auth-guard';
 
 export async function GET(request: NextRequest) {
   const user = await requireAuth();
@@ -13,10 +13,16 @@ export async function GET(request: NextRequest) {
   const search = searchParams.get('search') || '';
   const channelId = searchParams.get('channelId') || '';
 
+  const channelError = checkChannelAccess(user, channelId || null);
+  if (channelError) return channelError;
+
   const where: Record<string, unknown> = {};
 
   if (channelId) {
     where.channelId = channelId;
+  } else {
+    const allowedChannels = getChannelFilter(user);
+    if (allowedChannels) where.channelId = { in: allowedChannels };
   }
 
   if (search) {

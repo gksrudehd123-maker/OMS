@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { requireAuth, requireRole, isError } from '@/lib/auth-guard';
+import { requireAuth, requireRole, isError, checkChannelAccess, getChannelFilter } from '@/lib/auth-guard';
 
 // 광고비 목록 조회
 export async function GET(request: NextRequest) {
@@ -12,6 +12,9 @@ export async function GET(request: NextRequest) {
   const to = searchParams.get('to');
   const channelId = searchParams.get('channelId');
 
+  const channelError = checkChannelAccess(user, channelId);
+  if (channelError) return channelError;
+
   const where: Record<string, unknown> = {};
   if (from || to) {
     where.date = {
@@ -21,6 +24,9 @@ export async function GET(request: NextRequest) {
   }
   if (channelId) {
     where.channelId = channelId;
+  } else {
+    const allowedChannels = getChannelFilter(user);
+    if (allowedChannels) where.channelId = { in: allowedChannels };
   }
 
   const adCosts = await prisma.adCost.findMany({
