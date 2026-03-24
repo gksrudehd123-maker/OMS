@@ -15,6 +15,7 @@ import {
   ZAxis,
 } from 'recharts';
 import { DateRangeFilter } from '@/components/common/date-range-filter';
+import { ChannelFilter } from '@/components/common/channel-filter';
 import { TrendingUp, TrendingDown, ArrowUpDown } from 'lucide-react';
 
 type KPI = {
@@ -49,16 +50,19 @@ type SortKey = 'margin' | 'marginRate' | 'sales' | 'quantity';
 export default function MarginsPage() {
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
+  const [channelId, setChannelId] = useState('');
   const [data, setData] = useState<ReportData | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>('margin');
   const [sortAsc, setSortAsc] = useState(false);
 
   useEffect(() => {
     if (!from || !to) return;
-    fetch(`/api/report?from=${from}&to=${to}`)
+    const params = new URLSearchParams({ from, to });
+    if (channelId) params.set('channelId', channelId);
+    fetch(`/api/report?${params}`)
       .then((res) => res.json())
       .then(setData);
-  }, [from, to]);
+  }, [from, to, channelId]);
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -170,6 +174,7 @@ export default function MarginsPage() {
             상품별 마진율을 분석하고 수익 구조를 파악합니다
           </p>
         </div>
+        <ChannelFilter value={channelId} onChange={setChannelId} />
         <DateRangeFilter
           from={from}
           to={to}

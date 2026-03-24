@@ -11,6 +11,7 @@ import {
   Megaphone,
 } from 'lucide-react';
 import { DateRangeFilter } from '@/components/common/date-range-filter';
+import { ChannelFilter } from '@/components/common/channel-filter';
 import { ProgressBar } from '@/components/ui/progress-bar';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -48,13 +49,15 @@ type DashboardData = {
 export default function DashboardPage() {
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
+  const [channelId, setChannelId] = useState('');
 
   const { data, isLoading: loading } = useQuery<DashboardData>({
-    queryKey: ['dashboard', from, to],
+    queryKey: ['dashboard', from, to, channelId],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (from) params.set('from', from);
       if (to) params.set('to', to);
+      if (channelId) params.set('channelId', channelId);
       const res = await fetch(`/api/dashboard?${params}`);
       return res.json();
     },
@@ -123,6 +126,7 @@ export default function DashboardPage() {
             매출 및 마진 현황을 한눈에 확인하세요
           </p>
         </div>
+        <ChannelFilter value={channelId} onChange={setChannelId} />
         <DateRangeFilter
           from={from}
           to={to}

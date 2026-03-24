@@ -7,6 +7,7 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const from = searchParams.get('from');
   const to = searchParams.get('to');
+  const channelId = searchParams.get('channelId');
 
   if (!from || !to) {
     return NextResponse.json(
@@ -20,10 +21,18 @@ export async function GET(request: NextRequest) {
     lte: new Date(to + 'T23:59:59'),
   };
 
+  const orderWhere: Record<string, unknown> = { orderDate: dateFilter };
+  const dsWhere: Record<string, unknown> = { date: dateFilter };
+
+  if (channelId) {
+    orderWhere.channelId = channelId;
+    dsWhere.channelId = channelId;
+  }
+
   // 2개 쿼리 병렬 실행 + 필요한 필드만 select
   const [orders, dailySalesRecords] = await Promise.all([
     prisma.order.findMany({
-      where: { orderDate: dateFilter },
+      where: orderWhere,
       select: {
         orderNumber: true,
         orderDate: true,
@@ -46,7 +55,7 @@ export async function GET(request: NextRequest) {
       orderBy: { orderDate: 'asc' },
     }),
     prisma.dailySales.findMany({
-      where: { date: dateFilter },
+      where: dsWhere,
       select: {
         date: true,
         salesAmount: true,

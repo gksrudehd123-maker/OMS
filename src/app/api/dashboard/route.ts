@@ -7,6 +7,7 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const from = searchParams.get('from');
   const to = searchParams.get('to');
+  const channelId = searchParams.get('channelId');
 
   const dateFilter = from || to
     ? {
@@ -15,9 +16,21 @@ export async function GET(request: NextRequest) {
       }
     : undefined;
 
-  const orderWhere = dateFilter ? { orderDate: dateFilter } : {};
-  const dsWhere = dateFilter ? { date: dateFilter } : {};
-  const adWhere = dateFilter ? { date: dateFilter } : {};
+  const orderWhere: Record<string, unknown> = {};
+  const dsWhere: Record<string, unknown> = {};
+  const adWhere: Record<string, unknown> = {};
+
+  if (dateFilter) {
+    orderWhere.orderDate = dateFilter;
+    dsWhere.date = dateFilter;
+    adWhere.date = dateFilter;
+  }
+
+  if (channelId) {
+    orderWhere.channelId = channelId;
+    dsWhere.channelId = channelId;
+    adWhere.channelId = channelId;
+  }
 
   // 3개 쿼리 병렬 실행 + 필요한 필드만 select
   const [orders, dailySalesRecords, adCostAgg] = await Promise.all([

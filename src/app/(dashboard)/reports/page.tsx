@@ -3,6 +3,7 @@
 import { useRef, useState } from 'react';
 import { FileSpreadsheet, FileText, Download, Loader2, Printer } from 'lucide-react';
 import { DateRangeFilter } from '@/components/common/date-range-filter';
+import { ChannelFilter } from '@/components/common/channel-filter';
 import { ProgressBar } from '@/components/ui/progress-bar';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -71,6 +72,7 @@ type ReportData = {
 export default function ReportsPage() {
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
+  const [channelId, setChannelId] = useState('');
   const [data, setData] = useState<ReportData | null>(null);
   const [loading, setLoading] = useState(false);
   const [excelLoading, setExcelLoading] = useState(false);
@@ -81,7 +83,9 @@ export default function ReportsPage() {
     if (!from || !to) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/report?from=${from}&to=${to}`);
+      const params = new URLSearchParams({ from, to });
+      if (channelId) params.set('channelId', channelId);
+      const res = await fetch(`/api/report?${params}`);
       const json = await res.json();
       if (res.ok) setData(json);
     } finally {
@@ -258,6 +262,7 @@ export default function ReportsPage() {
       {/* 기간 선택 + 조회 */}
       <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6" data-print-hide>
         <div className="space-y-4">
+          <ChannelFilter value={channelId} onChange={setChannelId} />
           <DateRangeFilter
             from={from}
             to={to}
