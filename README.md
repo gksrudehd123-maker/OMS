@@ -503,7 +503,7 @@ ipconfig | grep "IPv4"
 - [x] 리포트 차트 (매출/마진 추이, 매출 구성 비율 파이, 상품별 마진 Top 5)
 - [x] 채널별 비교 리포트 (채널별 매출/원가/수수료/배송비/마진 비교 테이블 + 합계행)
 - [ ] 매주/매월 자동 리포트 생성
-- [ ] 리포트 인쇄 기능 (window.print + 인쇄용 CSS 처리)
+- [x] 리포트 인쇄 기능 (window.print + 인쇄용 CSS 처리)
 
 ### Phase 7 - 배포 및 최적화
 - [x] Vercel 배포 (https://oms-dun.vercel.app/)

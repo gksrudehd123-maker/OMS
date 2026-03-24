@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { FileSpreadsheet, FileText, Download, Loader2 } from 'lucide-react';
+import { FileSpreadsheet, FileText, Download, Loader2, Printer } from 'lucide-react';
 import { DateRangeFilter } from '@/components/common/date-range-filter';
 import { ProgressBar } from '@/components/ui/progress-bar';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -221,6 +221,10 @@ export default function ReportsPage() {
     }
   };
 
+  const handlePrint = () => {
+    window.print();
+  };
+
   const fmt = (n: number) => `₩${n.toLocaleString()}`;
 
   const formatCurrency = (value: number) => {
@@ -243,7 +247,7 @@ export default function ReportsPage() {
   return (
     <div className="space-y-6">
       <ProgressBar loading={loading} />
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between" data-print-hide>
         <div>
           <h1 className="text-2xl font-semibold">리포트</h1>
           <p className="text-sm text-muted-foreground">
@@ -253,7 +257,7 @@ export default function ReportsPage() {
       </div>
 
       {/* 기간 선택 + 조회 */}
-      <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+      <div className="rounded-xl border border-border bg-card p-6 shadow-sm" data-print-hide>
         <div className="space-y-4">
           <DateRangeFilter
             from={from}
@@ -297,7 +301,7 @@ export default function ReportsPage() {
       {data && (
         <>
           {/* 다운로드 버튼 */}
-          <div className="flex gap-3">
+          <div className="flex gap-3" data-print-hide>
             <button
               onClick={downloadExcel}
               disabled={excelLoading}
@@ -321,6 +325,13 @@ export default function ReportsPage() {
                 <FileText className="h-4 w-4" />
               )}
               PDF 다운로드
+            </button>
+            <button
+              onClick={handlePrint}
+              className="inline-flex items-center gap-2 rounded-lg border border-blue-300 bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-100 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-400 dark:hover:bg-blue-900"
+            >
+              <Printer className="h-4 w-4" />
+              인쇄
             </button>
           </div>
 
@@ -668,7 +679,7 @@ export default function ReportsPage() {
       )}
 
       {!data && !loading && (
-        <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+        <div className="rounded-xl border border-border bg-card p-6 shadow-sm" data-print-hide>
           <div className="flex h-48 flex-col items-center justify-center gap-2 text-muted-foreground">
             <Download className="h-8 w-8" />
             <p className="text-sm">기간을 선택하고 조회 버튼을 눌러주세요</p>

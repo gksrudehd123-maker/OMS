@@ -82,3 +82,55 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* 인쇄용 스타일 */
+@media print {
+  /* 사이드바, 헤더, 인쇄 불필요 요소 숨김 */
+  [data-print-hide] {
+    display: none !important;
+  }
+
+  /* 메인 콘텐츠 영역 전체 너비 사용 */
+  body {
+    background: white !important;
+    color: black !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* 레이아웃 초기화: 사이드바 패딩 제거 */
+  .pl-60 {
+    padding-left: 0 !important;
+  }
+
+  /* 카드 그림자/테두리 정리 */
+  .shadow-sm {
+    box-shadow: none !important;
+  }
+
+  /* 리포트 영역 페이지 나눔 */
+  [data-pdf-section] {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* 테이블 페이지 넘김 허용 (긴 테이블) */
+  table {
+    break-inside: auto;
+  }
+
+  tr {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* 차트 높이 확보 */
+  .recharts-responsive-container {
+    min-height: 200px !important;
+  }
+
+  @page {
+    size: A4 landscape;
+    margin: 10mm;
+  }
+}
