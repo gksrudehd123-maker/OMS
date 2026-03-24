@@ -16,7 +16,9 @@
 - **상품별 분석**: 상품 단위 수익성 분석 및 마진 Top 10
 - **데이터 수집**: 엑셀 업로드 + 네이버 API 자동 동기화
 - **광고비 관리**: 채널+날짜별 광고비 입력, 기간 총합에서 차감
-- **리포트 생성**: PDF/엑셀 리포트 다운로드
+- **리포트 생성**: PDF/엑셀 리포트 다운로드 + 주간/월간 자동 리포트
+- **인증/권한**: 로그인 + RBAC (OWNER/MANAGER/STAFF) + 채널별 접근 제한
+- **사용자 관리**: OWNER가 사용자 추가/역할·채널 권한 설정/삭제
 
 ---
 
@@ -93,6 +95,7 @@
 | **Toast** | sonner | 알림 토스트 UI |
 | **Theme** | next-themes | 다크모드/라이트모드/시스템 연동 |
 | **Server State** | TanStack Query 5 | API 데이터 캐싱, 중복 요청 방지, 자동 갱신 |
+| **Auth** | NextAuth.js 4 | Credentials Provider, JWT 세션, RBAC |
 | **Error Monitoring** | Sentry (@sentry/nextjs 10) | 에러 자동 수집, Session Replay, 성능 모니터링 |
 
 ### 개발 도구
@@ -148,6 +151,10 @@ NEXT_PUBLIC_APP_NAME=OMS
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 NEXT_PUBLIC_HIDE_API_SYNC=false    # true: Vercel에서 API 동기화 UI 숨김
 
+# NextAuth.js
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=...                # openssl rand -base64 32
+
 # 네이버 커머스 API (스마트스토어 자동 동기화)
 NAVER_CLIENT_ID=...
 NAVER_CLIENT_SECRET=...
@@ -166,7 +173,7 @@ OMS/
 ├── public/                         # 정적 파일
 ├── scripts/                        # 자동화 스크립트
 │   ├── auto-sync.bat               # Windows 작업 스케줄러용 자동 동기화
-│   ├── sync-log.txt                # 동기화 실행 로그
+│   ├── auto-report.bat             # Windows 작업 스케줄러용 자동 리포트
 │   └── decrypt-xlsx.py             # (레거시) 엑셀 복호화 스크립트
 ├── prisma/
 │   ├── schema.prisma               # DB 스키마
@@ -179,51 +186,64 @@ OMS/
 │   │   │   ├── products/           # 상품 관리
 │   │   │   ├── channels/           # 채널 관리
 │   │   │   ├── ad-costs/           # 광고비 관리
-│   │   │   ├── reports/            # 리포트
+│   │   │   ├── reports/            # 리포트 + 자동 리포트 이력
 │   │   │   ├── margins/            # 마진 분석
-│   │   │   └── settings/           # 설정
+│   │   │   ├── users/              # 사용자 관리 (OWNER 전용)
+│   │   │   └── settings/           # 설정 (프로필, 테마, 기본값, 자동 리포트)
 │   │   ├── api/                    # API Route Handlers
-│   │   │   ├── dashboard/          # 대시보드 KPI + 차트 데이터 (Order + DailySales 합산)
+│   │   │   ├── auth/               # 인증 (NextAuth, 회원가입, 가입 체크)
+│   │   │   ├── dashboard/          # 대시보드 KPI + 차트 데이터
 │   │   │   ├── orders/             # 주문 조회 (스마트스토어/쿠팡 윙)
 │   │   │   ├── daily-sales/        # 판매 조회 (쿠팡 로켓그로스)
-│   │   │   ├── products/           # 상품 CRUD (RG 전용 필드 포함)
+│   │   │   ├── products/           # 상품 CRUD
 │   │   │   ├── channels/           # 채널 CRUD
-│   │   │   ├── upload/             # 엑셀 업로드 (3-way 분기: 스마트스토어/쿠팡윙/로켓그로스)
+│   │   │   ├── upload/             # 엑셀 업로드 (3-way 분기)
 │   │   │   ├── sync/smartstore/    # 스마트스토어 API 동기화
 │   │   │   ├── ad-costs/           # 광고비 CRUD
-│   │   │   ├── report/             # 리포트 데이터 (Order + DailySales 합산)
+│   │   │   ├── report/             # 리포트 데이터 + 자동 리포트 (auto/generated)
+│   │   │   ├── users/              # 사용자 CRUD (OWNER 전용)
+│   │   │   ├── user/               # 프로필 (profile) + 비밀번호 (password)
 │   │   │   └── settings/           # 설정 API
-│   │   ├── global-error.tsx        # Sentry 에러 바운더리 (자동 에러 보고)
+│   │   ├── login/                  # 로그인 페이지
+│   │   ├── register/               # 회원가입 페이지 (첫 사용자 전용)
+│   │   ├── global-error.tsx        # Sentry 에러 바운더리
 │   │   ├── layout.tsx
 │   │   ├── globals.css
-│   ├── instrumentation.ts          # Sentry 서버/엣지 초기화 (register 함수)
+│   ├── middleware.ts               # NextAuth 미들웨어 (페이지 접근 보호)
+│   ├── instrumentation.ts          # Sentry 서버/엣지 초기화
 │   ├── instrumentation-client.ts   # Sentry 클라이언트 초기화 + Session Replay
 │   ├── components/
 │   │   ├── ui/                     # shadcn/ui + 공통 UI (skeleton, progress-bar 등)
-│   │   ├── layout/                 # 사이드바, 헤더
-│   │   ├── common/                 # 날짜 필터 등 공통 컴포넌트
+│   │   ├── layout/                 # 사이드바 (OWNER 전용 메뉴 포함), 헤더
+│   │   ├── common/                 # 날짜 필터, 채널 필터 (권한 기반)
 │   │   ├── sales/                  # 주문 테이블, DailySales 테이블, 업로드 존
-│   │   └── providers/              # Theme, Query Provider
+│   │   └── providers/              # Theme, Query, Session Provider
+│   ├── types/
+│   │   └── next-auth.d.ts          # NextAuth 타입 확장 (id, role, allowedChannels)
 │   └── lib/
 │       ├── prisma.ts               # Prisma 클라이언트
+│       ├── auth.ts                 # NextAuth 설정 (Credentials, JWT 콜백)
+│       ├── auth-guard.ts           # API 인증/권한 미들웨어 (requireAuth, requireRole, 채널 검증, isStaff)
+│       ├── rate-limit.ts           # IP 기반 인메모리 Rate Limiter
 │       ├── utils.ts                # 공통 유틸
 │       ├── constants.ts            # 상수 정의
 │       ├── excel/                  # 엑셀 파서
-│       │   ├── smartstore-parser.ts  # 스마트스토어 주문조회 엑셀
-│       │   ├── coupang-parser.ts     # 쿠팡 윙 DeliveryList 엑셀
-│       │   ├── rocketgrowth-parser.ts # 쿠팡 로켓그로스 Statistics 엑셀
-│       │   ├── column-map.ts         # 채널별 컬럼 매핑 (스마트스토어/쿠팡윙/로켓그로스)
-│       │   └── validate-format.ts    # 업로드 양식 검증 (3-way: 스마트스토어/쿠팡/로켓그로스)
+│       │   ├── smartstore-parser.ts
+│       │   ├── coupang-parser.ts
+│       │   ├── rocketgrowth-parser.ts
+│       │   ├── column-map.ts
+│       │   └── validate-format.ts
 │       ├── helpers/                # 비즈니스 로직 헬퍼
 │       │   ├── margin-calc.ts      # 마진 계산 (스마트스토어/쿠팡 윙)
 │       │   ├── rg-margin-calc.ts   # 마진 계산 (로켓그로스, VAT 포함)
-│       │   ├── product-key.ts      # 상품키 생성
-│       │   └── status-map.ts       # 주문 상태 매핑
+│       │   ├── product-key.ts
+│       │   └── status-map.ts
 │       ├── naver/
 │       │   └── commerce-api.ts     # 네이버 커머스 API 클라이언트
 │       └── services/
 │           ├── order-processor.ts       # 주문 처리 (스마트스토어/쿠팡 윙)
-│           └── dailysales-processor.ts  # 판매 처리 (로켓그로스)
+│           ├── dailysales-processor.ts  # 판매 처리 (로켓그로스)
+│           └── report-generator.ts     # 리포트 데이터 생성 (자동 리포트용)
 ├── .env.example
 ├── package.json
 └── README.md
@@ -275,12 +295,18 @@ OMS/
                                    └────────────────────────────────┘
 ★ = 로켓그로스 전용 필드          ★ = 로켓그로스 전용 테이블
 
-┌──────────────┐
-│   Setting    │
-├──────────────┤
-│ key          │
-│ value        │
-└──────────────┘
+┌──────────────────┐  ┌──────────────┐  ┌────────────────────┐
+│      User        │  │   Setting    │  │  GeneratedReport   │
+├──────────────────┤  ├──────────────┤  ├────────────────────┤
+│ id               │  │ key          │  │ id                 │
+│ email (unique)   │  │ value        │  │ type (weekly/monthly)│
+│ password (hash)  │  └──────────────┘  │ periodFrom / To    │
+│ name             │                     │ reportData (JSON)  │
+│ role (enum)      │                     │ createdAt          │
+│ allowedChannels  │                     └────────────────────┘
+│ uploads[]        │
+└──────────────────┘
+Role: OWNER | MANAGER | STAFF
 ```
 
 ### Product 모델 필드 용도
@@ -317,7 +343,7 @@ OMS/
 | 패턴 | 사용 페이지 |
 |------|------------|
 | `useQuery` | 대시보드, 주문 테이블, 판매 테이블, 설정 |
-| `useQuery` + `useMutation` | 상품 관리, 채널 관리, 광고비 |
+| `useQuery` + `useMutation` | 상품 관리, 채널 관리, 광고비, 사용자 관리, 리포트 이력 |
 
 ---
 
@@ -328,6 +354,7 @@ OMS/
 | **Frontend + API** | Vercel | https://oms-dun.vercel.app/ (대시보드/조회용) |
 | **Database** | Supabase | 매니지드 PostgreSQL (서울 리전) |
 | **자동 동기화** | Windows 작업 스케줄러 | 로컬 PC에서 매일 09:00 실행 (네이버 API IP 제한) |
+| **자동 리포트** | Windows 작업 스케줄러 | 매주 월요일 / 매월 1일 자동 리포트 생성 |
 
 ```
 GitHub Push → Vercel Auto Deploy (main branch → Production)
@@ -449,10 +476,12 @@ ipconfig | grep "IPv4"
 ### 설정 페이지
 - [x] 테마 설정 (다크/라이트/시스템)
 - [x] 기본값 설정 (기본 배송비, 무료배송 기준금액)
+- [x] 자동 리포트 설정 (비활성/주간/월간)
 - [x] 채널 관리 바로가기
+- [x] 사용자 관리 바로가기 (OWNER만)
 - [x] 데이터 관리 (업로드 이력 조회/삭제)
 - [x] 프로필 설정 — 이름 변경, 비밀번호 변경 (Phase 8)
-- [x] 사용자 관리 — 역할/채널 권한 설정, 사용자 삭제 (Phase 8)
+- [x] 사용자 관리 — 사용자 추가, 역할/채널 권한 설정, 사용자 삭제 (Phase 8)
 - [ ] Notion 연동 설정 (Phase 10)
 
 ### 추가 개선 아이디어
@@ -532,9 +561,11 @@ ipconfig | grep "IPv4"
 | users | `OWNER` | - | `OWNER` | `OWNER` |
 | user/profile | - | - | `requireAuth` | - |
 | user/password | - | `requireAuth` | - | - |
+| report/auto | 인증 없음 (내부용) | - | - | - |
+| report/generated | `requireAuth` | - | - | `OWNER, MANAGER` |
 | sync/smartstore | 인증 없음 (내부용) | 인증 없음 (내부용) | - | - |
 
-> sync/smartstore는 로컬 Windows 작업 스케줄러에서 호출하는 내부용 API로, Vercel 배포 시 `NEXT_PUBLIC_HIDE_API_SYNC=true`로 UI를 숨김 처리합니다.
+> sync/smartstore, report/auto는 로컬 Windows 작업 스케줄러에서 호출하는 내부용 API입니다. Vercel 배포 시 `NEXT_PUBLIC_HIDE_API_SYNC=true`로 동기화 UI를 숨김 처리합니다.
 
 ### 향후 개선 사항
 
