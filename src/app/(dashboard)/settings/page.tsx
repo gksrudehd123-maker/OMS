@@ -166,7 +166,7 @@ export default function SettingsPage() {
       </div>
 
       {/* 테마 설정 */}
-      <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+      <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
         <h2 className="text-lg font-semibold">테마 설정</h2>
         <p className="mt-1 text-sm text-muted-foreground">
           화면 테마를 선택하세요
@@ -218,7 +218,7 @@ export default function SettingsPage() {
       </div>
 
       {/* 기본값 설정 */}
-      <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+      <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
         <h2 className="text-lg font-semibold">기본값 설정</h2>
         <p className="mt-1 text-sm text-muted-foreground">
           신규 상품이 업로드로 자동 등록될 때 적용되는 기본값
@@ -300,7 +300,7 @@ export default function SettingsPage() {
       </div>
 
       {/* 채널 관리 바로가기 */}
-      <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+      <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-lg font-semibold">채널 관리</h2>
@@ -370,7 +370,7 @@ export default function SettingsPage() {
       </div>
 
       {/* 데이터 관리 */}
-      <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+      <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
         <h2 className="text-lg font-semibold">데이터 관리</h2>
         <p className="mt-1 text-sm text-muted-foreground">
           업로드 이력 조회 및 데이터 삭제

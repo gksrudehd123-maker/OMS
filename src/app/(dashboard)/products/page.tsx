@@ -187,8 +187,8 @@ export default function ProductsPage() {
         </p>
       </div>
 
-      <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
-        <div className="mb-4 flex items-center justify-between">
+      <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
+        <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
             <span className="text-sm text-muted-foreground">
               총 {total}개 상품
@@ -217,7 +217,7 @@ export default function ProductsPage() {
               setSearch(e.target.value);
               setPage(1);
             }}
-            className="rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring sm:w-auto"
           />
         </div>
 
@@ -387,7 +387,7 @@ export default function ProductsPage() {
               </div>
 
               {/* 배송비 */}
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div className="space-y-1.5">
                   <label className="text-sm font-medium">기본 배송비 (원)</label>
                   <input
@@ -416,7 +416,7 @@ export default function ProductsPage() {
                   <p className="text-xs font-medium text-orange-700 dark:text-orange-400">
                     로켓그로스 전용
                   </p>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <div className="space-y-1.5">
                       <label className="text-sm font-medium">입출고배송비 (원/개)</label>
                       <input

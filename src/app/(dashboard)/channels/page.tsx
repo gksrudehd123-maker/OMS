@@ -136,7 +136,7 @@ export default function ChannelsPage() {
     <div className="space-y-6">
       <ProgressBar loading={loading} />
       <Toaster richColors position="top-right" />
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold">채널 관리</h1>
           <p className="text-sm text-muted-foreground">
@@ -145,7 +145,7 @@ export default function ChannelsPage() {
         </div>
         <button
           onClick={() => setShowForm(!showForm)}
-          className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+          className="flex items-center gap-2 self-start rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
         >
           <Plus className="h-4 w-4" />
           채널 추가
@@ -153,9 +153,9 @@ export default function ChannelsPage() {
       </div>
 
       {showForm && (
-        <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+        <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
           <h3 className="mb-4 text-lg font-semibold">새 채널 등록</h3>
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <div>
               <label className="mb-1 block text-sm font-medium">채널명</label>
               <input
@@ -219,7 +219,7 @@ export default function ChannelsPage() {
                 <Skeleton className="h-5 w-12 rounded-full" />
               </div>
               <Skeleton className="mt-2 h-4 w-32" />
-              <div className="mt-4 grid grid-cols-2 gap-2">
+              <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
                 <div>
                   <Skeleton className="h-3 w-12 mb-1" />
                   <Skeleton className="h-5 w-16" />
@@ -258,7 +258,7 @@ export default function ChannelsPage() {
                 </span>
               </div>
               <p className="mt-1 text-sm text-muted-foreground">{ch.code}</p>
-              <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
+              <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2 text-sm">
                 <div>
                   <span className="text-muted-foreground">수수료율</span>
                   <p className="font-mono font-medium">{ch.feeRate}%</p>

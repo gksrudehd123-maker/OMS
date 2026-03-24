@@ -255,7 +255,7 @@ export function UploadZone({
     <div className="space-y-4">
       <div
         {...getRootProps()}
-        className={`flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed p-8 transition-colors ${
+        className={`flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed p-6 sm:p-8 transition-colors ${
           isDragActive
             ? 'border-primary bg-primary/5'
             : 'border-border hover:border-primary/50'
@@ -336,7 +336,7 @@ export function UploadZone({
 
                 {isRGUpload ? (
                   /* RG 전용 필드 */
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <div className="space-y-1">
                       <label className="text-xs text-muted-foreground">
                         원가 (원)
@@ -405,7 +405,7 @@ export function UploadZone({
                   </div>
                 ) : (
                   /* 기존 필드 (스마트스토어/쿠팡 윙) */
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <div className="space-y-1">
                       <label className="text-xs text-muted-foreground">
                         판매가 (원)

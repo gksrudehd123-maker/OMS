@@ -67,7 +67,7 @@ export function DailySalesTable({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-lg font-semibold">판매 내역 (로켓그로스)</h2>
         <div className="flex items-center gap-2">
           <input
@@ -78,9 +78,9 @@ export function DailySalesTable({
               setSearch(e.target.value);
               setPage(1);
             }}
-            className="rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring sm:w-auto"
           />
-          <span className="text-sm text-muted-foreground">총 {total}건</span>
+          <span className="shrink-0 text-sm text-muted-foreground">총 {total}건</span>
         </div>
       </div>
 

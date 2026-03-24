@@ -99,7 +99,7 @@
   }
 
   /* 레이아웃 초기화: 사이드바 패딩 제거 */
-  .pl-60 {
+  .lg\:pl-60 {
     padding-left: 0 !important;
   }
 

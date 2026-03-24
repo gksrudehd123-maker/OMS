@@ -197,7 +197,7 @@ export default function MarginsPage() {
             {kpiItems.map((item) => (
               <div
                 key={item.label}
-                className={`rounded-xl border p-6 shadow-sm transition-shadow hover:shadow-md ${
+                className={`rounded-xl border p-4 shadow-sm transition-shadow hover:shadow-md sm:p-6 ${
                   item.highlight
                     ? item.positive
                       ? 'border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-950'
@@ -216,7 +216,7 @@ export default function MarginsPage() {
                       <TrendingDown className="h-4 w-4 text-red-600" />
                     ))}
                 </div>
-                <p className="mt-2 font-mono text-2xl font-semibold">
+                <p className="mt-2 font-mono text-xl font-semibold sm:text-2xl">
                   {item.value}
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">
@@ -229,7 +229,7 @@ export default function MarginsPage() {
           {/* 차트 영역 */}
           <div className="grid gap-4 lg:grid-cols-2">
             {/* 마진율 분포 차트 */}
-            <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+            <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
               <h2 className="text-lg font-semibold">마진율 분포</h2>
               <p className="text-xs text-muted-foreground">
                 상품별 마진율 구간 분포 (5% 단위)
@@ -288,7 +288,7 @@ export default function MarginsPage() {
             </div>
 
             {/* 매출 vs 마진율 산점도 */}
-            <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+            <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
               <h2 className="text-lg font-semibold">매출 vs 마진율</h2>
               <p className="text-xs text-muted-foreground">
                 매출이 크고 마진율이 높을수록 우상단에 위치
@@ -389,7 +389,7 @@ export default function MarginsPage() {
           </div>
 
           {/* 상품별 마진 테이블 */}
-          <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+          <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
             <h2 className="text-lg font-semibold">상품별 마진 상세</h2>
             <div className="mt-4 overflow-x-auto">
               <table className="w-full text-sm">

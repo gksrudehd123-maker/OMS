@@ -163,7 +163,7 @@ export function DateRangeFilter({
       </div>
 
       {/* 날짜 직접 선택 */}
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <input
           type="date"
           value={from}

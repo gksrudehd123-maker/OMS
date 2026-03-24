@@ -136,7 +136,7 @@ export default function AdCostsPage() {
       </div>
 
       {/* 광고비 입력 */}
-      <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+      <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
         <h2 className="text-lg font-semibold">광고비 입력</h2>
         <p className="mt-1 text-sm text-muted-foreground">
           같은 채널+날짜에 이미 등록된 광고비가 있으면 자동으로 수정됩니다
@@ -178,7 +178,7 @@ export default function AdCostsPage() {
               value={formCost}
               onChange={(e) => setFormCost(e.target.value)}
               placeholder="0"
-              className="w-32 rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring sm:w-32"
             />
           </div>
           <div>
@@ -190,7 +190,7 @@ export default function AdCostsPage() {
               value={formMemo}
               onChange={(e) => setFormMemo(e.target.value)}
               placeholder="네이버 검색광고 등"
-              className="w-48 rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring sm:w-48"
             />
           </div>
           <button
@@ -205,8 +205,8 @@ export default function AdCostsPage() {
       </div>
 
       {/* 광고비 내역 */}
-      <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
           <h2 className="text-lg font-semibold">광고비 내역</h2>
           <div className="flex items-center gap-3">
             <select

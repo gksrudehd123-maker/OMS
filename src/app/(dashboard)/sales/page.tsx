@@ -102,7 +102,7 @@ export default function SalesPage() {
 
       {/* API 동기화 영역 (로컬 환경에서만 표시) */}
       {!process.env.NEXT_PUBLIC_HIDE_API_SYNC && (
-        <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+        <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
           <h2 className="text-lg font-semibold">스마트스토어 API 동기화</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             네이버 커머스 API로 주문 데이터를 자동으로 가져옵니다
@@ -147,7 +147,7 @@ export default function SalesPage() {
       )}
 
       {/* 엑셀 업로드 영역 */}
-      <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+      <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
         <div className="mb-4 flex flex-wrap items-center gap-4">
           <h2 className="text-lg font-semibold">엑셀 업로드</h2>
           <select
@@ -187,7 +187,7 @@ export default function SalesPage() {
       </div>
 
       {/* 주문/판매 목록 */}
-      <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+      <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
         {isRocketGrowth ? (
           <DailySalesTable channelId={selectedChannel} refreshKey={refreshKey} />
         ) : (

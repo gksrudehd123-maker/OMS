@@ -257,7 +257,7 @@ export default function ReportsPage() {
       </div>
 
       {/* 기간 선택 + 조회 */}
-      <div className="rounded-xl border border-border bg-card p-6 shadow-sm" data-print-hide>
+      <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6" data-print-hide>
         <div className="space-y-4">
           <DateRangeFilter
             from={from}
@@ -279,7 +279,7 @@ export default function ReportsPage() {
       {/* 로딩 스켈레톤 */}
       {loading && !data && (
         <div className="space-y-6">
-          <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+          <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
             <Skeleton className="h-5 w-24 mb-4" />
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {Array.from({ length: 7 }).map((_, i) => (
@@ -290,7 +290,7 @@ export default function ReportsPage() {
               ))}
             </div>
           </div>
-          <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+          <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
             <Skeleton className="h-5 w-32 mb-4" />
             <Skeleton className="h-72 w-full rounded-lg" />
           </div>
@@ -339,7 +339,7 @@ export default function ReportsPage() {
           <div ref={reportRef} className="space-y-6">
           {/* KPI 요약 + 매출/마진 추이 차트 */}
           <div data-pdf-section className="space-y-6">
-          <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+          <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
             <h2 className="text-lg font-semibold">KPI 요약</h2>
             <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {[
@@ -377,7 +377,7 @@ export default function ReportsPage() {
 
           {/* 매출/마진 추이 차트 */}
           {data.dailyData.length > 0 && (
-            <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+            <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
               <h2 className="text-lg font-semibold">매출/마진 추이</h2>
               <div className="mt-4 h-72">
                 <ResponsiveContainer width="100%" height="100%">
@@ -431,7 +431,7 @@ export default function ReportsPage() {
           <div data-pdf-section className="space-y-6">
           <div className="grid gap-4 lg:grid-cols-2">
             {/* 매출 구성 비율 (파이 차트) */}
-            <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+            <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
               <h2 className="text-lg font-semibold">채널별 매출 비율</h2>
               <div className="mt-4 h-52">
                 <ResponsiveContainer width="100%" height="100%">
@@ -474,7 +474,7 @@ export default function ReportsPage() {
             </div>
 
             {/* 상품별 출고 수량 Top 5 */}
-            <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+            <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
               <h2 className="text-lg font-semibold">상품별 출고 수량 Top 5</h2>
               <div className="mt-4 h-64">
                 <ResponsiveContainer width="100%" height="100%">
@@ -530,7 +530,7 @@ export default function ReportsPage() {
           </div>
 
           {/* 일별 매출 테이블 */}
-          <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+          <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
             <h2 className="text-lg font-semibold">일별 매출</h2>
             <div className="mt-4 overflow-x-auto">
               <table className="w-full text-sm">
@@ -564,7 +564,7 @@ export default function ReportsPage() {
           </div>
 
           {/* 상품별 실적 테이블 */}
-          <div data-pdf-section className="rounded-xl border border-border bg-card p-6 shadow-sm">
+          <div data-pdf-section className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
             <h2 className="text-lg font-semibold">상품별 실적</h2>
             <div className="mt-4 overflow-x-auto">
               <table className="w-full text-sm">
@@ -622,7 +622,7 @@ export default function ReportsPage() {
 
           {/* 채널별 비교 테이블 */}
           {data.channelData.length > 0 && (
-          <div data-pdf-section className="rounded-xl border border-border bg-card p-6 shadow-sm">
+          <div data-pdf-section className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
             <h2 className="text-lg font-semibold">채널별 비교</h2>
             <div className="mt-4 overflow-x-auto">
               <table className="w-full text-sm">
@@ -679,7 +679,7 @@ export default function ReportsPage() {
       )}
 
       {!data && !loading && (
-        <div className="rounded-xl border border-border bg-card p-6 shadow-sm" data-print-hide>
+        <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6" data-print-hide>
           <div className="flex h-48 flex-col items-center justify-center gap-2 text-muted-foreground">
             <Download className="h-8 w-8" />
             <p className="text-sm">기간을 선택하고 조회 버튼을 눌러주세요</p>

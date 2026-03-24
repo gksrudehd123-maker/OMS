@@ -170,7 +170,7 @@ export default function DashboardPage() {
           ? Array.from({ length: 5 }).map((_, i) => (
               <div
                 key={i}
-                className="rounded-xl border border-border bg-card p-6 shadow-sm"
+                className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6"
               >
                 <div className="flex items-center justify-between">
                   <Skeleton className="h-4 w-16" />
@@ -182,7 +182,7 @@ export default function DashboardPage() {
           : kpiCards.map((card) => (
               <div
                 key={card.label}
-                className="rounded-xl border border-border bg-card p-6 shadow-sm transition-shadow hover:shadow-md"
+                className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6 transition-shadow hover:shadow-md"
               >
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">
@@ -193,7 +193,7 @@ export default function DashboardPage() {
                   </div>
                 </div>
                 <div className="mt-3">
-                  <span className="font-mono text-2xl font-semibold">
+                  <span className="font-mono text-xl font-semibold sm:text-2xl">
                     {card.value}
                   </span>
                 </div>
@@ -202,7 +202,7 @@ export default function DashboardPage() {
       </div>
 
       {/* 매출 추이 차트 */}
-      <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+      <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
         <h2 className="text-lg font-semibold">매출 추이</h2>
         {loading ? (
           <div className="mt-4 space-y-3">
@@ -213,7 +213,7 @@ export default function DashboardPage() {
             데이터가 없습니다
           </div>
         ) : (
-          <div className="mt-4 h-72">
+          <div className="mt-4 h-56 sm:h-72">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={dailyData}>
                 <defs>
@@ -297,12 +297,12 @@ export default function DashboardPage() {
 
       {/* 하단 차트 영역 */}
       <div className="grid gap-4 lg:grid-cols-2">
-        <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+        <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
           <h2 className="text-lg font-semibold">채널별 매출/마진</h2>
           {loading ? (
             <Skeleton className="mt-4 h-[300px] w-full rounded-lg" />
           ) : data?.channelData && data.channelData.length > 0 ? (
-            <div className="mt-4 h-[300px]">
+            <div className="mt-4 h-64 sm:h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={data.channelData}>
                   <CartesianGrid
@@ -358,12 +358,12 @@ export default function DashboardPage() {
             </div>
           )}
         </div>
-        <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+        <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
           <h2 className="text-lg font-semibold">상품별 출고 수량 Top 10</h2>
           {loading ? (
             <Skeleton className="mt-4 h-[300px] w-full rounded-lg" />
           ) : data?.productMarginRank && data.productMarginRank.length > 0 ? (
-            <div className="mt-4 h-[300px]">
+            <div className="mt-4 h-64 sm:h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
                   data={(() => {
