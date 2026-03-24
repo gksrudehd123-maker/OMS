@@ -1,7 +1,8 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { FileSpreadsheet, FileText, Download, Loader2, Printer } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { FileSpreadsheet, FileText, Download, Loader2, Printer, Trash2, Clock } from 'lucide-react';
 import { DateRangeFilter } from '@/components/common/date-range-filter';
 import { ChannelFilter } from '@/components/common/channel-filter';
 import { ProgressBar } from '@/components/ui/progress-bar';
@@ -70,6 +71,7 @@ type ReportData = {
 };
 
 export default function ReportsPage() {
+  const queryClient = useQueryClient();
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
   const [channelId, setChannelId] = useState('');
@@ -78,6 +80,34 @@ export default function ReportsPage() {
   const [excelLoading, setExcelLoading] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);
   const reportRef = useRef<HTMLDivElement>(null);
+
+  // 생성된 리포트 이력
+  type GeneratedReport = {
+    id: string;
+    type: string;
+    periodFrom: string;
+    periodTo: string;
+    createdAt: string;
+  };
+
+  const { data: generatedReports = [] } = useQuery<GeneratedReport[]>({
+    queryKey: ['generated-reports'],
+    queryFn: async () => {
+      const res = await fetch('/api/report/generated');
+      if (!res.ok) return [];
+      return res.json();
+    },
+  });
+
+  const deleteReportMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await fetch(`/api/report/generated/${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('삭제 실패');
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['generated-reports'] });
+    },
+  });
 
   const fetchReport = async () => {
     if (!from || !to) return;
@@ -687,6 +717,68 @@ export default function ReportsPage() {
           <div className="flex h-48 flex-col items-center justify-center gap-2 text-muted-foreground">
             <Download className="h-8 w-8" />
             <p className="text-sm">기간을 선택하고 조회 버튼을 눌러주세요</p>
+          </div>
+        </div>
+      )}
+
+      {/* 자동 생성된 리포트 이력 */}
+      {generatedReports.length > 0 && (
+        <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Clock className="h-5 w-5 text-muted-foreground" />
+            <h2 className="text-lg font-semibold">자동 생성된 리포트</h2>
+          </div>
+          <div className="overflow-x-auto rounded-lg border border-border">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border bg-muted/50">
+                  <th className="whitespace-nowrap px-4 py-3 text-left font-medium">유형</th>
+                  <th className="whitespace-nowrap px-4 py-3 text-left font-medium">기간</th>
+                  <th className="whitespace-nowrap px-4 py-3 text-left font-medium">생성일</th>
+                  <th className="whitespace-nowrap px-4 py-3 text-center font-medium">관리</th>
+                </tr>
+              </thead>
+              <tbody>
+                {generatedReports.map((r) => (
+                  <tr key={r.id} className="border-b border-border last:border-0 hover:bg-muted/30">
+                    <td className="whitespace-nowrap px-4 py-3">
+                      <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
+                        r.type === 'weekly'
+                          ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
+                          : 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300'
+                      }`}>
+                        {r.type === 'weekly' ? '주간' : '월간'}
+                      </span>
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3 text-muted-foreground">
+                      {new Date(r.periodFrom).toLocaleDateString('ko-KR')} ~ {new Date(r.periodTo).toLocaleDateString('ko-KR')}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3 text-muted-foreground">
+                      {new Date(r.createdAt).toLocaleString('ko-KR')}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3 text-center">
+                      <div className="flex items-center justify-center gap-1">
+                        <a
+                          href={`/api/report/generated/${r.id}/download`}
+                          className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                          title="엑셀 다운로드"
+                        >
+                          <Download className="h-4 w-4" />
+                        </a>
+                        <button
+                          onClick={() => deleteReportMutation.mutate(r.id)}
+                          disabled={deleteReportMutation.isPending}
+                          className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950"
+                          title="삭제"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       )}

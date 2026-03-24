@@ -163,6 +163,19 @@ model Setting {
   @@map("settings")
 }
 
+model GeneratedReport {
+  id         String   @id @default(cuid())
+  type       String   // "weekly" | "monthly"
+  periodFrom DateTime @db.Date
+  periodTo   DateTime @db.Date
+  reportData Json     // 리포트 데이터 스냅샷 (kpi, channelData, dailyData, productData)
+  createdAt  DateTime @default(now())
+
+  @@index([type])
+  @@index([createdAt])
+  @@map("generated_reports")
+}
+
 model DailySales {
   id                      String   @id @default(cuid())
   date                    DateTime @db.Date

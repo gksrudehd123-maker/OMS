@@ -150,6 +150,7 @@ export default function SettingsPage() {
   // 기본값 설정 state
   const [defaultShippingCost, setDefaultShippingCost] = useState('');
   const [defaultFreeShippingMin, setDefaultFreeShippingMin] = useState('');
+  const [autoReportSchedule, setAutoReportSchedule] = useState('off');
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [settingsInitialized, setSettingsInitialized] = useState(false);
@@ -163,6 +164,7 @@ export default function SettingsPage() {
       if (!settingsInitialized) {
         if (data.defaultShippingCost) setDefaultShippingCost(data.defaultShippingCost);
         if (data.defaultFreeShippingMin) setDefaultFreeShippingMin(data.defaultFreeShippingMin);
+        if (data.autoReportSchedule) setAutoReportSchedule(data.autoReportSchedule);
         setSettingsInitialized(true);
       }
       return data;
@@ -198,6 +200,7 @@ export default function SettingsPage() {
         body: JSON.stringify({
           defaultShippingCost: defaultShippingCost || '0',
           defaultFreeShippingMin: defaultFreeShippingMin || '',
+          autoReportSchedule: autoReportSchedule || 'off',
         }),
       });
       if (res.ok) {
@@ -542,6 +545,30 @@ export default function SettingsPage() {
             ))}
           </div>
         )}
+      </div>
+
+      {/* 자동 리포트 설정 */}
+      <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
+        <h2 className="text-lg font-semibold">자동 리포트</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          주간 또는 월간 리포트를 자동으로 생성합니다. 생성된 리포트는 리포트 페이지에서 확인할 수 있습니다.
+        </p>
+
+        <div className="mt-4 sm:max-w-xs">
+          <label className="text-sm font-medium">생성 주기</label>
+          <select
+            value={autoReportSchedule}
+            onChange={(e) => setAutoReportSchedule(e.target.value)}
+            className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+          >
+            <option value="off">비활성</option>
+            <option value="weekly">주간 (매주 월요일, 지난주 리포트)</option>
+            <option value="monthly">월간 (매월 1일, 지난달 리포트)</option>
+          </select>
+          <p className="mt-1.5 text-xs text-muted-foreground">
+            변경 후 아래 저장 버튼을 눌러 적용하세요.
+          </p>
+        </div>
       </div>
 
       {/* 사용자 관리 바로가기 (OWNER만) */}

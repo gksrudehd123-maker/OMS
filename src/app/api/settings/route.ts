@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { requireAuth, requireRole, isError } from '@/lib/auth-guard';
 
 // 설정 키 목록
-const VALID_KEYS = ['defaultShippingCost', 'defaultFreeShippingMin'];
+const VALID_KEYS = ['defaultShippingCost', 'defaultFreeShippingMin', 'autoReportSchedule'];
 
 export async function GET() {
   const user = await requireAuth();
