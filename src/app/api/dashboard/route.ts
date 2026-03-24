@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { calculateMargin } from '@/lib/helpers/margin-calc';
 import { calculateRGMargin } from '@/lib/helpers/rg-margin-calc';
-import { requireAuth, isError, checkChannelAccess, getChannelFilter } from '@/lib/auth-guard';
+import { requireAuth, isError, checkChannelAccess, getChannelFilter, isStaff } from '@/lib/auth-guard';
 
 export async function GET(request: NextRequest) {
   const user = await requireAuth();
@@ -216,27 +216,35 @@ export async function GET(request: NextRequest) {
   const netMargin = totalMargin - totalAdCostAmount;
   const avgMarginRate = totalSales > 0 ? Math.round((netMargin / totalSales) * 1000) / 10 : 0;
 
+  const staff = isStaff(user);
+
   const response = NextResponse.json({
     kpi: {
       totalSales: Math.round(totalSales),
-      totalMargin: Math.round(netMargin),
-      totalAdCost: Math.round(totalAdCostAmount),
-      avgMarginRate,
+      totalMargin: staff ? undefined : Math.round(netMargin),
+      totalAdCost: staff ? undefined : Math.round(totalAdCostAmount),
+      avgMarginRate: staff ? undefined : avgMarginRate,
       totalOrders: orders.length + rgSalesCount,
-      calculableCount,
+      calculableCount: staff ? undefined : calculableCount,
     },
     dailyData: Object.values(dailyMap)
-      .map((d) => ({ ...d, sales: Math.round(d.sales), margin: Math.round(d.margin) }))
+      .map((d) => ({
+        date: d.date,
+        sales: Math.round(d.sales),
+        margin: staff ? undefined : Math.round(d.margin),
+        orders: d.orders,
+      }))
       .sort((a, b) => a.date.localeCompare(b.date)),
     channelData: Object.values(channelMap)
       .map((ch) => ({
-        ...ch,
+        name: ch.name,
         sales: Math.round(ch.sales),
-        margin: Math.round(ch.margin),
-        marginRate: ch.sales > 0 ? Math.round((ch.margin / ch.sales) * 1000) / 10 : 0,
+        margin: staff ? undefined : Math.round(ch.margin),
+        marginRate: staff ? undefined : (ch.sales > 0 ? Math.round((ch.margin / ch.sales) * 1000) / 10 : 0),
+        orders: ch.orders,
       }))
       .sort((a, b) => b.sales - a.sales),
-    productMarginRank: Object.values(productMarginMap)
+    productMarginRank: staff ? [] : Object.values(productMarginMap)
       .map((p) => ({
         ...p,
         sales: Math.round(p.sales),

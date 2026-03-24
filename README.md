@@ -490,7 +490,7 @@ ipconfig | grep "IPv4"
 |---|------|------|----------|
 | ~~1~~ | ~~GET API 인증 누락~~ | ✅ 해결 — 전체 GET API에 `requireAuth()` 적용 완료 | - |
 | ~~2~~ | ~~회원가입 통제 없음~~ | ✅ 해결 — 첫 사용자만 공개 가입, 이후 OWNER만 추가 가능 | - |
-| 3 | **STAFF에 민감 데이터 노출** | 대시보드/리포트 API가 원가, 마진, 수수료율을 역할 구분 없이 반환. 브라우저 개발자도구로 확인 가능 | dashboard, report, products/[id] GET |
+| ~~3~~ | ~~STAFF에 민감 데이터 노출~~ | ✅ 해결 — STAFF일 때 원가/마진/수수료율 응답에서 제거 (dashboard, report, orders, daily-sales, products) | - |
 | ~~4~~ | ~~upload DELETE 인증 없음~~ | ✅ 해결 — `requireRole('OWNER', 'MANAGER')` 적용 | - |
 
 #### 보안 헤더/설정 (중간)

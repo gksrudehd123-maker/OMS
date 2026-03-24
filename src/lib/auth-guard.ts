@@ -51,6 +51,11 @@ export function getChannelFilter(user: SessionUser): string[] | null {
   return user.allowedChannels;
 }
 
+// STAFF 역할 여부 확인 — 민감 데이터(원가, 마진, 수수료) 차단용
+export function isStaff(user: SessionUser): boolean {
+  return user.role === 'STAFF';
+}
+
 // 타입 가드: NextResponse인지 확인
 export function isError(result: SessionUser | NextResponse): result is NextResponse {
   return result instanceof NextResponse;

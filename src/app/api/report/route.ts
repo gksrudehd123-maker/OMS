@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { calculateMargin } from '@/lib/helpers/margin-calc';
 import { calculateRGMargin } from '@/lib/helpers/rg-margin-calc';
-import { requireAuth, isError, checkChannelAccess, getChannelFilter } from '@/lib/auth-guard';
+import { requireAuth, isError, checkChannelAccess, getChannelFilter, isStaff } from '@/lib/auth-guard';
 
 export async function GET(request: NextRequest) {
   const user = await requireAuth();
@@ -214,42 +214,52 @@ export async function GET(request: NextRequest) {
     }
   }
 
+  const staff = isStaff(user);
+
   const response = NextResponse.json({
     period: { from, to },
     kpi: {
       totalSales: Math.round(totalSales),
-      totalCost: Math.round(totalCost),
-      totalFee: Math.round(totalFee),
-      totalShipping: Math.round(totalShipping),
-      totalMargin: Math.round(totalMargin),
-      avgMarginRate: totalSales > 0 ? Math.round((totalMargin / totalSales) * 1000) / 10 : 0,
+      totalCost: staff ? undefined : Math.round(totalCost),
+      totalFee: staff ? undefined : Math.round(totalFee),
+      totalShipping: staff ? undefined : Math.round(totalShipping),
+      totalMargin: staff ? undefined : Math.round(totalMargin),
+      avgMarginRate: staff ? undefined : (totalSales > 0 ? Math.round((totalMargin / totalSales) * 1000) / 10 : 0),
       totalOrders: orders.length + dailySalesRecords.length,
     },
     channelData: Object.values(channelMap)
       .map((ch) => ({
-        ...ch,
+        name: ch.name,
         sales: Math.round(ch.sales),
-        margin: Math.round(ch.margin),
-        cost: Math.round(ch.cost),
-        fee: Math.round(ch.fee),
-        shipping: Math.round(ch.shipping),
-        marginRate: ch.sales > 0 ? Math.round((ch.margin / ch.sales) * 1000) / 10 : 0,
+        orders: ch.orders,
+        margin: staff ? undefined : Math.round(ch.margin),
+        cost: staff ? undefined : Math.round(ch.cost),
+        fee: staff ? undefined : Math.round(ch.fee),
+        shipping: staff ? undefined : Math.round(ch.shipping),
+        marginRate: staff ? undefined : (ch.sales > 0 ? Math.round((ch.margin / ch.sales) * 1000) / 10 : 0),
       }))
       .sort((a, b) => b.sales - a.sales),
     dailyData: Object.values(dailyMap)
-      .map((d) => ({ ...d, sales: Math.round(d.sales), margin: Math.round(d.margin) }))
+      .map((d) => ({
+        date: d.date,
+        sales: Math.round(d.sales),
+        margin: staff ? undefined : Math.round(d.margin),
+        orders: d.orders,
+      }))
       .sort((a, b) => a.date.localeCompare(b.date)),
     productData: Object.values(productMap)
       .map((p) => ({
-        ...p,
+        name: p.name,
+        optionInfo: p.optionInfo,
+        quantity: p.quantity,
         sales: Math.round(p.sales),
-        cost: Math.round(p.cost),
-        fee: Math.round(p.fee),
-        shipping: Math.round(p.shipping),
-        margin: Math.round(p.margin),
-        marginRate: p.sales > 0 ? Math.round((p.margin / p.sales) * 1000) / 10 : 0,
+        cost: staff ? undefined : Math.round(p.cost),
+        fee: staff ? undefined : Math.round(p.fee),
+        shipping: staff ? undefined : Math.round(p.shipping),
+        margin: staff ? undefined : Math.round(p.margin),
+        marginRate: staff ? undefined : (p.sales > 0 ? Math.round((p.margin / p.sales) * 1000) / 10 : 0),
       }))
-      .sort((a, b) => b.margin - a.margin),
+      .sort((a, b) => (b.sales || 0) - (a.sales || 0)),
   });
 
   response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');

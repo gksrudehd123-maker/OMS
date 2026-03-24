@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { calculateMargin } from '@/lib/helpers/margin-calc';
-import { requireAuth, isError, checkChannelAccess, getChannelFilter } from '@/lib/auth-guard';
+import { requireAuth, isError, checkChannelAccess, getChannelFilter, isStaff } from '@/lib/auth-guard';
 
 export async function GET(request: NextRequest) {
   const user = await requireAuth();
@@ -116,9 +116,10 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  const ordersWithMargin = orders.map((order) => ({
-    ...order,
-    margin: calculateMargin({
+  const staff = isStaff(user);
+
+  const ordersWithMargin = orders.map((order) => {
+    const margin = calculateMargin({
       sellingPrice: order.product.sellingPrice ? Number(order.product.sellingPrice) : null,
       costPrice: order.product.costPrice ? Number(order.product.costPrice) : null,
       quantity: order.quantity,
@@ -128,8 +129,14 @@ export async function GET(request: NextRequest) {
       freeShippingMin: order.product.freeShippingMin ? Number(order.product.freeShippingMin) : null,
       orderTotal: orderTotals[order.orderNumber] || 0,
       isAnyFreeShipping: orderFreeShipping[order.orderNumber] || false,
-    }),
-  }));
+    });
+
+    if (staff) {
+      const { product: _p, channel: _c, ...rest } = order;
+      return { ...rest, margin: undefined };
+    }
+    return { ...order, margin };
+  });
 
   const response = NextResponse.json({
     orders: ordersWithMargin,

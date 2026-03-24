@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { calculateRGMargin } from '@/lib/helpers/rg-margin-calc';
-import { requireAuth, isError, checkChannelAccess, getChannelFilter } from '@/lib/auth-guard';
+import { requireAuth, isError, checkChannelAccess, getChannelFilter, isStaff } from '@/lib/auth-guard';
 
 export async function GET(request: NextRequest) {
   const user = await requireAuth();
@@ -40,6 +40,8 @@ export async function GET(request: NextRequest) {
     prisma.dailySales.count({ where }),
   ]);
 
+  const staff = isStaff(user);
+
   const salesWithMargin = sales.map((ds) => {
     const margin = calculateRGMargin({
       salesAmount: Number(ds.salesAmount),
@@ -53,6 +55,11 @@ export async function GET(request: NextRequest) {
         ? Number(ds.product.couponDiscount)
         : null,
     });
+
+    if (staff) {
+      const { product: _p, channel: _c, ...rest } = ds;
+      return { ...rest, margin: undefined };
+    }
 
     return {
       ...ds,

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { requireAuth, isError } from '@/lib/auth-guard';
+import { requireAuth, isError, isStaff } from '@/lib/auth-guard';
 
 export async function GET(request: NextRequest) {
   const user = await requireAuth();
@@ -53,7 +53,12 @@ export async function GET(request: NextRequest) {
     prisma.product.count({ where }),
   ]);
 
-  const response = NextResponse.json({ products, total, page, limit });
+  const staff = isStaff(user);
+  const sanitized = staff
+    ? products.map(({ costPrice: _, feeRate: _f, shippingCost: _s, freeShippingMin: _fm, couponDiscount: _cd, fulfillmentFee: _ff, ...rest }) => rest)
+    : products;
+
+  const response = NextResponse.json({ products: sanitized, total, page, limit });
   response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
   return response;
 }
