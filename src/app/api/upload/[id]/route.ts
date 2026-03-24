@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { requireAuth, isError } from '@/lib/auth-guard';
+import { requireAuth, requireRole, isError } from '@/lib/auth-guard';
 
 export async function GET(
   request: NextRequest,
@@ -28,6 +28,9 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } },
 ) {
+  const user = await requireRole('OWNER', 'MANAGER');
+  if (isError(user)) return user;
+
   await prisma.upload.delete({ where: { id: params.id } });
   return NextResponse.json({ success: true });
 }
