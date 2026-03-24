@@ -422,7 +422,8 @@ ipconfig | grep "IPv4"
 - [x] User 모델에 allowedChannels 필드 추가 (접근 가능 채널 지정)
 - [x] API 인증 미들웨어 (세션 없으면 401, 역할 부족 시 403)
 - [x] 역할별 API 접근 제어 (채널/설정: OWNER만, 상품/광고비: OWNER+MANAGER, 업로드: 로그인 필수)
-- [ ] 대시보드 채널 버튼을 사용자 권한에 따라 필터링
+- [x] 대시보드 채널 버튼을 사용자 권한에 따라 필터링 (allowedChannels 기반, OWNER 전체 허용, 채널 1개 시 자동 선택)
+- [x] Dashboard/Report API 채널 접근 권한 서버 검증 (checkChannelAccess + getChannelFilter)
 - [ ] 사용자 관리 페이지 (OWNER가 역할/채널 권한 설정)
 - [ ] API Rate Limiting
 
@@ -476,15 +477,52 @@ ipconfig | grep "IPv4"
 | XSS | React — JSX 출력 시 HTML escape 기본 적용 |
 | CSRF | Next.js API Route — same-origin 요청만 허용 |
 | 파일 업로드 | `.xlsx`만 허용, 서버에서 파싱 후 DB 저장 (파일 저장 안 함) |
+| 환경 변수 | `NEXT_PUBLIC_`에 민감 정보 없음 (APP_NAME, APP_URL, HIDE_API_SYNC만 해당) |
+| 비밀번호 해싱 | bcryptjs (hash rounds 12) |
+| 인증 인프라 | NextAuth.js JWT + Middleware 페이지 보호 |
 
-### 다중 사용자 전환 전 필수 조치
+### 보안 감사 결과 (2026-03-24 기준)
 
-| 우선순위 | 항목 | 설명 | 해결 시점 |
-|----------|------|------|-----------|
-| **높음** | 인증 미적용 | 모든 API가 인증 없이 공개 상태. URL을 아는 누구나 데이터 조회/수정/삭제 가능 | Phase 8 |
-| **높음** | 역할 기반 접근 제어 | STAFF 역할에게 마진/원가 등 민감 데이터 차단 필요 | Phase 8 |
-| 중간 | API Rate Limiting | 무한 반복 호출에 의한 DB 부하 방어 (ex: `next-rate-limit`, Vercel Edge Config) | Phase 8 이후 |
-| 낮음 | 에러 메시지 상세 노출 | API 에러 응답에 내부 정보가 포함될 수 있음. 프로덕션에서는 일반 메시지로 대체 권장 | Phase 8 이후 |
+#### 즉시 해결 필요 (높음)
+
+| # | 항목 | 설명 | 해당 API |
+|---|------|------|----------|
+| 1 | **GET API 인증 누락** | 조회 API 대부분이 인증 없이 공개 상태. URL만 알면 누구나 데이터 조회 가능 | orders, daily-sales, products, ad-costs, upload, settings, channels GET |
+| 2 | **회원가입 통제 없음** | `/api/auth/register`가 누구나 접근 가능. 외부인이 계정 생성 가능 | auth/register POST |
+| 3 | **STAFF에 민감 데이터 노출** | 대시보드/리포트 API가 원가, 마진, 수수료율을 역할 구분 없이 반환. 브라우저 개발자도구로 확인 가능 | dashboard, report, products/[id] GET |
+| 4 | **upload DELETE 인증 없음** | 누구나 업로드 삭제 가능 (CASCADE로 주문 데이터까지 삭제됨) | upload/[id] DELETE |
+
+#### 보안 헤더/설정 (중간)
+
+| # | 항목 | 설명 |
+|---|------|------|
+| 5 | **보안 헤더 미설정** | next.config.mjs에 CSP, X-Frame-Options, HSTS 등 없음 → XSS, 클릭재킹 취약 |
+| 6 | **빌드 에러 무시** | `ignoreBuildErrors: true`, `ignoreDuringBuilds: true` → 보안 문제가 빌드에서 감지 안 됨 |
+| 7 | **채널 접근 검증 불완전** | dashboard, report만 적용. orders, daily-sales, ad-costs GET에는 미적용 |
+| 8 | **비밀번호 정책 미흡** | 최소 6자만 검증, 복잡도 요구 없음. 재설정/변경 기능 없음 |
+
+#### 개선 권장 (낮음)
+
+| # | 항목 | 설명 |
+|---|------|------|
+| 9 | API Rate Limiting | 무한 반복 호출에 의한 DB 부하 방어 (ex: `next-rate-limit`, Vercel Edge Config) |
+| 10 | 에러 메시지 상세 노출 | API 에러 응답에 내부 정보 포함 가능. 프로덕션에서는 일반 메시지로 대체 권장 |
+| 11 | SessionProvider 갱신 설정 | 토큰 만료 시 자동 갱신 미설정 (NextAuth 기본값 사용) |
+
+### API 인증/권한 현황
+
+| API | GET | POST | PATCH | DELETE |
+|-----|-----|------|-------|--------|
+| dashboard | `requireAuth` + 채널 검증 | - | - | - |
+| report | `requireAuth` + 채널 검증 | - | - | - |
+| orders | **인증 없음** | - | - | - |
+| daily-sales | **인증 없음** | - | - | - |
+| products | **인증 없음** | `requireAuth` | `OWNER, MANAGER` | `OWNER, MANAGER` |
+| channels | **인증 없음** | `OWNER` | `OWNER` | - |
+| ad-costs | **인증 없음** | `OWNER, MANAGER` | - | `OWNER, MANAGER` |
+| upload | **인증 없음** | `requireAuth` | - | **인증 없음** |
+| settings | **인증 없음** | - | `OWNER` | - |
+| sync/smartstore | **인증 없음** | **인증 없음** | - | - |
 
 ### 환경 변수 보안
 

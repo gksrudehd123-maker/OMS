@@ -2,12 +2,20 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { calculateMargin } from '@/lib/helpers/margin-calc';
 import { calculateRGMargin } from '@/lib/helpers/rg-margin-calc';
+import { requireAuth, isError, checkChannelAccess, getChannelFilter } from '@/lib/auth-guard';
 
 export async function GET(request: NextRequest) {
+  const user = await requireAuth();
+  if (isError(user)) return user;
+
   const { searchParams } = new URL(request.url);
   const from = searchParams.get('from');
   const to = searchParams.get('to');
   const channelId = searchParams.get('channelId');
+
+  // 요청된 channelId가 사용자 권한에 포함되는지 확인
+  const channelError = checkChannelAccess(user, channelId);
+  if (channelError) return channelError;
 
   const dateFilter = from || to
     ? {
@@ -30,6 +38,14 @@ export async function GET(request: NextRequest) {
     orderWhere.channelId = channelId;
     dsWhere.channelId = channelId;
     adWhere.channelId = channelId;
+  }
+
+  // channelId 미지정 시, 허용된 채널만 필터링 (OWNER/빈 배열은 전체)
+  const allowedChannels = getChannelFilter(user);
+  if (!channelId && allowedChannels) {
+    orderWhere.channelId = { in: allowedChannels };
+    dsWhere.channelId = { in: allowedChannels };
+    adWhere.channelId = { in: allowedChannels };
   }
 
   // 3개 쿼리 병렬 실행 + 필요한 필드만 select

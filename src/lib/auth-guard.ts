@@ -7,6 +7,7 @@ type SessionUser = {
   name: string;
   email: string;
   role: string;
+  allowedChannels: string[];
 };
 
 // 인증 확인 — 로그인 필수
@@ -29,6 +30,25 @@ export async function requireRole(
     return NextResponse.json({ error: '접근 권한이 없습니다' }, { status: 403 });
   }
   return result;
+}
+
+// 채널 접근 권한 확인 — 요청된 channelId가 사용자의 허용 채널에 포함되는지 검증
+export function checkChannelAccess(
+  user: SessionUser,
+  channelId: string | null,
+): NextResponse | null {
+  if (!channelId) return null; // 전체 조회 — 쿼리 필터로 처리
+  if (user.role === 'OWNER') return null;
+  if (user.allowedChannels.length === 0) return null; // 빈 배열 = 전체 허용
+  if (user.allowedChannels.includes(channelId)) return null;
+  return NextResponse.json({ error: '해당 채널에 접근 권한이 없습니다' }, { status: 403 });
+}
+
+// 사용자의 허용 채널 조건을 Prisma where에 추가
+export function getChannelFilter(user: SessionUser): string[] | null {
+  if (user.role === 'OWNER') return null;
+  if (user.allowedChannels.length === 0) return null;
+  return user.allowedChannels;
 }
 
 // 타입 가드: NextResponse인지 확인
