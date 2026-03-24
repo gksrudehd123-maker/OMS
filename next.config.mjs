@@ -5,12 +5,6 @@ const nextConfig = {
   experimental: {
     serverComponentsExternalPackages: ['xlsx-populate'],
   },
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
   async headers() {
     return [
       {

@@ -79,7 +79,7 @@ export async function GET(request: NextRequest) {
   ]);
 
   // 같은 주문번호 목록으로 합산금액 조회 (N+1 제거: select로 최소 필드만)
-  const orderNumbers = [...new Set(orders.map((o) => o.orderNumber))];
+  const orderNumbers = Array.from(new Set(orders.map((o) => o.orderNumber)));
   const orderGroups =
     orderNumbers.length > 0
       ? await prisma.order.findMany({

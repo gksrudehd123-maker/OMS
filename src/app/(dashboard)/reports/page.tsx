@@ -448,14 +448,14 @@ export default function ReportsPage() {
                       outerRadius={80}
                       paddingAngle={3}
                       dataKey="value"
-                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      label={(({ name, percent }: { name?: string; percent?: number }) => `${name ?? ''} ${((percent ?? 0) * 100).toFixed(0)}%`) as never}
                     >
                       {channelBreakdown.map((_, index) => (
                         <Cell key={index} fill={PIE_COLORS[index % PIE_COLORS.length]} />
                       ))}
                     </Pie>
                     <Tooltip
-                      formatter={(value: number, name: string) => [`₩${value.toLocaleString()}`, name]}
+                      formatter={((value: unknown, name: unknown) => [`₩${Number(value).toLocaleString()}`, String(name)]) as never}
                     />
                   </PieChart>
                 </ResponsiveContainer>
