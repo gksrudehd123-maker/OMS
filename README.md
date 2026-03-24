@@ -510,7 +510,7 @@ ipconfig | grep "IPv4"
 - [x] Python 의존성 제거 (xlsx-populate 자체 암호 해제)
 - [x] 환경별 UI 분기 (Vercel에서 API 동기화 UI 숨김)
 - [x] 로딩 UX (전 페이지 ProgressBar + Skeleton UI)
-- [ ] 성능 최적화
+- [x] 성능 최적화
   - [x] TanStack Query 도입 (캐싱, 중복 요청 방지 — 전 페이지 적용 완료)
   - [x] DB 쿼리 최적화 (Promise.all 병렬화, select 최소화, aggregate 활용, N+1 제거)
   - [x] API 응답 캐싱 (Cache-Control s-maxage + stale-while-revalidate 전 API 적용)
@@ -523,10 +523,22 @@ ipconfig | grep "IPv4"
   - [x] 다이얼로그/업로드 영역 터치 UX
 - [ ] Vercel Analytics (현재 불필요 — 사용자 1명, 내부 도구. 팀원 추가 시 검토)
 
+### Phase 7.5 - 채널별 대시보드
+- [ ] 대시보드 상단 채널 선택 버튼 ([전체] [스마트스토어] [쿠팡 윙] [로켓그로스])
+- [ ] Dashboard API에 channelId 필터 파라미터 추가
+- [ ] 마진 분석 페이지에도 채널 필터 적용
+- [ ] 리포트 페이지 채널별 필터 적용
+
 ### Phase 8 - 인증 및 권한 관리
-- [ ] NextAuth.js 설정
+- [ ] NextAuth.js 설정 (Credentials Provider)
 - [ ] 로그인 / 회원가입 페이지
-- [ ] 역할 기반 접근 제어 (OWNER/MANAGER: 전체, STAFF: 마진/원가 차단)
+- [ ] 미로그인 시 로그인 페이지 리다이렉트
+- [ ] User 모델에 allowedChannels 필드 추가 (접근 가능 채널 지정)
+- [ ] 역할 기반 접근 제어 (OWNER: 전체, MANAGER: 전체 열람, STAFF: 지정 채널만 + 마진/원가 차단)
+- [ ] 대시보드 채널 버튼을 사용자 권한에 따라 필터링
+- [ ] API 인증 미들웨어 (세션 없으면 401)
+- [ ] 역할별 API 접근 제어 (STAFF는 원가 API 차단)
+- [ ] API Rate Limiting
 
 ### Phase 9 - 매출 데이터 자동 수집 (대부분 완료)
 - [x] 네이버 커머스 API 연동 (스마트스토어 주문 자동 수집)
@@ -550,7 +562,8 @@ ipconfig | grep "IPv4"
 - [x] 기본값 설정 (기본 배송비, 무료배송 기준금액)
 - [x] 채널 관리 바로가기
 - [x] 데이터 관리 (업로드 이력 조회/삭제)
-- [ ] 프로필 설정 (Phase 8 이후)
+- [ ] 프로필 설정 (Phase 8)
+- [ ] 사용자 관리 — 계정 생성, 역할/채널 권한 설정 (Phase 8)
 - [ ] Notion 연동 설정 (Phase 10)
 
 ---
