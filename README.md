@@ -152,9 +152,9 @@ NEXT_PUBLIC_HIDE_API_SYNC=false    # true: Vercel에서 API 동기화 UI 숨김
 NAVER_CLIENT_ID=...
 NAVER_CLIENT_SECRET=...
 
-# 쿠팡 API (현재 미사용 — IP 제한)
-COUPANG_ACCESS_KEY=...
-COUPANG_SECRET_KEY=...
+# 쿠팡 API (미사용 — IP 제한으로 엑셀 업로드 대체)
+# COUPANG_ACCESS_KEY=...
+# COUPANG_SECRET_KEY=...
 ```
 
 ---
@@ -299,140 +299,25 @@ OMS/
 
 ## Sentry - 에러 모니터링
 
-### 왜 필요한가?
-
-운영 중 에러가 발생했을 때, Sentry가 없으면 사용자가 "안돼요"라고 알려주기 전까지 에러 발생 사실 자체를 알 수 없습니다.
-Sentry를 연동하면 에러가 발생하는 순간 **자동으로 Sentry 대시보드에 기록**되어, 어떤 페이지에서 어떤 브라우저를 사용하는 사용자에게 어떤 에러가 발생했는지 스택트레이스까지 즉시 확인할 수 있습니다.
-
-### 주요 기능
-
-| 기능 | 설명 |
-|------|------|
-| **에러 자동 수집** | 프론트엔드(브라우저)와 백엔드(API Route) 모두에서 발생하는 에러를 자동으로 포착하여 Sentry 대시보드에 기록 |
-| **Session Replay** | 에러 발생 시 사용자가 어떤 동작을 했는지 화면 녹화를 재생할 수 있음. 에러 재현이 어려운 경우 특히 유용 |
-| **성능 모니터링** | API 응답 시간, 페이지 로딩 속도 등 성능 데이터를 수집하여 병목 구간을 파악 |
-| **라우터 전환 추적** | Next.js 페이지 이동 시 전환 성능을 자동으로 추적 |
-| **글로벌 에러 페이지** | 앱 전체에서 처리되지 않은 에러 발생 시 `global-error.tsx`에서 사용자에게 안내 메시지를 보여주고, 동시에 Sentry로 에러를 보고 |
-
-### 설정 상세
-
-```
-tracesSampleRate: 1.0           → 모든 요청의 성능 데이터를 100% 수집
-replaysOnErrorSampleRate: 1.0   → 에러 발생 시 세션 리플레이를 100% 녹화
-replaysSessionSampleRate: 0.1   → 일반(정상) 세션은 10%만 녹화 (비용 절약)
-```
-
-### 파일 구조
+프론트엔드/백엔드 에러를 자동 수집하여 Sentry 대시보드에 기록. Session Replay, 성능 모니터링, 라우터 전환 추적 포함. dev 환경에서는 비활성화 (컴파일 속도 개선).
 
 | 파일 | 역할 |
 |------|------|
-| `src/instrumentation.ts` | 서버(Node.js)와 엣지(Edge Runtime)에서 Sentry를 초기화하는 `register()` 함수. Next.js가 서버 시작 시 자동 호출 |
-| `src/instrumentation-client.ts` | 브라우저(클라이언트)에서 Sentry를 초기화. Session Replay 통합 및 라우터 전환 추적 설정 포함 |
-| `src/app/global-error.tsx` | 앱 전체 에러 바운더리. 처리되지 않은 에러 발생 시 `Sentry.captureException()`으로 에러를 보고하고, 사용자에게 "다시 시도" 버튼이 포함된 안내 화면을 표시 |
-| `next.config.mjs` | `withSentryConfig()`으로 Next.js 빌드를 감싸서 소스맵 업로드 및 Sentry 빌드 플러그인 적용 |
+| `src/instrumentation.ts` | 서버/엣지 Sentry 초기화 |
+| `src/instrumentation-client.ts` | 클라이언트 Sentry 초기화 + Session Replay |
+| `src/app/global-error.tsx` | 글로벌 에러 바운더리 → Sentry 보고 |
+| `next.config.mjs` | 프로덕션에서만 `withSentryConfig()` 적용 |
 
 ---
 
 ## TanStack Query - 서버 상태 관리
 
-### 왜 필요한가?
+전 페이지에 적용. API 데이터 캐싱(1분), 중복 요청 방지, 변경 시 자동 갱신(`invalidateQueries`).
 
-기존에는 모든 페이지에서 `useState` + `useEffect` + `fetch`를 조합해서 데이터를 불러왔습니다. 이 방식에는 다음과 같은 문제가 있습니다:
-
-```tsx
-// 이전 방식: 모든 페이지마다 이런 보일러플레이트 코드를 반복
-const [data, setData] = useState(null);
-const [loading, setLoading] = useState(true);
-
-useEffect(() => {
-  setLoading(true);
-  fetch('/api/dashboard')
-    .then(res => res.json())
-    .then(data => setData(data))
-    .finally(() => setLoading(false));
-}, [from, to]);
-```
-
-**문제점:**
-- 대시보드 → 상품관리 → 다시 대시보드로 돌아오면 **매번 빈 화면에서 다시 로딩** (깜빡임)
-- 채널 목록을 상품 관리와 설정 페이지에서 동시에 불러오면 **같은 API를 중복 호출**
-- 상품 수정 후 목록 갱신을 위해 **수동으로 상태를 업데이트**해야 함
-- 로딩/에러 상태를 **매번 직접 선언하고 관리**해야 함
-
-### TanStack Query 적용 후
-
-```tsx
-// 현재 방식: 선언적이고 간결
-const { data, isLoading } = useQuery({
-  queryKey: ['dashboard', from, to],
-  queryFn: () => fetch('/api/dashboard').then(res => res.json()),
-});
-```
-
-### 체감되는 차이
-
-| 항목 | 이전 (useState + useEffect) | 현재 (TanStack Query) |
-|------|---|---|
-| **페이지 전환 후 복귀** | 빈 화면 → 로딩 → 데이터 표시 (깜빡임) | 캐시된 데이터 즉시 표시, 백그라운드에서 최신 데이터 갱신 |
-| **같은 API 동시 호출** | 컴포넌트마다 각각 fetch → 2~3번 중복 호출 | 자동 중복 제거, 1번만 호출 후 결과 공유 |
-| **데이터 변경 후 목록 갱신** | `setProducts(prev => ...)` 수동 업데이트 | `invalidateQueries()` 한 줄로 자동 새로고침 |
-| **로딩/에러 상태** | useState로 직접 선언 + try/catch | `isLoading`, `isError` 자동 제공 |
-| **코드량** | fetch + useState 3개 + useEffect + try/catch | useQuery 한 줄 |
-
-### 적용된 페이지
-
-| 페이지 | 사용 패턴 | 설명 |
-|------|------|------|
-| **대시보드** (`page.tsx`) | `useQuery` | KPI, 차트 데이터 조회. 날짜 필터 변경 시 `queryKey`가 바뀌면서 자동 재조회 |
-| **상품 관리** (`products/page.tsx`) | `useQuery` + `useMutation` | 상품 목록 조회 + 수정/비활성화. 변경 성공 시 `invalidateQueries`로 목록 자동 갱신 |
-| **채널 관리** (`channels/page.tsx`) | `useQuery` + `useMutation` | 채널 목록 조회 + 등록/수정/활성화 토글 |
-| **광고비** (`ad-costs/page.tsx`) | `useQuery` + `useMutation` | 광고비 내역 조회 + 등록/삭제 |
-| **설정** (`settings/page.tsx`) | `useQuery` x3 | 기본값 설정, 채널 목록, 업로드 이력을 각각 독립적으로 조회 |
-| **주문 테이블** (`order-table.tsx`) | `useQuery` | 주문 목록 페이지네이션 + 검색 |
-| **판매 테이블** (`daily-sales-table.tsx`) | `useQuery` | 로켓그로스 판매 목록 페이지네이션 + 검색 |
-
-### QueryProvider 전역 설정
-
-```tsx
-// src/components/providers/query-provider.tsx
-new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 60 * 1000,        // 데이터를 1분간 "신선한" 상태로 유지
-                                     // → 1분 이내 페이지 전환 시 API 재호출 없이 캐시 사용
-      refetchOnWindowFocus: false,   // 브라우저 탭 전환 시 자동 재호출 끔
-                                     // → 내부 관리 도구이므로 실시간성이 불필요
-    },
-  },
-});
-```
-
-### useQuery vs useMutation
-
-| | useQuery | useMutation |
-|---|---|---|
-| **용도** | 데이터 **조회** (GET) | 데이터 **변경** (POST/PATCH/DELETE) |
-| **실행 시점** | 컴포넌트 마운트 시 자동 실행 | `mutate()` 호출 시 수동 실행 |
-| **캐싱** | `queryKey` 기반으로 자동 캐싱 | 캐싱 없음 (변경 작업이므로) |
-| **상태** | `isLoading`, `data`, `isError` | `isPending`, `isSuccess`, `isError` |
-| **연동** | - | `onSuccess`에서 `invalidateQueries()`로 관련 쿼리 자동 갱신 |
-
-```tsx
-// 예시: 상품 수정 → 목록 자동 갱신
-const productMutation = useMutation({
-  mutationFn: (data) => fetch(`/api/products/${id}`, { method: 'PATCH', body: ... }),
-  onSuccess: () => {
-    // 상품 수정이 성공하면 상품 목록 쿼리를 무효화 → 자동으로 다시 불러옴
-    queryClient.invalidateQueries({ queryKey: ['products'] });
-    toast.success('저장되었습니다');
-  },
-});
-
-// 저장 버튼에서 isPending으로 로딩 상태 표시
-<button disabled={productMutation.isPending}>
-  {productMutation.isPending ? '저장 중...' : '저장'}
-</button>
-```
+| 패턴 | 사용 페이지 |
+|------|------------|
+| `useQuery` | 대시보드, 주문 테이블, 판매 테이블, 설정 |
+| `useQuery` + `useMutation` | 상품 관리, 채널 관리, 광고비 |
 
 ---
 
@@ -552,15 +437,6 @@ ipconfig | grep "IPv4"
 - ~~쿠팡 Wing API 연동~~ (IP 제한 + 플레리오토 충돌 → 엑셀 업로드로 대체)
 - ~~쿠팡 로켓배송 엑셀 파서~~ (불필요 — 제외)
 
-### Phase 11 - SaaS 전환 (다중 셀러 서비스)
-> Phase 8 완료 후 진행. 현재 코드 구조(Prisma + Next.js API Route)에서 큰 변경 없이 전환 가능.
-
-- [ ] 테넌트 분리 (전체 테이블에 tenantId 추가, API에서 로그인 사용자의 tenantId 필터링)
-- [ ] 셀러 회원가입 + 온보딩 (가입 시 tenant 자동 생성, 채널 등록 안내, 첫 업로드 가이드)
-- [ ] 결제 연동 (토스페이먼츠 or Paddle — 월 구독 모델)
-- [ ] 플랜 분리 (Basic: 채널 1개 + 3개월 / Pro: 채널 무제한 + 1년 + 자동 리포트)
-- [ ] 랜딩 페이지 (서비스 소개, 요금제, 가입 유도)
-
 ### Phase 10 - Notion 연동 (CS 관리)
 - [ ] Notion API Integration 설정
 - [ ] CS 데이터베이스 조회/등록/수정 (양방향 동기화)
@@ -574,6 +450,15 @@ ipconfig | grep "IPv4"
 - [ ] 프로필 설정 (Phase 8)
 - [ ] 사용자 관리 — 계정 생성, 역할/채널 권한 설정 (Phase 8)
 - [ ] Notion 연동 설정 (Phase 10)
+
+### Phase 11 - SaaS 전환 (다중 셀러 서비스)
+> Phase 8 완료 후 진행. 현재 코드 구조(Prisma + Next.js API Route)에서 큰 변경 없이 전환 가능.
+
+- [ ] 테넌트 분리 (전체 테이블에 tenantId 추가, API에서 로그인 사용자의 tenantId 필터링)
+- [ ] 셀러 회원가입 + 온보딩 (가입 시 tenant 자동 생성, 채널 등록 안내, 첫 업로드 가이드)
+- [ ] 결제 연동 (토스페이먼츠 or Paddle — 월 구독 모델)
+- [ ] 플랜 분리 (Basic: 채널 1개 + 3개월 / Pro: 채널 무제한 + 1년 + 자동 리포트)
+- [ ] 랜딩 페이지 (서비스 소개, 요금제, 가입 유도)
 
 ---
 
