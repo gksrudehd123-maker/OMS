@@ -55,5 +55,7 @@ export async function GET(request: NextRequest) {
     };
   });
 
-  return NextResponse.json({ sales: salesWithMargin, total, page, limit });
+  const response = NextResponse.json({ sales: salesWithMargin, total, page, limit });
+  response.headers.set('Cache-Control', 'public, s-maxage=30, stale-while-revalidate=60');
+  return response;
 }

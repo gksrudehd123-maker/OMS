@@ -512,8 +512,8 @@ ipconfig | grep "IPv4"
 - [x] 로딩 UX (전 페이지 ProgressBar + Skeleton UI)
 - [ ] 성능 최적화
   - [x] TanStack Query 도입 (캐싱, 중복 요청 방지 — 전 페이지 적용 완료)
-  - [ ] DB 쿼리 최적화 (Prisma groupBy/aggregate, 인덱스 추가)
-  - [ ] API 응답 캐싱 (Cache-Control, revalidate)
+  - [x] DB 쿼리 최적화 (Promise.all 병렬화, select 최소화, aggregate 활용, N+1 제거)
+  - [x] API 응답 캐싱 (Cache-Control s-maxage + stale-while-revalidate 전 API 적용)
   - [ ] 번들 사이즈 최적화 (next/dynamic lazy load)
 - [x] Sentry 에러 모니터링 (@sentry/nextjs 10 — instrumentation 패턴 적용, Session Replay, 라우터 전환 추적)
 - [x] 모바일 반응형 UI

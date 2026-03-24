@@ -7,7 +7,9 @@ export async function GET() {
     orderBy: { createdAt: 'asc' },
   });
 
-  return NextResponse.json(channels);
+  const response = NextResponse.json(channels);
+  response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
+  return response;
 }
 
 export async function POST(request: NextRequest) {

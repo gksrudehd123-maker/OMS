@@ -14,9 +14,8 @@ export async function GET(request: NextRequest) {
 
   const where: Record<string, unknown> = {};
 
-  if (channelId) {
-    where.channelId = channelId;
-  }
+  if (channelId) where.channelId = channelId;
+  if (status) where.orderStatus = status;
 
   if (search) {
     where.OR = [
@@ -24,10 +23,6 @@ export async function GET(request: NextRequest) {
       { orderNumber: { contains: search } },
       { buyerName: { contains: search } },
     ];
-  }
-
-  if (status) {
-    where.orderStatus = status;
   }
 
   if (from || to) {
@@ -40,7 +35,30 @@ export async function GET(request: NextRequest) {
   const [orders, total] = await Promise.all([
     prisma.order.findMany({
       where,
-      include: { product: true, channel: true },
+      select: {
+        id: true,
+        productOrderNumber: true,
+        orderNumber: true,
+        orderDate: true,
+        orderStatus: true,
+        productName: true,
+        optionInfo: true,
+        quantity: true,
+        buyerName: true,
+        claimStatus: true,
+        productId: true,
+        channelId: true,
+        product: {
+          select: {
+            sellingPrice: true,
+            costPrice: true,
+            feeRate: true,
+            shippingCost: true,
+            freeShippingMin: true,
+          },
+        },
+        channel: { select: { feeRate: true } },
+      },
       orderBy: { orderDate: 'desc' },
       skip: (page - 1) * limit,
       take: limit,
@@ -48,76 +66,66 @@ export async function GET(request: NextRequest) {
     prisma.order.count({ where }),
   ]);
 
-  // 같은 주문번호별 합산금액 계산 (배송비 무료배송 판단용)
+  // 같은 주문번호 목록으로 합산금액 조회 (N+1 제거: select로 최소 필드만)
   const orderNumbers = [...new Set(orders.map((o) => o.orderNumber))];
   const orderGroups =
     orderNumbers.length > 0
       ? await prisma.order.findMany({
           where: { orderNumber: { in: orderNumbers } },
-          include: { product: true },
+          select: {
+            orderNumber: true,
+            quantity: true,
+            product: {
+              select: {
+                sellingPrice: true,
+                shippingCost: true,
+                freeShippingMin: true,
+              },
+            },
+          },
         })
       : [];
 
-  // 주문번호별 합산금액 및 무료배송 조건 체크
+  // 주문번호별 합산금액 + 무료배송 (단일 루프)
   const orderTotals: Record<string, number> = {};
   const orderFreeShipping: Record<string, boolean> = {};
 
   for (const o of orderGroups) {
-    const sellingPrice = o.product.sellingPrice
-      ? Number(o.product.sellingPrice)
-      : 0;
-    const amount = sellingPrice * o.quantity;
-    orderTotals[o.orderNumber] = (orderTotals[o.orderNumber] || 0) + amount;
+    const sp = o.product.sellingPrice ? Number(o.product.sellingPrice) : 0;
+    orderTotals[o.orderNumber] = (orderTotals[o.orderNumber] || 0) + sp * o.quantity;
   }
 
-  // 무료배송 조건 체크: 한 주문 내 어떤 상품이든 조건 충족 시 전체 무료
   for (const o of orderGroups) {
-    const freeShippingMin = o.product.freeShippingMin
-      ? Number(o.product.freeShippingMin)
-      : null;
-    const total = orderTotals[o.orderNumber] || 0;
-
-    if (freeShippingMin !== null && total >= freeShippingMin) {
-      orderFreeShipping[o.orderNumber] = true;
-    }
-    // shippingCost가 0인 상품(무료배송 상품)이 있어도 전체 무료배송
-    if (Number(o.product.shippingCost) === 0) {
+    if (orderFreeShipping[o.orderNumber]) continue;
+    const freeMin = o.product.freeShippingMin ? Number(o.product.freeShippingMin) : null;
+    if ((freeMin !== null && (orderTotals[o.orderNumber] || 0) >= freeMin) ||
+        Number(o.product.shippingCost) === 0) {
       orderFreeShipping[o.orderNumber] = true;
     }
   }
 
-  // 마진 계산하여 주문 데이터에 추가
-  const ordersWithMargin = orders.map((order) => {
-    const marginResult = calculateMargin({
-      sellingPrice: order.product.sellingPrice
-        ? Number(order.product.sellingPrice)
-        : null,
-      costPrice: order.product.costPrice
-        ? Number(order.product.costPrice)
-        : null,
+  const ordersWithMargin = orders.map((order) => ({
+    ...order,
+    margin: calculateMargin({
+      sellingPrice: order.product.sellingPrice ? Number(order.product.sellingPrice) : null,
+      costPrice: order.product.costPrice ? Number(order.product.costPrice) : null,
       quantity: order.quantity,
       feeRate: Number(order.channel.feeRate),
-      productFeeRate: order.product.feeRate
-        ? Number(order.product.feeRate)
-        : null,
+      productFeeRate: order.product.feeRate ? Number(order.product.feeRate) : null,
       shippingCost: Number(order.product.shippingCost),
-      freeShippingMin: order.product.freeShippingMin
-        ? Number(order.product.freeShippingMin)
-        : null,
+      freeShippingMin: order.product.freeShippingMin ? Number(order.product.freeShippingMin) : null,
       orderTotal: orderTotals[order.orderNumber] || 0,
       isAnyFreeShipping: orderFreeShipping[order.orderNumber] || false,
-    });
+    }),
+  }));
 
-    return {
-      ...order,
-      margin: marginResult,
-    };
-  });
-
-  return NextResponse.json({
+  const response = NextResponse.json({
     orders: ordersWithMargin,
     total,
     page,
     limit,
   });
+
+  response.headers.set('Cache-Control', 'public, s-maxage=30, stale-while-revalidate=60');
+  return response;
 }

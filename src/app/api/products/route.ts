@@ -49,7 +49,9 @@ export async function GET(request: NextRequest) {
     prisma.product.count({ where }),
   ]);
 
-  return NextResponse.json({ products, total, page, limit });
+  const response = NextResponse.json({ products, total, page, limit });
+  response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
+  return response;
 }
 
 export async function POST(request: NextRequest) {

@@ -15,7 +15,9 @@ export async function GET() {
       result[s.key] = s.value;
     }
 
-    return NextResponse.json(result);
+    const response = NextResponse.json(result);
+    response.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600');
+    return response;
   } catch (err) {
     console.error('Settings GET error:', err);
     return NextResponse.json(

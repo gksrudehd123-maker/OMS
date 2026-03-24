@@ -28,7 +28,9 @@ export async function GET(request: NextRequest) {
   // 합계
   const totalCost = adCosts.reduce((sum, ac) => sum + Number(ac.cost), 0);
 
-  return NextResponse.json({ adCosts, totalCost });
+  const response = NextResponse.json({ adCosts, totalCost });
+  response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
+  return response;
 }
 
 // 광고비 등록/수정 (같은 채널+날짜면 upsert)
