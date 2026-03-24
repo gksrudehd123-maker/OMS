@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { requireAuth, isError } from '@/lib/auth-guard';
 import { parseSmartstoreExcel } from '@/lib/excel/smartstore-parser';
 import { parseCoupangExcel } from '@/lib/excel/coupang-parser';
 import { parseRocketGrowthExcel } from '@/lib/excel/rocketgrowth-parser';
@@ -11,6 +12,9 @@ import { validateExcelFormat } from '@/lib/excel/validate-format';
 const COUPANG_CHANNEL_CODES = ['coupang_wing', 'coupang_rocket_growth', 'coupang_rocket_delivery'];
 
 export async function POST(request: NextRequest) {
+  const user = await requireAuth();
+  if (isError(user)) return user;
+
   try {
     const formData = await request.formData();
     const file = formData.get('file') as File | null;

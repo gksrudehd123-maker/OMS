@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { requireRole, isError } from '@/lib/auth-guard';
 
 export async function GET() {
   const channels = await prisma.channel.findMany({
@@ -13,6 +14,9 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  const user = await requireRole('OWNER');
+  if (isError(user)) return user;
+
   const body = await request.json();
   const { name, code, feeRate } = body;
 

@@ -415,14 +415,15 @@ ipconfig | grep "IPv4"
 - [x] 리포트 페이지 채널별 필터 적용
 
 ### Phase 8 - 인증 및 권한 관리
-- [ ] NextAuth.js 설정 (Credentials Provider)
-- [ ] 로그인 / 회원가입 페이지
-- [ ] 미로그인 시 로그인 페이지 리다이렉트
-- [ ] User 모델에 allowedChannels 필드 추가 (접근 가능 채널 지정)
-- [ ] 역할 기반 접근 제어 (OWNER: 전체, MANAGER: 전체 열람, STAFF: 지정 채널만 + 마진/원가 차단)
+- [x] NextAuth.js 설정 (Credentials Provider, JWT 세션)
+- [x] 로그인 / 회원가입 페이지 (로딩 스피너, 성공/실패 피드백)
+- [x] 미로그인 시 로그인 페이지 리다이렉트 (Next.js Middleware)
+- [x] Role enum 변경 (ADMIN/USER → OWNER/MANAGER/STAFF)
+- [x] User 모델에 allowedChannels 필드 추가 (접근 가능 채널 지정)
+- [x] API 인증 미들웨어 (세션 없으면 401, 역할 부족 시 403)
+- [x] 역할별 API 접근 제어 (채널/설정: OWNER만, 상품/광고비: OWNER+MANAGER, 업로드: 로그인 필수)
 - [ ] 대시보드 채널 버튼을 사용자 권한에 따라 필터링
-- [ ] API 인증 미들웨어 (세션 없으면 401)
-- [ ] 역할별 API 접근 제어 (STAFF는 원가 API 차단)
+- [ ] 사용자 관리 페이지 (OWNER가 역할/채널 권한 설정)
 - [ ] API Rate Limiting
 
 ### Phase 9 - 매출 데이터 자동 수집 (대부분 완료)

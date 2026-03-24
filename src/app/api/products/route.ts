@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { requireAuth, isError } from '@/lib/auth-guard';
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -55,6 +56,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const user = await requireAuth();
+  if (isError(user)) return user;
+
   const body = await request.json();
   const {
     name,

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { requireRole, isError } from '@/lib/auth-guard';
 
 // 광고비 목록 조회
 export async function GET(request: NextRequest) {
@@ -35,6 +36,9 @@ export async function GET(request: NextRequest) {
 
 // 광고비 등록/수정 (같은 채널+날짜면 upsert)
 export async function POST(request: NextRequest) {
+  const user = await requireRole('OWNER', 'MANAGER');
+  if (isError(user)) return user;
+
   try {
     const body = await request.json();
     const { channelId, date, cost, memo } = body;
@@ -78,6 +82,9 @@ export async function POST(request: NextRequest) {
 
 // 광고비 삭제
 export async function DELETE(request: NextRequest) {
+  const user = await requireRole('OWNER', 'MANAGER');
+  if (isError(user)) return user;
+
   const { searchParams } = new URL(request.url);
   const id = searchParams.get('id');
 

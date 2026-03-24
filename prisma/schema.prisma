@@ -9,19 +9,21 @@ datasource db {
 }
 
 enum Role {
-  ADMIN
-  USER
+  OWNER
+  MANAGER
+  STAFF
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  password  String
-  name      String
-  role      Role     @default(USER)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  uploads   Upload[]
+  id              String   @id @default(cuid())
+  email           String   @unique
+  password        String
+  name            String
+  role            Role     @default(STAFF)
+  allowedChannels String[] @default([])
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  uploads         Upload[]
 
   @@map("users")
 }

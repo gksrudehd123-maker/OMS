@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { requireRole, isError } from '@/lib/auth-guard';
 
 export async function GET(
   request: NextRequest,
@@ -27,6 +28,9 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: { id: string } },
 ) {
+  const user = await requireRole('OWNER', 'MANAGER');
+  if (isError(user)) return user;
+
   const body = await request.json();
 
   // 허용된 필드만 업데이트
@@ -54,6 +58,9 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } },
 ) {
+  const user = await requireRole('OWNER', 'MANAGER');
+  if (isError(user)) return user;
+
   const product = await prisma.product.update({
     where: { id: params.id },
     data: { isActive: false },

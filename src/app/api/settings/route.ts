@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { requireRole, isError } from '@/lib/auth-guard';
 
 // 설정 키 목록
 const VALID_KEYS = ['defaultShippingCost', 'defaultFreeShippingMin'];
@@ -28,6 +29,9 @@ export async function GET() {
 }
 
 export async function PUT(request: NextRequest) {
+  const user = await requireRole('OWNER');
+  if (isError(user)) return user;
+
   try {
     const body = await request.json();
 
