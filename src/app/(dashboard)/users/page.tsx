@@ -110,8 +110,8 @@ export default function UsersPage() {
       toast.error('이름, 이메일, 비밀번호를 모두 입력해주세요');
       return;
     }
-    if (newPassword.length < 6) {
-      toast.error('비밀번호는 6자 이상이어야 합니다');
+    if (newPassword.length < 8) {
+      toast.error('비밀번호는 8자 이상이어야 합니다');
       return;
     }
     createMutation.mutate({ name: newName, email: newEmail, password: newPassword });
@@ -256,7 +256,7 @@ export default function UsersPage() {
                 type="password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="6자 이상"
+                placeholder="8자 이상 (영문+숫자)"
                 className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
               />
             </div>

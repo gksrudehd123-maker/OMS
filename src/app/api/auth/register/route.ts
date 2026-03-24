@@ -21,9 +21,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (password.length < 6) {
+    if (password.length < 8) {
       return NextResponse.json(
-        { error: '비밀번호는 6자 이상이어야 합니다' },
+        { error: '비밀번호는 8자 이상이어야 합니다' },
+        { status: 400 },
+      );
+    }
+
+    if (!/[A-Za-z]/.test(password) || !/[0-9]/.test(password)) {
+      return NextResponse.json(
+        { error: '비밀번호는 영문과 숫자를 모두 포함해야 합니다' },
         { status: 400 },
       );
     }

@@ -132,8 +132,8 @@ export default function SettingsPage() {
       toast.error('현재 비밀번호와 새 비밀번호를 입력해주세요');
       return;
     }
-    if (newPassword.length < 6) {
-      toast.error('새 비밀번호는 6자 이상이어야 합니다');
+    if (newPassword.length < 8) {
+      toast.error('새 비밀번호는 8자 이상이어야 합니다');
       return;
     }
     if (newPassword !== confirmPassword) {
@@ -304,7 +304,7 @@ export default function SettingsPage() {
                     type={showNewPw ? 'text' : 'password'}
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="6자 이상"
+                    placeholder="8자 이상 (영문+숫자)"
                     className="w-full rounded-lg border border-input bg-background px-3 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                   />
                   <button
