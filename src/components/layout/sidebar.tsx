@@ -11,11 +11,13 @@ import {
   Megaphone,
   FileBarChart,
   Settings,
+  Users,
   ChevronLeft,
   ChevronRight,
   Menu,
   X,
 } from 'lucide-react';
+import { useSession } from 'next-auth/react';
 import { cn } from '@/lib/utils';
 import { useState, useEffect } from 'react';
 
@@ -27,13 +29,18 @@ const navItems = [
   { href: '/channels', label: '채널 분석', icon: Store },
   { href: '/ad-costs', label: '광고비 관리', icon: Megaphone },
   { href: '/reports', label: '리포트', icon: FileBarChart },
+  { href: '/users', label: '사용자 관리', icon: Users, ownerOnly: true },
   { href: '/settings', label: '설정', icon: Settings },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { data: session } = useSession();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  const isOwner = session?.user?.role === 'OWNER';
+  const visibleItems = navItems.filter((item) => !item.ownerOnly || isOwner);
 
   // 모바일 메뉴 열릴 때 스크롤 방지
   useEffect(() => {
@@ -105,7 +112,7 @@ export function Sidebar() {
 
         {/* Navigation */}
         <nav className="flex-1 space-y-1 p-2">
-          {navItems.map((item) => {
+          {visibleItems.map((item) => {
             const isActive =
               item.href === '/'
                 ? pathname === '/'
@@ -154,7 +161,7 @@ export function Sidebar() {
 
         {/* Navigation */}
         <nav className="flex-1 space-y-1 p-2">
-          {navItems.map((item) => {
+          {visibleItems.map((item) => {
             const isActive =
               item.href === '/'
                 ? pathname === '/'

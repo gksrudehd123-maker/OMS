@@ -424,7 +424,7 @@ ipconfig | grep "IPv4"
 - [x] 역할별 API 접근 제어 (채널/설정: OWNER만, 상품/광고비: OWNER+MANAGER, 업로드: 로그인 필수)
 - [x] 대시보드 채널 버튼을 사용자 권한에 따라 필터링 (allowedChannels 기반, OWNER 전체 허용, 채널 1개 시 자동 선택)
 - [x] Dashboard/Report API 채널 접근 권한 서버 검증 (checkChannelAccess + getChannelFilter)
-- [ ] 사용자 관리 페이지 (OWNER가 역할/채널 권한 설정)
+- [x] 사용자 관리 페이지 (OWNER가 역할/채널 권한 설정, 사용자 삭제)
 - [ ] API Rate Limiting
 
 ### Phase 9 - 매출 데이터 자동 수집 (대부분 완료)
@@ -449,13 +449,14 @@ ipconfig | grep "IPv4"
 - [x] 기본값 설정 (기본 배송비, 무료배송 기준금액)
 - [x] 채널 관리 바로가기
 - [x] 데이터 관리 (업로드 이력 조회/삭제)
-- [ ] 프로필 설정 (Phase 8)
-- [ ] 사용자 관리 — 계정 생성, 역할/채널 권한 설정 (Phase 8)
+- [x] 프로필 설정 — 이름 변경, 비밀번호 변경 (Phase 8)
+- [x] 사용자 관리 — 역할/채널 권한 설정, 사용자 삭제 (Phase 8)
 - [ ] Notion 연동 설정 (Phase 10)
 
 ### Phase 11 - SaaS 전환 (다중 셀러 서비스)
 > Phase 8 완료 후 진행. 현재 코드 구조(Prisma + Next.js API Route)에서 큰 변경 없이 전환 가능.
 
+- [ ] ADMIN 역할 + 어드민 대시보드 (시스템 관리자 전용 — 전체 테넌트 현황, 매출 통계, 구독 관리, 셀러 정지/삭제)
 - [ ] 테넌트 분리 (전체 테이블에 tenantId 추가, API에서 로그인 사용자의 tenantId 필터링)
 - [ ] 셀러 회원가입 + 온보딩 (가입 시 tenant 자동 생성, 채널 등록 안내, 첫 업로드 가이드)
 - [ ] 결제 연동 (토스페이먼츠 or Paddle — 월 구독 모델)

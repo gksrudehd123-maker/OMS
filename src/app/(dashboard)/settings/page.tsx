@@ -4,6 +4,8 @@ import { useTheme } from 'next-themes';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
+import { useMutation } from '@tanstack/react-query';
 import {
   Sun,
   Moon,
@@ -12,12 +14,16 @@ import {
   Loader2,
   Check,
   Store,
+  Users,
   ExternalLink,
   Upload,
   Trash2,
   AlertTriangle,
   FileSpreadsheet,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
+import { Toaster, toast } from 'sonner';
 import { ProgressBar } from '@/components/ui/progress-bar';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -62,13 +68,80 @@ type UploadRecord = {
 };
 
 export default function SettingsPage() {
+  const { data: session } = useSession();
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(() => {
     if (typeof window !== 'undefined') return true;
     return false;
   });
   const router = useRouter();
+  const isOwner = session?.user?.role === 'OWNER';
   const queryClient = useQueryClient();
+
+  // 프로필 설정 state
+  const [profileName, setProfileName] = useState(session?.user?.name || '');
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showCurrentPw, setShowCurrentPw] = useState(false);
+  const [showNewPw, setShowNewPw] = useState(false);
+
+  const nameMutation = useMutation({
+    mutationFn: async (name: string) => {
+      const res = await fetch('/api/user/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || '수정 실패');
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      toast.success('이름이 변경되었습니다. 다시 로그인하면 반영됩니다.');
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
+  const passwordMutation = useMutation({
+    mutationFn: async (body: { currentPassword: string; newPassword: string }) => {
+      const res = await fetch('/api/user/password', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || '변경 실패');
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      toast.success('비밀번호가 변경되었습니다');
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
+  const handleChangePassword = () => {
+    if (!currentPassword || !newPassword) {
+      toast.error('현재 비밀번호와 새 비밀번호를 입력해주세요');
+      return;
+    }
+    if (newPassword.length < 6) {
+      toast.error('새 비밀번호는 6자 이상이어야 합니다');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast.error('새 비밀번호가 일치하지 않습니다');
+      return;
+    }
+    passwordMutation.mutate({ currentPassword, newPassword });
+  };
 
   // 데이터 관리 state
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
@@ -158,11 +231,113 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6">
       <ProgressBar loading={loadingChannels || loadingUploads || loadingDefaults} />
+      <Toaster richColors position="top-right" />
       <div>
         <h1 className="text-2xl font-semibold">설정</h1>
         <p className="text-sm text-muted-foreground">
           시스템 설정을 관리합니다
         </p>
+      </div>
+
+      {/* 프로필 설정 */}
+      <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
+        <h2 className="text-lg font-semibold">프로필 설정</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          이름과 비밀번호를 변경할 수 있습니다
+        </p>
+
+        <div className="mt-4 space-y-6">
+          {/* 이메일 (읽기 전용) */}
+          <div>
+            <label className="text-sm font-medium">이메일</label>
+            <p className="mt-1 rounded-lg bg-muted/50 px-3 py-2 text-sm text-muted-foreground">
+              {session?.user?.email}
+            </p>
+          </div>
+
+          {/* 이름 변경 */}
+          <div>
+            <label className="text-sm font-medium">이름</label>
+            <div className="mt-1 flex gap-2">
+              <input
+                type="text"
+                value={profileName}
+                onChange={(e) => setProfileName(e.target.value)}
+                className="flex-1 rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+              <button
+                onClick={() => nameMutation.mutate(profileName)}
+                disabled={nameMutation.isPending || !profileName.trim()}
+                className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+              >
+                {nameMutation.isPending ? '저장 중...' : '변경'}
+              </button>
+            </div>
+          </div>
+
+          {/* 비밀번호 변경 */}
+          <div className="border-t border-border pt-4">
+            <h3 className="text-sm font-semibold">비밀번호 변경</h3>
+            <div className="mt-3 grid gap-3 sm:max-w-sm">
+              <div>
+                <label className="mb-1 block text-sm font-medium">현재 비밀번호</label>
+                <div className="relative">
+                  <input
+                    type={showCurrentPw ? 'text' : 'password'}
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    className="w-full rounded-lg border border-input bg-background px-3 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowCurrentPw(!showCurrentPw)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground"
+                  >
+                    {showCurrentPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium">새 비밀번호</label>
+                <div className="relative">
+                  <input
+                    type={showNewPw ? 'text' : 'password'}
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="6자 이상"
+                    className="w-full rounded-lg border border-input bg-background px-3 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPw(!showNewPw)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground"
+                  >
+                    {showNewPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium">새 비밀번호 확인</label>
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+                {confirmPassword && newPassword !== confirmPassword && (
+                  <p className="mt-1 text-xs text-red-500">비밀번호가 일치하지 않습니다</p>
+                )}
+              </div>
+              <button
+                onClick={handleChangePassword}
+                disabled={passwordMutation.isPending}
+                className="w-fit rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+              >
+                {passwordMutation.isPending ? '변경 중...' : '비밀번호 변경'}
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* 테마 설정 */}
@@ -368,6 +543,28 @@ export default function SettingsPage() {
           </div>
         )}
       </div>
+
+      {/* 사용자 관리 바로가기 (OWNER만) */}
+      {isOwner && (
+        <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-semibold">사용자 관리</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                사용자 역할 및 채널 접근 권한 관리
+              </p>
+            </div>
+            <button
+              onClick={() => router.push('/users')}
+              className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted"
+            >
+              <Users className="h-4 w-4" />
+              사용자 관리 페이지
+              <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* 데이터 관리 */}
       <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
