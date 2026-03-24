@@ -514,7 +514,7 @@ ipconfig | grep "IPv4"
   - [x] TanStack Query 도입 (캐싱, 중복 요청 방지 — 전 페이지 적용 완료)
   - [x] DB 쿼리 최적화 (Promise.all 병렬화, select 최소화, aggregate 활용, N+1 제거)
   - [x] API 응답 캐싱 (Cache-Control s-maxage + stale-while-revalidate 전 API 적용)
-  - [ ] 번들 사이즈 최적화 (next/dynamic lazy load)
+  - [x] 번들 사이즈 최적화 (next/dynamic lazy load — 대시보드/매출관리 차트·테이블 분리)
 - [x] Sentry 에러 모니터링 (@sentry/nextjs 10 — instrumentation 패턴 적용, Session Replay, 라우터 전환 추적)
 - [x] 모바일 반응형 UI
   - [x] 사이드바 → 햄버거 메뉴 전환
@@ -552,6 +552,36 @@ ipconfig | grep "IPv4"
 - [x] 데이터 관리 (업로드 이력 조회/삭제)
 - [ ] 프로필 설정 (Phase 8 이후)
 - [ ] Notion 연동 설정 (Phase 10)
+
+---
+
+## 보안 참고사항
+
+> 현재는 단일 사용자 내부 도구로 운영 중이며, 다중 사용자 전환 시 아래 항목을 반드시 적용해야 합니다.
+
+### 현재 안전한 부분
+
+| 항목 | 방어 수단 |
+|------|-----------|
+| SQL Injection | Prisma ORM — 파라미터 바인딩 자동 처리 |
+| XSS | React — JSX 출력 시 HTML escape 기본 적용 |
+| CSRF | Next.js API Route — same-origin 요청만 허용 |
+| 파일 업로드 | `.xlsx`만 허용, 서버에서 파싱 후 DB 저장 (파일 저장 안 함) |
+
+### 다중 사용자 전환 전 필수 조치
+
+| 우선순위 | 항목 | 설명 | 해결 시점 |
+|----------|------|------|-----------|
+| **높음** | 인증 미적용 | 모든 API가 인증 없이 공개 상태. URL을 아는 누구나 데이터 조회/수정/삭제 가능 | Phase 8 |
+| **높음** | 역할 기반 접근 제어 | STAFF 역할에게 마진/원가 등 민감 데이터 차단 필요 | Phase 8 |
+| 중간 | API Rate Limiting | 무한 반복 호출에 의한 DB 부하 방어 (ex: `next-rate-limit`, Vercel Edge Config) | Phase 8 이후 |
+| 낮음 | 에러 메시지 상세 노출 | API 에러 응답에 내부 정보가 포함될 수 있음. 프로덕션에서는 일반 메시지로 대체 권장 | Phase 8 이후 |
+
+### 환경 변수 보안
+
+- `.env` 파일은 `.gitignore`에 포함되어 Git에 커밋되지 않음
+- `NEXT_PUBLIC_` 접두사 변수는 클라이언트 번들에 노출됨 — 현재 `APP_NAME`, `APP_URL`, `HIDE_API_SYNC`만 해당하며 민감 정보 없음
+- DB 연결 정보, API 키 등은 서버 전용 변수로 클라이언트에 노출되지 않음
 
 ---
 

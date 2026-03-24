@@ -1,11 +1,25 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { UploadZone } from '@/components/sales/upload-zone';
-import { OrderTable } from '@/components/sales/order-table';
-import { DailySalesTable } from '@/components/sales/daily-sales-table';
+import dynamic from 'next/dynamic';
 import { Toaster, toast } from 'sonner';
 import { RefreshCw, Loader2 } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+
+const UploadZone = dynamic(
+  () => import('@/components/sales/upload-zone').then((m) => m.UploadZone),
+  { loading: () => <Skeleton className="h-40 w-full rounded-xl" /> },
+);
+
+const OrderTable = dynamic(
+  () => import('@/components/sales/order-table').then((m) => m.OrderTable),
+  { loading: () => <Skeleton className="h-96 w-full rounded-xl" /> },
+);
+
+const DailySalesTable = dynamic(
+  () => import('@/components/sales/daily-sales-table').then((m) => m.DailySalesTable),
+  { loading: () => <Skeleton className="h-96 w-full rounded-xl" /> },
+);
 
 type Channel = {
   id: string;
