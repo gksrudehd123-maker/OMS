@@ -1,9 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { hash } from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
+import { requireRole, isError } from '@/lib/auth-guard';
 
 export async function POST(request: NextRequest) {
   try {
+    // 첫 번째 가입자(OWNER 생성)만 공개 허용, 이후는 OWNER만 사용자 추가 가능
+    const userCount = await prisma.user.count();
+    if (userCount > 0) {
+      const owner = await requireRole('OWNER');
+      if (isError(owner)) return owner;
+    }
+
     const { email, password, name } = await request.json();
 
     if (!email || !password || !name) {
@@ -28,8 +36,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 첫 번째 가입자는 OWNER, 이후는 STAFF
-    const userCount = await prisma.user.count();
     const role = userCount === 0 ? 'OWNER' : 'STAFF';
 
     const hashedPassword = await hash(password, 12);

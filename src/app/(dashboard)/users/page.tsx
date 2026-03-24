@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
-import { Users, Shield, Trash2 } from 'lucide-react';
+import { Users, Plus, Trash2 } from 'lucide-react';
 import { ProgressBar } from '@/components/ui/progress-bar';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -54,6 +54,12 @@ export default function UsersPage() {
   const [editChannels, setEditChannels] = useState<string[]>([]);
   const [deleteConfirm, setDeleteConfirm] = useState<User | null>(null);
 
+  // 사용자 추가 state
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [newEmail, setNewEmail] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+
   const { data: users = [], isLoading } = useQuery<User[]>({
     queryKey: ['users'],
     queryFn: async () => {
@@ -72,6 +78,44 @@ export default function UsersPage() {
   });
 
   const activeChannels = channels.filter((ch) => ch.isActive);
+
+  const createMutation = useMutation({
+    mutationFn: async (body: { email: string; password: string; name: string }) => {
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || '등록 실패');
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      toast.success('사용자가 등록되었습니다');
+      setNewName('');
+      setNewEmail('');
+      setNewPassword('');
+      setShowAddForm(false);
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+    },
+    onError: (err: Error) => {
+      toast.error(err.message);
+    },
+  });
+
+  const handleCreate = () => {
+    if (!newName || !newEmail || !newPassword) {
+      toast.error('이름, 이메일, 비밀번호를 모두 입력해주세요');
+      return;
+    }
+    if (newPassword.length < 6) {
+      toast.error('비밀번호는 6자 이상이어야 합니다');
+      return;
+    }
+    createMutation.mutate({ name: newName, email: newEmail, password: newPassword });
+  };
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, body }: { id: string; body: Record<string, unknown> }) => {
@@ -166,12 +210,77 @@ export default function UsersPage() {
       <ProgressBar loading={isLoading} />
       <Toaster richColors position="top-right" />
 
-      <div>
-        <h1 className="text-2xl font-semibold">사용자 관리</h1>
-        <p className="text-sm text-muted-foreground">
-          사용자 역할과 채널 접근 권한을 관리합니다. 행을 클릭하여 수정하세요.
-        </p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold">사용자 관리</h1>
+          <p className="text-sm text-muted-foreground">
+            사용자 역할과 채널 접근 권한을 관리합니다. 행을 클릭하여 수정하세요.
+          </p>
+        </div>
+        <button
+          onClick={() => setShowAddForm(!showAddForm)}
+          className="flex items-center gap-2 self-start rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+        >
+          <Plus className="h-4 w-4" />
+          사용자 추가
+        </button>
       </div>
+
+      {showAddForm && (
+        <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
+          <h3 className="mb-4 text-lg font-semibold">새 사용자 등록</h3>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div>
+              <label className="mb-1 block text-sm font-medium">이름</label>
+              <input
+                type="text"
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                placeholder="홍길동"
+                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium">이메일</label>
+              <input
+                type="email"
+                value={newEmail}
+                onChange={(e) => setNewEmail(e.target.value)}
+                placeholder="email@example.com"
+                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium">비밀번호</label>
+              <input
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="6자 이상"
+                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+          </div>
+          <p className="mt-2 text-xs text-muted-foreground">
+            새 사용자는 STAFF 역할로 등록됩니다. 등록 후 역할과 채널 권한을 변경할 수 있습니다.
+          </p>
+          <div className="mt-4 flex gap-2">
+            <button
+              onClick={handleCreate}
+              disabled={createMutation.isPending}
+              className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+            >
+              {createMutation.isPending ? '등록 중...' : '등록'}
+            </button>
+            <button
+              onClick={() => setShowAddForm(false)}
+              className="rounded-lg border border-border px-4 py-2 text-sm transition-colors hover:bg-muted"
+            >
+              취소
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* 사용자 테이블 */}
       <div className="overflow-x-auto rounded-xl border border-border bg-card shadow-sm">

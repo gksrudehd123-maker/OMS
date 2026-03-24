@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -15,6 +15,31 @@ export default function RegisterPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [checking, setChecking] = useState(true);
+
+  // 이미 사용자가 있으면 로그인 페이지로 리다이렉트 (첫 사용자만 가입 가능)
+  useEffect(() => {
+    fetch('/api/auth/register-check')
+      .then((res) => res.json())
+      .then((data) => {
+        if (!data.allowRegister) {
+          router.replace('/login');
+        } else {
+          setChecking(false);
+        }
+      })
+      .catch(() => {
+        router.replace('/login');
+      });
+  }, [router]);
+
+  if (checking) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

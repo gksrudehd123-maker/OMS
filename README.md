@@ -489,7 +489,7 @@ ipconfig | grep "IPv4"
 | # | 항목 | 설명 | 해당 API |
 |---|------|------|----------|
 | ~~1~~ | ~~GET API 인증 누락~~ | ✅ 해결 — 전체 GET API에 `requireAuth()` 적용 완료 | - |
-| 2 | **회원가입 통제 없음** | `/api/auth/register`가 누구나 접근 가능. 외부인이 계정 생성 가능 | auth/register POST |
+| ~~2~~ | ~~회원가입 통제 없음~~ | ✅ 해결 — 첫 사용자만 공개 가입, 이후 OWNER만 추가 가능 | - |
 | 3 | **STAFF에 민감 데이터 노출** | 대시보드/리포트 API가 원가, 마진, 수수료율을 역할 구분 없이 반환. 브라우저 개발자도구로 확인 가능 | dashboard, report, products/[id] GET |
 | 4 | **upload DELETE 인증 없음** | 누구나 업로드 삭제 가능 (CASCADE로 주문 데이터까지 삭제됨) | upload/[id] DELETE |
 
