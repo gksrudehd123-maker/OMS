@@ -459,6 +459,7 @@ ipconfig | grep "IPv4"
 - [ ] 결제 연동 (토스페이먼츠 or Paddle — 월 구독 모델)
 - [ ] 플랜 분리 (Basic: 채널 1개 + 3개월 / Pro: 채널 무제한 + 1년 + 자동 리포트)
 - [ ] 랜딩 페이지 (서비스 소개, 요금제, 가입 유도)
+- [ ] SNS 로그인 추가 (Google, Kakao — NextAuth.js Provider 추가로 대응)
 
 ---
 
