@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { requireRole, isError } from '@/lib/auth-guard';
+import { requireAuth, requireRole, isError } from '@/lib/auth-guard';
 
 // 광고비 목록 조회
 export async function GET(request: NextRequest) {
+  const user = await requireAuth();
+  if (isError(user)) return user;
+
   const { searchParams } = new URL(request.url);
   const from = searchParams.get('from');
   const to = searchParams.get('to');

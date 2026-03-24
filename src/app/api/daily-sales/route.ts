@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { calculateRGMargin } from '@/lib/helpers/rg-margin-calc';
+import { requireAuth, isError } from '@/lib/auth-guard';
 
 export async function GET(request: NextRequest) {
+  const user = await requireAuth();
+  if (isError(user)) return user;
+
   const { searchParams } = new URL(request.url);
   const page = parseInt(searchParams.get('page') || '1');
   const limit = parseInt(searchParams.get('limit') || '20');

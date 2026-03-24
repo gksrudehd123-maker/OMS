@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { requireAuth, isError } from '@/lib/auth-guard';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } },
 ) {
+  const user = await requireAuth();
+  if (isError(user)) return user;
+
   const upload = await prisma.upload.findUnique({
     where: { id: params.id },
     include: { channel: true, orders: { take: 100 } },

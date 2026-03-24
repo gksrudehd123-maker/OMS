@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { requireRole, isError } from '@/lib/auth-guard';
+import { requireAuth, requireRole, isError } from '@/lib/auth-guard';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } },
 ) {
+  const user = await requireAuth();
+  if (isError(user)) return user;
+
   const product = await prisma.product.findUnique({
     where: { id: params.id },
     include: {

@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { requireRole, isError } from '@/lib/auth-guard';
+import { requireAuth, requireRole, isError } from '@/lib/auth-guard';
 
 export async function GET() {
+  const user = await requireAuth();
+  if (isError(user)) return user;
+
   const channels = await prisma.channel.findMany({
     include: { _count: { select: { orders: true, dailySales: true } } },
     orderBy: { createdAt: 'asc' },

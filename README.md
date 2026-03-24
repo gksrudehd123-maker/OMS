@@ -488,7 +488,7 @@ ipconfig | grep "IPv4"
 
 | # | 항목 | 설명 | 해당 API |
 |---|------|------|----------|
-| 1 | **GET API 인증 누락** | 조회 API 대부분이 인증 없이 공개 상태. URL만 알면 누구나 데이터 조회 가능 | orders, daily-sales, products, ad-costs, upload, settings, channels GET |
+| ~~1~~ | ~~GET API 인증 누락~~ | ✅ 해결 — 전체 GET API에 `requireAuth()` 적용 완료 | - |
 | 2 | **회원가입 통제 없음** | `/api/auth/register`가 누구나 접근 가능. 외부인이 계정 생성 가능 | auth/register POST |
 | 3 | **STAFF에 민감 데이터 노출** | 대시보드/리포트 API가 원가, 마진, 수수료율을 역할 구분 없이 반환. 브라우저 개발자도구로 확인 가능 | dashboard, report, products/[id] GET |
 | 4 | **upload DELETE 인증 없음** | 누구나 업로드 삭제 가능 (CASCADE로 주문 데이터까지 삭제됨) | upload/[id] DELETE |
@@ -516,13 +516,16 @@ ipconfig | grep "IPv4"
 |-----|-----|------|-------|--------|
 | dashboard | `requireAuth` + 채널 검증 | - | - | - |
 | report | `requireAuth` + 채널 검증 | - | - | - |
-| orders | **인증 없음** | - | - | - |
-| daily-sales | **인증 없음** | - | - | - |
-| products | **인증 없음** | `requireAuth` | `OWNER, MANAGER` | `OWNER, MANAGER` |
-| channels | **인증 없음** | `OWNER` | `OWNER` | - |
-| ad-costs | **인증 없음** | `OWNER, MANAGER` | - | `OWNER, MANAGER` |
-| upload | **인증 없음** | `requireAuth` | - | **인증 없음** |
-| settings | **인증 없음** | - | `OWNER` | - |
+| orders | `requireAuth` | - | - | - |
+| daily-sales | `requireAuth` | - | - | - |
+| products | `requireAuth` | `requireAuth` | `OWNER, MANAGER` | `OWNER, MANAGER` |
+| channels | `requireAuth` | `OWNER` | `OWNER` | - |
+| ad-costs | `requireAuth` | `OWNER, MANAGER` | - | `OWNER, MANAGER` |
+| upload | `requireAuth` | `requireAuth` | - | **인증 없음** |
+| settings | `requireAuth` | - | `OWNER` | - |
+| users | `OWNER` | - | `OWNER` | `OWNER` |
+| user/profile | - | - | `requireAuth` | - |
+| user/password | - | `requireAuth` | - | - |
 | sync/smartstore | **인증 없음** | **인증 없음** | - | - |
 
 ### 환경 변수 보안
