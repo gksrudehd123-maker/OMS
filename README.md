@@ -414,7 +414,7 @@ ipconfig | grep "IPv4"
 - [x] 마진 분석 페이지에도 채널 필터 적용
 - [x] 리포트 페이지 채널별 필터 적용
 
-### Phase 8 - 인증 및 권한 관리
+### Phase 8 - 인증 및 권한 관리 (완료)
 - [x] NextAuth.js 설정 (Credentials Provider, JWT 세션)
 - [x] 로그인 / 회원가입 페이지 (로딩 스피너, 성공/실패 피드백)
 - [x] 미로그인 시 로그인 페이지 리다이렉트 (Next.js Middleware)
@@ -424,8 +424,10 @@ ipconfig | grep "IPv4"
 - [x] 역할별 API 접근 제어 (채널/설정: OWNER만, 상품/광고비: OWNER+MANAGER, 업로드: 로그인 필수)
 - [x] 대시보드 채널 버튼을 사용자 권한에 따라 필터링 (allowedChannels 기반, OWNER 전체 허용, 채널 1개 시 자동 선택)
 - [x] Dashboard/Report API 채널 접근 권한 서버 검증 (checkChannelAccess + getChannelFilter)
-- [x] 사용자 관리 페이지 (OWNER가 역할/채널 권한 설정, 사용자 삭제)
-- [ ] API Rate Limiting
+- [x] 사용자 관리 페이지 (OWNER가 역할/채널 권한 설정, 사용자 추가/삭제)
+- [x] 프로필 설정 (이름 변경, 비밀번호 변경)
+- [x] API Rate Limiting (IP 기반 인메모리, API 분당 60회, 로그인/회원가입 분당 10회)
+- [x] 보안 강화 — GET API 전체 인증, 회원가입 통제, STAFF 민감 데이터 차단, 보안 헤더, 비밀번호 정책(8자+영문숫자)
 
 ### Phase 9 - 매출 데이터 자동 수집 (대부분 완료)
 - [x] 네이버 커머스 API 연동 (스마트스토어 주문 자동 수집)
@@ -466,49 +468,26 @@ ipconfig | grep "IPv4"
 
 ---
 
-## 보안 참고사항
+## 보안
 
-> 현재는 단일 사용자 내부 도구로 운영 중이며, 다중 사용자 전환 시 아래 항목을 반드시 적용해야 합니다.
-
-### 현재 안전한 부분
+### 방어 현황
 
 | 항목 | 방어 수단 |
 |------|-----------|
 | SQL Injection | Prisma ORM — 파라미터 바인딩 자동 처리 |
-| XSS | React — JSX 출력 시 HTML escape 기본 적용 |
+| XSS | React JSX escape + 보안 헤더 (X-XSS-Protection, X-Content-Type-Options) |
+| 클릭재킹 | X-Frame-Options: DENY |
 | CSRF | Next.js API Route — same-origin 요청만 허용 |
+| HTTPS 강제 | Strict-Transport-Security (HSTS 1년) |
 | 파일 업로드 | `.xlsx`만 허용, 서버에서 파싱 후 DB 저장 (파일 저장 안 함) |
-| 환경 변수 | `NEXT_PUBLIC_`에 민감 정보 없음 (APP_NAME, APP_URL, HIDE_API_SYNC만 해당) |
-| 비밀번호 해싱 | bcryptjs (hash rounds 12) |
-| 인증 인프라 | NextAuth.js JWT + Middleware 페이지 보호 |
-
-### 보안 감사 결과 (2026-03-24 기준)
-
-#### 즉시 해결 필요 (높음)
-
-| # | 항목 | 설명 | 해당 API |
-|---|------|------|----------|
-| ~~1~~ | ~~GET API 인증 누락~~ | ✅ 해결 — 전체 GET API에 `requireAuth()` 적용 완료 | - |
-| ~~2~~ | ~~회원가입 통제 없음~~ | ✅ 해결 — 첫 사용자만 공개 가입, 이후 OWNER만 추가 가능 | - |
-| ~~3~~ | ~~STAFF에 민감 데이터 노출~~ | ✅ 해결 — STAFF일 때 원가/마진/수수료율 응답에서 제거 (dashboard, report, orders, daily-sales, products) | - |
-| ~~4~~ | ~~upload DELETE 인증 없음~~ | ✅ 해결 — `requireRole('OWNER', 'MANAGER')` 적용 | - |
-
-#### 보안 헤더/설정 (중간)
-
-| # | 항목 | 설명 |
-|---|------|------|
-| ~~5~~ | ~~보안 헤더 미설정~~ | ✅ 해결 — X-Frame-Options, HSTS, X-Content-Type-Options, Referrer-Policy, Permissions-Policy 적용 |
-| ~~6~~ | ~~빌드 에러 무시~~ | ✅ 해결 — `ignoreBuildErrors`, `ignoreDuringBuilds` 제거, 타입 에러 수정 완료 |
-| ~~7~~ | ~~채널 접근 검증 불완전~~ | ✅ 해결 — orders, daily-sales, ad-costs GET에도 checkChannelAccess + getChannelFilter 적용 |
-| ~~8~~ | ~~비밀번호 정책 미흡~~ | ✅ 해결 — 최소 8자 + 영문/숫자 필수, 비밀번호 변경 기능 구현 완료 |
-
-#### 개선 권장 (낮음)
-
-| # | 항목 | 설명 |
-|---|------|------|
-| ~~9~~ | ~~API Rate Limiting~~ | ✅ 해결 — IP 기반 인메모리 Rate Limiter 적용 (API 분당 60회, 로그인/회원가입 분당 10회) |
-| 10 | 에러 메시지 상세 노출 | API 에러 응답에 내부 정보 포함 가능. 프로덕션에서는 일반 메시지로 대체 권장 |
-| 11 | SessionProvider 갱신 설정 | 토큰 만료 시 자동 갱신 미설정 (NextAuth 기본값 사용) |
+| 비밀번호 | bcryptjs (rounds 12), 최소 8자 + 영문/숫자 필수 |
+| 인증 | NextAuth.js JWT + Middleware 페이지 보호 + 전체 API `requireAuth()` |
+| 권한 제어 | RBAC (OWNER/MANAGER/STAFF) + 채널별 접근 제한 (allowedChannels) |
+| 민감 데이터 | STAFF 역할에 원가/마진/수수료율 API 응답에서 제거 |
+| 회원가입 통제 | 첫 사용자만 공개 가입, 이후 OWNER만 추가 가능 |
+| Rate Limiting | IP 기반 인메모리 (API 분당 60회, 로그인/회원가입 분당 10회) |
+| 브라우저 권한 | Permissions-Policy: 카메라/마이크/위치 차단 |
+| Referrer | strict-origin-when-cross-origin |
 
 ### API 인증/권한 현황
 
@@ -516,17 +495,26 @@ ipconfig | grep "IPv4"
 |-----|-----|------|-------|--------|
 | dashboard | `requireAuth` + 채널 검증 | - | - | - |
 | report | `requireAuth` + 채널 검증 | - | - | - |
-| orders | `requireAuth` | - | - | - |
-| daily-sales | `requireAuth` | - | - | - |
+| orders | `requireAuth` + 채널 검증 | - | - | - |
+| daily-sales | `requireAuth` + 채널 검증 | - | - | - |
 | products | `requireAuth` | `requireAuth` | `OWNER, MANAGER` | `OWNER, MANAGER` |
 | channels | `requireAuth` | `OWNER` | `OWNER` | - |
-| ad-costs | `requireAuth` | `OWNER, MANAGER` | - | `OWNER, MANAGER` |
+| ad-costs | `requireAuth` + 채널 검증 | `OWNER, MANAGER` | - | `OWNER, MANAGER` |
 | upload | `requireAuth` | `requireAuth` | - | `OWNER, MANAGER` |
 | settings | `requireAuth` | - | `OWNER` | - |
 | users | `OWNER` | - | `OWNER` | `OWNER` |
 | user/profile | - | - | `requireAuth` | - |
 | user/password | - | `requireAuth` | - | - |
-| sync/smartstore | **인증 없음** | **인증 없음** | - | - |
+| sync/smartstore | 인증 없음 (내부용) | 인증 없음 (내부용) | - | - |
+
+> sync/smartstore는 로컬 Windows 작업 스케줄러에서 호출하는 내부용 API로, Vercel 배포 시 `NEXT_PUBLIC_HIDE_API_SYNC=true`로 UI를 숨김 처리합니다.
+
+### 향후 개선 사항
+
+| 항목 | 설명 |
+|------|------|
+| 에러 메시지 정제 | API 에러 응답에서 내부 정보 제거, 프로덕션용 일반 메시지 적용 |
+| 세션 갱신 | SessionProvider에 refetchInterval 설정 (토큰 자동 갱신) |
 
 ### 환경 변수 보안
 
