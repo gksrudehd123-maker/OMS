@@ -13,12 +13,18 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'productId가 필요합니다' }, { status: 400 });
   }
 
+  // 상품 썸네일 조회
+  const product = await prisma.product.findUnique({
+    where: { id: productId },
+    select: { name: true, thumbnailUrl: true },
+  });
+
   const keywords = await prisma.productKeyword.findMany({
     where: { productId },
     include: {
       ranks: {
         orderBy: { date: 'desc' },
-        take: 2, // 최신 + 전일 (변동 계산용)
+        take: 2,
       },
     },
     orderBy: { createdAt: 'asc' },
@@ -42,7 +48,13 @@ export async function GET(request: NextRequest) {
     };
   });
 
-  return NextResponse.json(result);
+  return NextResponse.json({
+    product: {
+      name: product?.name,
+      thumbnailUrl: product?.thumbnailUrl,
+    },
+    keywords: result,
+  });
 }
 
 // POST /api/keywords

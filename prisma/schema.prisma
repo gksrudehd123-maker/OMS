@@ -54,6 +54,7 @@ model Product {
   memo            String?
   isActive        Boolean   @default(true)
   storeProductId  String?               // 네이버 쇼핑 상품 ID (키워드 순위 매칭용)
+  thumbnailUrl    String?               // 네이버 쇼핑 썸네일 URL
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
   orders          Order[]

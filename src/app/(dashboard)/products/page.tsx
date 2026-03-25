@@ -219,7 +219,7 @@ export default function ProductsPage() {
 
       {activeTab === 'keywords' ? (
         <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
-          <KeywordRankTab products={products.map((p) => ({ id: p.id, name: p.name, optionInfo: p.optionInfo }))} />
+          <KeywordRankTab />
         </div>
       ) : (
 

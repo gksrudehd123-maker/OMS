@@ -39,6 +39,19 @@ export async function POST(request: NextRequest) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
+  // 매칭된 상품 썸네일/storeProductId 업데이트
+  if (result.matchedItem) {
+    await prisma.product.update({
+      where: { id: kw.productId },
+      data: {
+        thumbnailUrl: result.matchedItem.image,
+        ...(result.matchedItem.productId && !kw.product.storeProductId
+          ? { storeProductId: result.matchedItem.productId }
+          : {}),
+      },
+    });
+  }
+
   // 오늘 날짜로 upsert
   const saved = await prisma.keywordRank.upsert({
     where: { keywordId_date: { keywordId, date: today } },

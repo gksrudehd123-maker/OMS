@@ -34,6 +34,7 @@ export interface RankResult {
   matchedItem?: {
     title: string;
     link: string;
+    image: string;
     mallName: string;
     productId: string;
   };
@@ -47,11 +48,11 @@ async function searchShopping(
   start: number = 1,
   display: number = 100,
 ): Promise<NaverShoppingResponse> {
-  const clientId = process.env.NAVER_CLIENT_ID;
-  const clientSecret = process.env.NAVER_CLIENT_SECRET;
+  const clientId = process.env.NAVER_SEARCH_CLIENT_ID;
+  const clientSecret = process.env.NAVER_SEARCH_CLIENT_SECRET;
 
   if (!clientId || !clientSecret) {
-    throw new Error('NAVER_CLIENT_ID와 NAVER_CLIENT_SECRET 환경 변수가 필요합니다');
+    throw new Error('NAVER_SEARCH_CLIENT_ID와 NAVER_SEARCH_CLIENT_SECRET 환경 변수가 필요합니다');
   }
 
   const params = new URLSearchParams({
@@ -96,28 +97,18 @@ export async function checkKeywordRank(
   for (let i = 0; i < data.items.length; i++) {
     const item = data.items[i];
 
-    // storeProductId로 정확 매칭
-    if (storeProductId && item.productId === storeProductId) {
-      return {
-        rank: i + 1,
-        page: Math.ceil((i + 1) / 40), // 네이버 쇼핑 1페이지 = 40개
-        matchedItem: {
-          title: item.title.replace(/<[^>]*>/g, ''),
-          link: item.link,
-          mallName: item.mallName,
-          productId: item.productId,
-        },
-      };
-    }
+    const matched =
+      (storeProductId && item.productId === storeProductId) ||
+      item.mallName === storeName;
 
-    // mallName으로 매칭
-    if (item.mallName === storeName) {
+    if (matched) {
       return {
         rank: i + 1,
         page: Math.ceil((i + 1) / 40),
         matchedItem: {
           title: item.title.replace(/<[^>]*>/g, ''),
           link: item.link,
+          image: item.image,
           mallName: item.mallName,
           productId: item.productId,
         },
