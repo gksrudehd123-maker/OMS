@@ -213,6 +213,8 @@ export function KeywordRankTab() {
       toast.success('키워드가 등록되었습니다');
       setNewKeyword('');
       queryClient.invalidateQueries({ queryKey: ['keywords', selectedProductId] });
+      queryClient.invalidateQueries({ queryKey: ['keyword-history'] });
+      queryClient.invalidateQueries({ queryKey: ['all-keyword-history'] });
     },
     onError: (err: Error) => toast.error(err.message),
   });
@@ -223,6 +225,8 @@ export function KeywordRankTab() {
       toast.success('키워드가 삭제되었습니다');
       setSelectedKeywordId(null);
       queryClient.invalidateQueries({ queryKey: ['keywords', selectedProductId] });
+      queryClient.invalidateQueries({ queryKey: ['keyword-history'] });
+      queryClient.invalidateQueries({ queryKey: ['all-keyword-history'] });
     },
   });
 
@@ -238,6 +242,8 @@ export function KeywordRankTab() {
       if (!res.ok) throw new Error(data.error);
       toast.success(data.rank ? `${data.rank}위 (${data.page}페이지)` : '100위 안에 없습니다');
       queryClient.invalidateQueries({ queryKey: ['keywords', selectedProductId] });
+      queryClient.invalidateQueries({ queryKey: ['keyword-history'] });
+      queryClient.invalidateQueries({ queryKey: ['all-keyword-history'] });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : '조회 실패');
     } finally {
