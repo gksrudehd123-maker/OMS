@@ -39,12 +39,25 @@ type KPI = {
   calculableCount: number;
 };
 
+type PrevKPI = {
+  totalSales: number;
+  totalMargin: number;
+  totalOrders: number;
+} | null;
+
 type DashboardData = {
   kpi: KPI;
+  prevKpi?: PrevKPI;
   dailyData: { date: string; sales: number; margin: number; orders: number }[];
-  channelData: { name: string; sales: number; margin: number; marginRate: number; orders: number }[];
+  channelData: { name: string; sales: number; margin: number; marginRate: number; orders: number; adCost?: number; roas?: number | null }[];
   productMarginRank: { name: string; optionInfo: string; label: string; sales: number; margin: number; marginRate: number; orders: number }[];
 };
+
+function calcChange(current: number, prev: number | undefined): { pct: number; direction: 'up' | 'down' | 'same' } | null {
+  if (prev === undefined || prev === 0) return null;
+  const pct = Math.round(((current - prev) / Math.abs(prev)) * 1000) / 10;
+  return { pct, direction: pct > 0 ? 'up' : pct < 0 ? 'down' : 'same' };
+}
 
 export default function DashboardPage() {
   const [from, setFrom] = useState('');
@@ -64,7 +77,12 @@ export default function DashboardPage() {
   });
 
   const kpi = data?.kpi;
+  const prevKpi = data?.prevKpi;
   const dailyData = data?.dailyData || [];
+
+  const salesChange = kpi && prevKpi ? calcChange(kpi.totalSales, prevKpi.totalSales) : null;
+  const marginChange = kpi && prevKpi ? calcChange(kpi.totalMargin, prevKpi.totalMargin) : null;
+  const ordersChange = kpi && prevKpi ? calcChange(kpi.totalOrders, prevKpi.totalOrders) : null;
 
   const kpiCards = [
     {
@@ -73,6 +91,7 @@ export default function DashboardPage() {
       icon: ShoppingCart,
       color: 'text-blue-600 dark:text-blue-400',
       bgColor: 'bg-blue-50 dark:bg-blue-950',
+      change: salesChange,
     },
     {
       label: '총 마진',
@@ -86,6 +105,7 @@ export default function DashboardPage() {
         kpi && kpi.totalMargin >= 0
           ? 'bg-green-50 dark:bg-green-950'
           : 'bg-red-50 dark:bg-red-950',
+      change: marginChange,
     },
     {
       label: '평균 마진율',
@@ -99,6 +119,7 @@ export default function DashboardPage() {
         kpi && kpi.avgMarginRate >= 0
           ? 'bg-green-50 dark:bg-green-950'
           : 'bg-red-50 dark:bg-red-950',
+      change: null,
     },
     {
       label: '총 광고비',
@@ -106,6 +127,7 @@ export default function DashboardPage() {
       icon: Megaphone,
       color: 'text-orange-600 dark:text-orange-400',
       bgColor: 'bg-orange-50 dark:bg-orange-950',
+      change: null,
     },
     {
       label: '총 주문수',
@@ -113,6 +135,7 @@ export default function DashboardPage() {
       icon: Package,
       color: 'text-purple-600 dark:text-purple-400',
       bgColor: 'bg-purple-50 dark:bg-purple-950',
+      change: ordersChange,
     },
   ];
 
@@ -167,6 +190,18 @@ export default function DashboardPage() {
                   <span className="font-mono text-xl font-semibold sm:text-2xl">
                     {card.value}
                   </span>
+                  {card.change && (
+                    <span className={`ml-2 text-xs font-medium ${
+                      card.change.direction === 'up'
+                        ? 'text-green-600 dark:text-green-400'
+                        : card.change.direction === 'down'
+                          ? 'text-red-600 dark:text-red-400'
+                          : 'text-muted-foreground'
+                    }`}>
+                      {card.change.direction === 'up' ? '▲' : card.change.direction === 'down' ? '▼' : ''}
+                      {Math.abs(card.change.pct)}%
+                    </span>
+                  )}
                 </div>
               </div>
             ))}

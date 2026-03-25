@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Upload, FileSpreadsheet, CheckCircle, XCircle } from 'lucide-react';
+import { Upload, FileSpreadsheet, CheckCircle, XCircle, Package } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -287,7 +287,7 @@ export function UploadZone({
       {result && (
         <div className="rounded-lg border border-border bg-card p-4">
           <h4 className="text-sm font-medium">업로드 결과</h4>
-          <div className="mt-2 grid grid-cols-3 gap-3 text-sm">
+          <div className="mt-2 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
             <div className="flex items-center gap-2">
               <FileSpreadsheet className="h-4 w-4 text-muted-foreground" />
               <span>전체 {result.summary.total}건</span>
@@ -299,11 +299,19 @@ export function UploadZone({
             <div className="flex items-center gap-2">
               <XCircle className="h-4 w-4 text-danger" />
               <span>
-                실패 {result.summary.errors}건
-                {result.summary.duplicates > 0 &&
-                  ` (중복 ${result.summary.duplicates}건)`}
+                중복 {result.summary.duplicates}건
+                {result.summary.errors - result.summary.duplicates > 0 &&
+                  ` / 실패 ${result.summary.errors - result.summary.duplicates}건`}
               </span>
             </div>
+            {result.newProducts && result.newProducts.length > 0 && (
+              <div className="flex items-center gap-2">
+                <Package className="h-4 w-4 text-blue-500" />
+                <span className="text-blue-600 dark:text-blue-400">
+                  신규상품 {result.newProducts.length}건
+                </span>
+              </div>
+            )}
           </div>
         </div>
       )}

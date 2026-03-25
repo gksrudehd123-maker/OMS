@@ -103,6 +103,121 @@ export async function GET(request: NextRequest) {
 
   const totalAdCostAmount = Number(adCostAgg._sum.cost ?? 0);
 
+  // ── 이전 기간 비교 데이터 (전일/전주/전월 비교용) ──
+  let prevKpi: { totalSales: number; totalMargin: number; totalOrders: number } | null = null;
+
+  if (from && to) {
+    const fromDate = new Date(from);
+    const toDate = new Date(to + 'T23:59:59');
+    const periodMs = toDate.getTime() - fromDate.getTime();
+    const prevFrom = new Date(fromDate.getTime() - periodMs - 86400000); // 이전 기간 시작
+    const prevTo = new Date(fromDate.getTime() - 86400000); // 이전 기간 끝 (from 하루 전)
+
+    const prevDateFilter = {
+      gte: prevFrom,
+      lte: prevTo,
+    };
+
+    const prevOrderWhere: Record<string, unknown> = { orderDate: prevDateFilter };
+    const prevDsWhere: Record<string, unknown> = { date: prevDateFilter };
+    const prevAdWhere: Record<string, unknown> = { date: prevDateFilter };
+
+    if (channelId) {
+      prevOrderWhere.channelId = channelId;
+      prevDsWhere.channelId = channelId;
+      prevAdWhere.channelId = channelId;
+    } else if (allowedChannels) {
+      prevOrderWhere.channelId = { in: allowedChannels };
+      prevDsWhere.channelId = { in: allowedChannels };
+      prevAdWhere.channelId = { in: allowedChannels };
+    }
+
+    const [prevOrders, prevDs, prevAdAgg] = await Promise.all([
+      prisma.order.findMany({
+        where: prevOrderWhere,
+        select: {
+          orderNumber: true,
+          quantity: true,
+          product: {
+            select: { sellingPrice: true, costPrice: true, feeRate: true, shippingCost: true, freeShippingMin: true },
+          },
+          channel: { select: { feeRate: true } },
+        },
+      }),
+      prisma.dailySales.findMany({
+        where: prevDsWhere,
+        select: {
+          salesAmount: true,
+          salesQuantity: true,
+          product: {
+            select: { costPrice: true, feeRate: true, fulfillmentFee: true, couponDiscount: true },
+          },
+        },
+      }),
+      prisma.adCost.aggregate({ where: prevAdWhere, _sum: { cost: true } }),
+    ]);
+
+    // 이전 기간 주문별 합산
+    const prevOrderTotals: Record<string, number> = {};
+    for (const o of prevOrders) {
+      const sp = o.product.sellingPrice ? Number(o.product.sellingPrice) : 0;
+      prevOrderTotals[o.orderNumber] = (prevOrderTotals[o.orderNumber] || 0) + sp * o.quantity;
+    }
+    const prevOrderFS: Record<string, boolean> = {};
+    for (const o of prevOrders) {
+      if (prevOrderFS[o.orderNumber]) continue;
+      const freeMin = o.product.freeShippingMin ? Number(o.product.freeShippingMin) : null;
+      if ((freeMin !== null && (prevOrderTotals[o.orderNumber] || 0) >= freeMin) || Number(o.product.shippingCost) === 0) {
+        prevOrderFS[o.orderNumber] = true;
+      }
+    }
+
+    let prevSales = 0, prevMargin = 0, prevOrderCount = 0;
+    for (const o of prevOrders) {
+      const m = calculateMargin({
+        sellingPrice: o.product.sellingPrice ? Number(o.product.sellingPrice) : null,
+        costPrice: o.product.costPrice ? Number(o.product.costPrice) : null,
+        quantity: o.quantity,
+        feeRate: Number(o.channel.feeRate),
+        productFeeRate: o.product.feeRate ? Number(o.product.feeRate) : null,
+        shippingCost: Number(o.product.shippingCost),
+        freeShippingMin: o.product.freeShippingMin ? Number(o.product.freeShippingMin) : null,
+        orderTotal: prevOrderTotals[o.orderNumber] || 0,
+        isAnyFreeShipping: prevOrderFS[o.orderNumber] || false,
+      });
+      if (m.isCalculable) { prevSales += m.salesAmount; prevMargin += m.margin; }
+      prevOrderCount++;
+    }
+
+    for (const ds of prevDs) {
+      const rgM = calculateRGMargin({
+        salesAmount: Number(ds.salesAmount),
+        salesQuantity: ds.salesQuantity,
+        costPrice: ds.product.costPrice ? Number(ds.product.costPrice) : null,
+        feeRate: ds.product.feeRate ? Number(ds.product.feeRate) : null,
+        fulfillmentFee: ds.product.fulfillmentFee ? Number(ds.product.fulfillmentFee) : null,
+        couponDiscount: ds.product.couponDiscount ? Number(ds.product.couponDiscount) : null,
+      });
+      prevSales += Number(ds.salesAmount);
+      if (rgM.isCalculable) prevMargin += rgM.margin;
+      prevOrderCount += ds.salesQuantity;
+    }
+
+    const prevAdCost = Number(prevAdAgg._sum.cost ?? 0);
+    prevKpi = {
+      totalSales: Math.round(prevSales),
+      totalMargin: Math.round(prevMargin - prevAdCost),
+      totalOrders: prevOrderCount,
+    };
+  }
+
+  // ── 채널별 광고비 (ROAS 계산용) ──
+  const channelAdCosts = await prisma.adCost.groupBy({
+    by: ['channelId'],
+    where: adWhere,
+    _sum: { cost: true },
+  });
+
   // 주문번호별 합산금액 + 무료배송 판단 (단일 루프)
   const orderTotals: Record<string, number> = {};
   for (const o of orders) {
@@ -218,6 +333,12 @@ export async function GET(request: NextRequest) {
 
   const staff = isStaff(user);
 
+  // 채널별 광고비 맵
+  const channelAdCostMap: Record<string, number> = {};
+  for (const cac of channelAdCosts) {
+    channelAdCostMap[cac.channelId] = Number(cac._sum.cost ?? 0);
+  }
+
   const response = NextResponse.json({
     kpi: {
       totalSales: Math.round(totalSales),
@@ -227,6 +348,7 @@ export async function GET(request: NextRequest) {
       totalOrders: orders.length + rgSalesCount,
       calculableCount: staff ? undefined : calculableCount,
     },
+    prevKpi: staff ? undefined : prevKpi,
     dailyData: Object.values(dailyMap)
       .map((d) => ({
         date: d.date,
@@ -235,14 +357,20 @@ export async function GET(request: NextRequest) {
         orders: d.orders,
       }))
       .sort((a, b) => a.date.localeCompare(b.date)),
-    channelData: Object.values(channelMap)
-      .map((ch) => ({
-        name: ch.name,
-        sales: Math.round(ch.sales),
-        margin: staff ? undefined : Math.round(ch.margin),
-        marginRate: staff ? undefined : (ch.sales > 0 ? Math.round((ch.margin / ch.sales) * 1000) / 10 : 0),
-        orders: ch.orders,
-      }))
+    channelData: Object.entries(channelMap)
+      .map(([chId, ch]) => {
+        const adCost = channelAdCostMap[chId] || 0;
+        const roas = adCost > 0 ? Math.round((ch.sales / adCost) * 100) / 100 : null;
+        return {
+          name: ch.name,
+          sales: Math.round(ch.sales),
+          margin: staff ? undefined : Math.round(ch.margin),
+          marginRate: staff ? undefined : (ch.sales > 0 ? Math.round((ch.margin / ch.sales) * 1000) / 10 : 0),
+          orders: ch.orders,
+          adCost: staff ? undefined : Math.round(adCost),
+          roas: staff ? undefined : roas,
+        };
+      })
       .sort((a, b) => b.sales - a.sales),
     productMarginRank: staff ? [] : Object.values(productMarginMap)
       .map((p) => ({

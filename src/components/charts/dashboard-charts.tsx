@@ -27,6 +27,8 @@ type ChannelData = {
   margin: number;
   marginRate: number;
   orders: number;
+  adCost?: number;
+  roas?: number | null;
 };
 
 type ProductMargin = {
@@ -135,6 +137,12 @@ export function ChannelBarChart({ data }: { data: ChannelData[] }) {
                     <p className="text-green-500">마진: ₩{d.margin.toLocaleString()}</p>
                     <p className="text-muted-foreground">마진율: {d.marginRate.toFixed(1)}%</p>
                     <p className="text-muted-foreground">주문수: {d.orders}건</p>
+                    {d.adCost !== undefined && d.adCost > 0 && (
+                      <>
+                        <p className="text-orange-500">광고비: ₩{d.adCost.toLocaleString()}</p>
+                        <p className="text-orange-500">ROAS: {d.roas !== null && d.roas !== undefined ? `${d.roas.toFixed(2)}x` : '-'}</p>
+                      </>
+                    )}
                   </div>
                 </div>
               );
