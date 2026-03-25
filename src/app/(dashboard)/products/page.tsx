@@ -19,6 +19,12 @@ import {
 import { toast } from 'sonner';
 import { ProgressBar } from '@/components/ui/progress-bar';
 import { Skeleton } from '@/components/ui/skeleton';
+import dynamic from 'next/dynamic';
+
+const KeywordRankTab = dynamic(
+  () => import('@/components/products/keyword-rank-tab').then((m) => m.KeywordRankTab),
+  { loading: () => <Skeleton className="h-64 w-full rounded-lg" /> },
+);
 
 type Product = {
   id: string;
@@ -44,6 +50,7 @@ type Channel = {
 
 export default function ProductsPage() {
   const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState<'list' | 'keywords'>('list');
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [channelId, setChannelId] = useState('');
@@ -182,10 +189,39 @@ export default function ProductsPage() {
       <div>
         <h1 className="text-2xl font-semibold">상품 관리</h1>
         <p className="text-sm text-muted-foreground">
-          엑셀 업로드 시 자동 등록된 상품 목록입니다. 행을 클릭하여
-          판매가/원가를 설정하세요.
+          상품 목록 관리 및 키워드 순위를 추적합니다
         </p>
       </div>
+
+      {/* 탭 */}
+      <div className="flex gap-1 border-b border-border">
+        <button
+          onClick={() => setActiveTab('list')}
+          className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${
+            activeTab === 'list'
+              ? 'border-primary text-primary'
+              : 'border-transparent text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          상품 목록
+        </button>
+        <button
+          onClick={() => setActiveTab('keywords')}
+          className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${
+            activeTab === 'keywords'
+              ? 'border-primary text-primary'
+              : 'border-transparent text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          키워드 순위
+        </button>
+      </div>
+
+      {activeTab === 'keywords' ? (
+        <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
+          <KeywordRankTab products={products.map((p) => ({ id: p.id, name: p.name, optionInfo: p.optionInfo }))} />
+        </div>
+      ) : (
 
       <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
         <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -319,6 +355,8 @@ export default function ProductsPage() {
           </div>
         )}
       </div>
+
+      )}
 
       {/* 상품 편집 다이얼로그 */}
       <Dialog

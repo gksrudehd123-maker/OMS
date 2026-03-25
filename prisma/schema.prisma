@@ -53,10 +53,12 @@ model Product {
   fulfillmentFee  Decimal?  @db.Decimal(10, 2)
   memo            String?
   isActive        Boolean   @default(true)
+  storeProductId  String?               // 네이버 쇼핑 상품 ID (키워드 순위 매칭용)
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
   orders          Order[]
   dailySales      DailySales[]
+  keywords        ProductKeyword[]
 
   @@index([name])
   @@map("products")
@@ -209,4 +211,36 @@ model DailySales {
   @@index([channelId])
   @@index([uploadId])
   @@map("daily_sales")
+}
+
+// ============================================================
+// 키워드 순위 추적 (Phase 9.5)
+// ============================================================
+
+model ProductKeyword {
+  id        String   @id @default(cuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  keyword   String
+  createdAt DateTime @default(now())
+  ranks     KeywordRank[]
+
+  @@unique([productId, keyword])
+  @@index([productId])
+  @@map("product_keywords")
+}
+
+model KeywordRank {
+  id        String   @id @default(cuid())
+  keywordId String
+  keyword   ProductKeyword @relation(fields: [keywordId], references: [id], onDelete: Cascade)
+  rank      Int?     // 순위 (null이면 100위 밖)
+  page      Int?     // 몇 페이지
+  date      DateTime @db.Date
+  createdAt DateTime @default(now())
+
+  @@unique([keywordId, date])
+  @@index([keywordId])
+  @@index([date])
+  @@map("keyword_ranks")
 }

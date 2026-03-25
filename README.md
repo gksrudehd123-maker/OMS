@@ -468,18 +468,18 @@ ipconfig | grep "IPv4"
 - ~~쿠팡 Wing API 연동~~ (IP 제한 + 플레리오토 충돌 → 엑셀 업로드로 대체)
 - ~~쿠팡 로켓배송 엑셀 파서~~ (불필요 — 제외)
 
-### Phase 9.5 - 키워드 순위 추적 (스마트스토어)
+### Phase 9.5 - 키워드 순위 추적 (스마트스토어) (완료)
 > 네이버 쇼핑 검색 API 사용 (developers.naver.com). IP 제한 없음 — Vercel에서도 호출 가능.
 > 상품 관리 페이지에 [키워드 순위] 탭으로 추가.
 
-- [ ] Product 모델에 storeUrl 필드 추가 (스마트스토어 상품 링크)
-- [ ] KeywordRank DB 모델 (상품ID, 키워드, 순위, 조회일)
-- [ ] 네이버 쇼핑 검색 API 연동 (키워드 검색 → 내 상품 순위 매칭)
-- [ ] 상품별 키워드 등록/삭제 UI
-- [ ] 키워드별 현재 순위 조회 (실시간)
-- [ ] 순위 이력 저장 + 변동 표시 (▲▼)
-- [ ] 순위 추이 차트 (최근 30일)
-- [ ] 자동 순위 조회 스케줄링 (매일 자동 수집)
+- [x] Product 모델에 storeProductId 필드 추가 + ProductKeyword, KeywordRank DB 모델
+- [x] 네이버 쇼핑 검색 API 연동 (키워드 검색 → mallName/storeProductId로 내 상품 순위 매칭)
+- [x] 상품별 키워드 등록/삭제 UI (상품 관리 > 키워드 순위 탭)
+- [x] 키워드별 현재 순위 실시간 조회 (조회 버튼)
+- [x] 순위 이력 저장 + 변동 표시 (▲▼, 전일 대비)
+- [x] 순위 추이 차트 (최근 30일, Recharts LineChart)
+- [x] 전체 키워드 일괄 조회 API (/api/keywords/check-all, 스케줄러용)
+- [ ] 자동 순위 조회 스케줄링 (Windows 스케줄러 등록)
 
 ### Phase 10 - Notion 연동 (CS 관리)
 - [ ] Notion API Integration 설정
