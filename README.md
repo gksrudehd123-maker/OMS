@@ -472,12 +472,16 @@ ipconfig | grep "IPv4"
 > 네이버 쇼핑 검색 API 사용 (developers.naver.com). IP 제한 없음 — Vercel에서도 호출 가능.
 > 상품 관리 페이지에 [키워드 순위] 탭으로 추가.
 
-- [x] Product 모델에 storeProductId 필드 추가 + ProductKeyword, KeywordRank DB 모델
+- [x] Product 모델에 storeProductId + thumbnailUrl 필드 추가 + ProductKeyword, KeywordRank DB 모델
 - [x] 네이버 쇼핑 검색 API 연동 (키워드 검색 → mallName/storeProductId로 내 상품 순위 매칭)
+- [x] 스마트스토어 상품만 표시 (채널 코드 기반 필터링 + 상품명 중복 제거)
 - [x] 상품별 키워드 등록/삭제 UI (상품 관리 > 키워드 순위 탭)
-- [x] 키워드별 현재 순위 실시간 조회 (조회 버튼)
+- [x] 키워드별 현재 순위 실시간 조회 (조회 버튼) + 전체 일괄 조회
 - [x] 순위 이력 저장 + 변동 표시 (▲▼, 전일 대비)
-- [x] 순위 추이 차트 (최근 30일, Recharts LineChart)
+- [x] 2열 그리드 카드 UI (순위별 그라데이션 배경, 프로그레스 바, 10위 이내 왕관)
+- [x] 상품 카드 (네이버 쇼핑 썸네일 자동 저장, 평균 순위, 최고 키워드 표시)
+- [x] 개별 키워드 순위 추이 차트 (최근 30일) + 네이버 쇼핑 바로가기 링크
+- [x] 전체 키워드 추이 차트 (여러 키워드 다른 색상 라인, 항상 표시)
 - [x] 전체 키워드 일괄 조회 API (/api/keywords/check-all, 스케줄러용)
 - [ ] 자동 순위 조회 스케줄링 (Windows 스케줄러 등록)
 
