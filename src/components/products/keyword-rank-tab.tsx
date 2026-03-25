@@ -80,18 +80,18 @@ function RankCard({
             </p>
           )}
         </div>
-        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
+        <div className="flex items-center gap-1 ml-2">
           <button
             onClick={(e) => { e.stopPropagation(); onCheck(); }}
             disabled={checking}
-            className="rounded-lg p-1 text-muted-foreground hover:bg-white/60 dark:hover:bg-black/20 hover:text-foreground disabled:opacity-50"
+            className="rounded-lg p-1.5 bg-white/70 dark:bg-white/10 text-foreground hover:bg-white dark:hover:bg-white/20 disabled:opacity-50 border border-border/50"
             title="순위 조회"
           >
             {checking ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
           </button>
           <button
             onClick={(e) => { e.stopPropagation(); onDelete(); }}
-            className="rounded-lg p-1 text-muted-foreground hover:bg-red-100/60 dark:hover:bg-red-900/30 hover:text-red-600"
+            className="rounded-lg p-1.5 bg-white/70 dark:bg-white/10 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/40 hover:text-red-600 border border-border/50"
             title="삭제"
           >
             <Trash2 className="h-3.5 w-3.5" />
