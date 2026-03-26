@@ -22,7 +22,7 @@ export async function GET() {
     }
 
     const response = NextResponse.json(result);
-    response.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600');
+    response.headers.set('Cache-Control', 'private, no-cache');
     return response;
   } catch (err) {
     console.error('Settings GET error:', err);
