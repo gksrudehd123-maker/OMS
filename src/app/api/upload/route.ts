@@ -187,6 +187,7 @@ export async function POST(request: NextRequest) {
         errors: result.errors.length,
         duplicates: result.errors.filter((e) => e.message.startsWith('중복'))
           .length,
+        skippedToday: result.skippedToday,
       },
       newProducts,
     });

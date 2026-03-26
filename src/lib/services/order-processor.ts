@@ -3,6 +3,7 @@ import { ParsedOrder } from '@/lib/excel/smartstore-parser';
 
 export type ProcessResult = {
   successCount: number;
+  skippedToday: number;
   errors: { row: number; message: string }[];
   newProductIds: Set<string>;
 };
@@ -27,10 +28,20 @@ export async function processOrders(
   }
 
   let successCount = 0;
+  let skippedToday = 0;
   const errors = [...initialErrors];
   const newProductIds = new Set<string>();
 
+  // 당일 날짜 (KST 기준)
+  const todayStr = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().split('T')[0];
+
   for (const order of parsedOrders) {
+    // 당일 주문 skip
+    const orderDateStr = order.orderDate.toISOString().split('T')[0];
+    if (orderDateStr >= todayStr) {
+      skippedToday++;
+      continue;
+    }
     try {
       // 상품 조회 후 없으면 생성
       let product = await prisma.product.findUnique({
@@ -101,5 +112,5 @@ export async function processOrders(
     }
   }
 
-  return { successCount, errors, newProductIds };
+  return { successCount, skippedToday, errors, newProductIds };
 }

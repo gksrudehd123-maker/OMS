@@ -73,5 +73,5 @@ export async function GET(request: NextRequest) {
     };
   });
 
-  return apiPaginated(salesWithMargin, { total, page, limit }, 30);
+  return apiPaginated(salesWithMargin, { total, page, limit });
 }

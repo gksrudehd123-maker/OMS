@@ -58,6 +58,9 @@ export const DELIVERY_ATTR_EN_TO_KO: Record<string, string> = {
   ROCKET_GROWTH: '로켓그로스',
 };
 
+/** 매출 합산에서 제외할 주문 상태 */
+export const EXCLUDED_ORDER_STATUSES = ['CANCELED', 'CANCEL_DONE', 'RETURNED', 'EXCHANGED'];
+
 /**
  * 주문 상태를 영문 코드로 정규화
  * 이미 영문이면 그대로, 한글이면 변환

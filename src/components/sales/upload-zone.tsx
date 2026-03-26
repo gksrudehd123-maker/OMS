@@ -30,6 +30,7 @@ type UploadResult = {
     success: number;
     errors: number;
     duplicates: number;
+    skippedToday?: number;
   };
   newProducts: NewProduct[];
   isRocketGrowth?: boolean;
@@ -312,6 +313,14 @@ export function UploadZone({
                 </span>
               </div>
             )}
+            {result.summary.skippedToday && result.summary.skippedToday > 0 ? (
+              <div className="flex items-center gap-2">
+                <XCircle className="h-4 w-4 text-amber-500" />
+                <span className="text-amber-600 dark:text-amber-400">
+                  당일 주문 {result.summary.skippedToday}건 제외
+                </span>
+              </div>
+            ) : null}
           </div>
         </div>
       )}

@@ -139,5 +139,5 @@ export async function GET(request: NextRequest) {
     return { ...order, margin };
   });
 
-  return apiPaginated(ordersWithMargin, { total, page, limit }, 30);
+  return apiPaginated(ordersWithMargin, { total, page, limit });
 }

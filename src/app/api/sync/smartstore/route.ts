@@ -141,6 +141,15 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // 신규 상품 상세 정보 조회 (가격 설정 팝업용)
+    let newProducts: { id: string; name: string; optionInfo: string }[] = [];
+    if (result.newProductIds.size > 0) {
+      newProducts = await prisma.product.findMany({
+        where: { id: { in: Array.from(result.newProductIds) } },
+        select: { id: true, name: true, optionInfo: true },
+      });
+    }
+
     return NextResponse.json({
       summary: {
         total: parsedOrders.length,
@@ -150,6 +159,7 @@ export async function POST(request: NextRequest) {
           .length,
         newProducts: result.newProductIds.size,
       },
+      newProducts,
       message: `${result.successCount}건 동기화 완료`,
     });
   } catch (err) {

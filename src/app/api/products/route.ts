@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
     ? products.map(({ costPrice: _, feeRate: _f, shippingCost: _s, freeShippingMin: _fm, couponDiscount: _cd, fulfillmentFee: _ff, ...rest }) => rest)
     : products;
 
-  return apiPaginated(sanitized, { total, page, limit }, 60);
+  return apiPaginated(sanitized, { total, page, limit });
 }
 
 export async function POST(request: NextRequest) {

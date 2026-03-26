@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { calculateMargin } from '@/lib/helpers/margin-calc';
 import { calculateRGMargin } from '@/lib/helpers/rg-margin-calc';
 import { requireAuth, isError, checkChannelAccess, getChannelFilter, isStaff } from '@/lib/auth-guard';
+import { EXCLUDED_ORDER_STATUSES } from '@/lib/helpers/status-map';
 
 export async function GET(request: NextRequest) {
   const user = await requireAuth();
@@ -24,7 +25,9 @@ export async function GET(request: NextRequest) {
       }
     : undefined;
 
-  const orderWhere: Record<string, unknown> = {};
+  const orderWhere: Record<string, unknown> = {
+    orderStatus: { notIn: EXCLUDED_ORDER_STATUSES },
+  };
   const dsWhere: Record<string, unknown> = {};
   const adWhere: Record<string, unknown> = {};
 
@@ -118,7 +121,10 @@ export async function GET(request: NextRequest) {
       lte: prevTo,
     };
 
-    const prevOrderWhere: Record<string, unknown> = { orderDate: prevDateFilter };
+    const prevOrderWhere: Record<string, unknown> = {
+      orderDate: prevDateFilter,
+      orderStatus: { notIn: EXCLUDED_ORDER_STATUSES },
+    };
     const prevDsWhere: Record<string, unknown> = { date: prevDateFilter };
     const prevAdWhere: Record<string, unknown> = { date: prevDateFilter };
 

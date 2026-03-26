@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { calculateMargin } from '@/lib/helpers/margin-calc';
 import { calculateRGMargin } from '@/lib/helpers/rg-margin-calc';
+import { EXCLUDED_ORDER_STATUSES } from '@/lib/helpers/status-map';
 
 export type ReportData = {
   period: { from: string; to: string };
@@ -56,7 +57,10 @@ export async function generateReportData(
     lte: new Date(to + 'T23:59:59'),
   };
 
-  const orderWhere: Record<string, unknown> = { orderDate: dateFilter };
+  const orderWhere: Record<string, unknown> = {
+    orderDate: dateFilter,
+    orderStatus: { notIn: EXCLUDED_ORDER_STATUSES },
+  };
   const dsWhere: Record<string, unknown> = { date: dateFilter };
 
   if (channelId) {
