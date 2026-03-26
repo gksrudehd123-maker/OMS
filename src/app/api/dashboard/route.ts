@@ -390,6 +390,6 @@ export async function GET(request: NextRequest) {
       .slice(0, 10),
   });
 
-  response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
+  response.headers.set('Cache-Control', 'private, no-cache');
   return response;
 }
