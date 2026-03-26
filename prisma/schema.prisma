@@ -51,6 +51,9 @@ model Product {
   freeShippingMin Decimal?  @db.Decimal(10, 2)
   couponDiscount  Decimal?  @db.Decimal(10, 2)
   fulfillmentFee  Decimal?  @db.Decimal(10, 2)
+  brand           String?               // 브랜드 (방짜, 웰스파, 카모도)
+  brandCategory   String?               // 브랜드 내 세부 카테고리 (배터리, 기포기 등)
+  brandNone       Boolean   @default(false) // true: 해당사항 없음 (분류 대상 아님)
   memo            String?
   isActive        Boolean   @default(true)
   storeProductId  String?               // 네이버 쇼핑 상품 ID (키워드 순위 매칭용)

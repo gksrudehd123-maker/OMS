@@ -20,10 +20,16 @@ import { toast } from 'sonner';
 import { ProgressBar } from '@/components/ui/progress-bar';
 import { Skeleton } from '@/components/ui/skeleton';
 import dynamic from 'next/dynamic';
+import { Tag } from 'lucide-react';
 
 const KeywordRankTab = dynamic(
   () => import('@/components/products/keyword-rank-tab').then((m) => m.KeywordRankTab),
   { loading: () => <Skeleton className="h-64 w-full rounded-lg" /> },
+);
+
+const BrandClassifyDialog = dynamic(
+  () => import('@/components/products/brand-classify-dialog').then((m) => m.BrandClassifyDialog),
+  { loading: () => null },
 );
 
 type Product = {
@@ -55,6 +61,9 @@ export default function ProductsPage() {
   const [search, setSearch] = useState('');
   const [channelId, setChannelId] = useState('');
   const limit = 20;
+
+  // 브랜드 분류 다이얼로그
+  const [showBrandClassify, setShowBrandClassify] = useState(false);
 
   // 편집 다이얼로그
   const [editProduct, setEditProduct] = useState<Product | null>(null);
@@ -229,6 +238,13 @@ export default function ProductsPage() {
             <span className="text-sm text-muted-foreground">
               총 {total}개 상품
             </span>
+            <button
+              onClick={() => setShowBrandClassify(true)}
+              className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-sm font-medium hover:bg-accent transition-colors"
+            >
+              <Tag className="h-3.5 w-3.5" />
+              브랜드 분류
+            </button>
             <select
               value={channelId}
               onChange={(e) => {
@@ -560,6 +576,11 @@ export default function ProductsPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* 브랜드 분류 다이얼로그 */}
+      {showBrandClassify && (
+        <BrandClassifyDialog onClose={() => setShowBrandClassify(false)} />
+      )}
     </div>
   );
 }
