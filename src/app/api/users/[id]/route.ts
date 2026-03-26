@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireRole, isError } from '@/lib/auth-guard';
 import { writeAuditLog, diffChanges } from '@/lib/audit-log';
+import { apiSuccess, apiError } from '@/lib/api-response';
 
 export async function PATCH(
   request: NextRequest,
@@ -15,10 +16,7 @@ export async function PATCH(
 
   // 자기 자신의 역할은 변경 불가
   if (role && params.id === user.id) {
-    return NextResponse.json(
-      { error: '자신의 역할은 변경할 수 없습니다' },
-      { status: 400 },
-    );
+    return apiError('자신의 역할은 변경할 수 없습니다');
   }
 
   const data: Record<string, unknown> = {};
@@ -54,7 +52,7 @@ export async function PATCH(
     changes,
   });
 
-  return NextResponse.json(updated);
+  return apiSuccess(updated);
 }
 
 export async function DELETE(
@@ -66,10 +64,7 @@ export async function DELETE(
 
   // 자기 자신은 삭제 불가
   if (params.id === user.id) {
-    return NextResponse.json(
-      { error: '자신의 계정은 삭제할 수 없습니다' },
-      { status: 400 },
-    );
+    return apiError('자신의 계정은 삭제할 수 없습니다');
   }
 
   const target = await prisma.user.findUnique({
@@ -87,5 +82,5 @@ export async function DELETE(
     summary: `사용자 '${target?.name}' (${target?.email}) 삭제`,
   });
 
-  return NextResponse.json({ success: true });
+  return apiSuccess({ deleted: true });
 }

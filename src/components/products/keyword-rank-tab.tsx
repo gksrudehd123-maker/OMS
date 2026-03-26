@@ -163,7 +163,7 @@ export function KeywordRankTab() {
       if (!ssChannel) return [];
       const res = await fetch(`/api/products?channelId=${ssChannel.id}&limit=500`);
       const data = await res.json();
-      const raw = (data.products || []) as { id: string; name: string }[];
+      const raw = (data.data || []) as { id: string; name: string }[];
       const seen = new Map<string, Product>();
       for (const p of raw) {
         if (!seen.has(p.name)) seen.set(p.name, { id: p.id, name: p.name });

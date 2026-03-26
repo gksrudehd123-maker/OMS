@@ -75,7 +75,7 @@ export default function ProductsPage() {
     },
   });
 
-  const { data: productsData, isLoading: loading } = useQuery<{ products: Product[]; total: number }>({
+  const { data: productsData, isLoading: loading } = useQuery<{ data: Product[]; meta: { total: number } }>({
     queryKey: ['products', page, search, channelId],
     queryFn: async () => {
       const params = new URLSearchParams({
@@ -89,8 +89,8 @@ export default function ProductsPage() {
     },
   });
 
-  const products = productsData?.products ?? [];
-  const total = productsData?.total ?? 0;
+  const products = productsData?.data ?? [];
+  const total = productsData?.meta?.total ?? 0;
   const totalPages = Math.ceil(total / limit);
 
   const productMutation = useMutation({

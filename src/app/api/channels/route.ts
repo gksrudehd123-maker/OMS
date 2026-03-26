@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireAuth, requireRole, isError } from '@/lib/auth-guard';
 import { writeAuditLog } from '@/lib/audit-log';
+import { apiSuccess, apiError } from '@/lib/api-response';
 
 export async function GET() {
   const user = await requireAuth();
@@ -25,10 +26,7 @@ export async function POST(request: NextRequest) {
   const { name, code, feeRate } = body;
 
   if (!name || !code) {
-    return NextResponse.json(
-      { error: '채널명과 코드는 필수입니다' },
-      { status: 400 },
-    );
+    return apiError('채널명과 코드는 필수입니다');
   }
 
   const channel = await prisma.channel.create({
@@ -44,5 +42,5 @@ export async function POST(request: NextRequest) {
     summary: `채널 '${name}' 생성`,
   });
 
-  return NextResponse.json(channel, { status: 201 });
+  return apiSuccess(channel, 201);
 }

@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireRole, isError } from '@/lib/auth-guard';
 import { writeAuditLog, diffChanges } from '@/lib/audit-log';
+import { apiSuccess } from '@/lib/api-response';
 
 export async function PATCH(
   request: NextRequest,
@@ -29,5 +30,5 @@ export async function PATCH(
     changes,
   });
 
-  return NextResponse.json(channel);
+  return apiSuccess(channel);
 }

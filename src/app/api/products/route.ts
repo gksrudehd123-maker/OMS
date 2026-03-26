@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireAuth, isError, isStaff } from '@/lib/auth-guard';
 import { writeAuditLog } from '@/lib/audit-log';
+import { apiPaginated, apiSuccess, apiError } from '@/lib/api-response';
 
 export async function GET(request: NextRequest) {
   const user = await requireAuth();
@@ -59,9 +60,7 @@ export async function GET(request: NextRequest) {
     ? products.map(({ costPrice: _, feeRate: _f, shippingCost: _s, freeShippingMin: _fm, couponDiscount: _cd, fulfillmentFee: _ff, ...rest }) => rest)
     : products;
 
-  const response = NextResponse.json({ products: sanitized, total, page, limit });
-  response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
-  return response;
+  return apiPaginated(sanitized, { total, page, limit }, 60);
 }
 
 export async function POST(request: NextRequest) {
@@ -79,17 +78,14 @@ export async function POST(request: NextRequest) {
   } = body;
 
   if (!name) {
-    return NextResponse.json({ error: '상품명은 필수입니다' }, { status: 400 });
+    return apiError('상품명은 필수입니다');
   }
 
   const productKey = `${name.trim()}|${optionInfo.trim()}`;
 
   const existing = await prisma.product.findUnique({ where: { productKey } });
   if (existing) {
-    return NextResponse.json(
-      { error: '이미 존재하는 상품+옵션 조합입니다' },
-      { status: 409 },
-    );
+    return apiError('이미 존재하는 상품+옵션 조합입니다', 409);
   }
 
   const product = await prisma.product.create({
@@ -113,5 +109,5 @@ export async function POST(request: NextRequest) {
     summary: `상품 '${name}' 등록`,
   });
 
-  return NextResponse.json(product, { status: 201 });
+  return apiSuccess(product, 201);
 }

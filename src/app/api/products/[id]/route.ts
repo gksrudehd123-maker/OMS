@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireAuth, requireRole, isError, isStaff } from '@/lib/auth-guard';
 import { writeAuditLog, diffChanges } from '@/lib/audit-log';
+import { apiSuccess, apiError } from '@/lib/api-response';
 
 export async function GET(
   request: NextRequest,
@@ -19,18 +20,15 @@ export async function GET(
   });
 
   if (!product) {
-    return NextResponse.json(
-      { error: '상품을 찾을 수 없습니다' },
-      { status: 404 },
-    );
+    return apiError('상품을 찾을 수 없습니다', 404);
   }
 
   if (isStaff(user)) {
     const { costPrice: _, feeRate: _f, shippingCost: _s, freeShippingMin: _fm, couponDiscount: _cd, fulfillmentFee: _ff, ...rest } = product;
-    return NextResponse.json(rest);
+    return apiSuccess(rest);
   }
 
-  return NextResponse.json(product);
+  return apiSuccess(product);
 }
 
 export async function PATCH(
@@ -72,7 +70,7 @@ export async function PATCH(
     changes,
   });
 
-  return NextResponse.json(product);
+  return apiSuccess(product);
 }
 
 export async function DELETE(
@@ -96,5 +94,5 @@ export async function DELETE(
     summary: `상품 '${product.name}' 비활성화`,
   });
 
-  return NextResponse.json(product);
+  return apiSuccess(product);
 }

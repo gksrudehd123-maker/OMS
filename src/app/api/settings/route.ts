@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireAuth, requireRole, isError } from '@/lib/auth-guard';
 import { writeAuditLog } from '@/lib/audit-log';
+import { apiSuccess, apiError } from '@/lib/api-response';
 
 // 설정 키 목록
 const VALID_KEYS = ['defaultShippingCost', 'defaultFreeShippingMin', 'autoReportSchedule'];
@@ -76,12 +77,9 @@ export async function PUT(request: NextRequest) {
       });
     }
 
-    return NextResponse.json({ success: true });
+    return apiSuccess({ saved: true });
   } catch (err) {
     console.error('Settings PUT error:', err);
-    return NextResponse.json(
-      { error: '설정 저장 중 오류가 발생했습니다' },
-      { status: 500 },
-    );
+    return apiError('설정 저장 중 오류가 발생했습니다', 500);
   }
 }

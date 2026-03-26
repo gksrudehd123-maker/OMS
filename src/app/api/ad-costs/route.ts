@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireAuth, requireRole, isError, checkChannelAccess, getChannelFilter } from '@/lib/auth-guard';
 import { writeAuditLog } from '@/lib/audit-log';
+import { apiSuccess, apiError } from '@/lib/api-response';
 
 // 광고비 목록 조회
 export async function GET(request: NextRequest) {
@@ -54,10 +55,7 @@ export async function POST(request: NextRequest) {
     const { channelId, date, cost, memo } = body;
 
     if (!channelId || !date || cost === undefined) {
-      return NextResponse.json(
-        { error: '채널, 날짜, 광고비를 모두 입력해주세요' },
-        { status: 400 },
-      );
+      return apiError('채널, 날짜, 광고비를 모두 입력해주세요');
     }
 
     const adCost = await prisma.adCost.upsert({
@@ -89,13 +87,10 @@ export async function POST(request: NextRequest) {
       summary: `광고비 ${adCost.channel.name} ${date} ${cost}원 등록`,
     });
 
-    return NextResponse.json(adCost);
+    return apiSuccess(adCost);
   } catch (err) {
     console.error('AdCost create error:', err);
-    return NextResponse.json(
-      { error: '광고비 저장 중 오류가 발생했습니다' },
-      { status: 500 },
-    );
+    return apiError('광고비 저장 중 오류가 발생했습니다', 500);
   }
 }
 
@@ -108,7 +103,7 @@ export async function DELETE(request: NextRequest) {
   const id = searchParams.get('id');
 
   if (!id) {
-    return NextResponse.json({ error: 'ID가 필요합니다' }, { status: 400 });
+    return apiError('ID가 필요합니다');
   }
 
   const adCost = await prisma.adCost.findUnique({
@@ -126,5 +121,5 @@ export async function DELETE(request: NextRequest) {
     summary: `광고비 ${adCost?.channel.name} ${adCost?.date.toISOString().slice(0, 10)} 삭제`,
   });
 
-  return NextResponse.json({ success: true });
+  return apiSuccess({ deleted: true });
 }

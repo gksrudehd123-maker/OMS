@@ -179,16 +179,16 @@ export default function SettingsPage() {
     },
   });
 
-  const { data: uploadsData, isLoading: loadingUploads } = useQuery<{ uploads: UploadRecord[] }>({
+  const { data: uploadsData, isLoading: loadingUploads } = useQuery<{ data: UploadRecord[] }>({
     queryKey: ['uploads'],
     queryFn: async () => {
       const res = await fetch('/api/upload?limit=50');
-      if (!res.ok) return { uploads: [] };
+      if (!res.ok) return { data: [] };
       return res.json();
     },
   });
 
-  const uploads = uploadsData?.uploads ?? [];
+  const uploads = uploadsData?.data ?? [];
 
   const handleSaveDefaults = async () => {
     setSaving(true);

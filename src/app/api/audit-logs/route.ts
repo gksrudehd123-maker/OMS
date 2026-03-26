@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireRole, isError } from '@/lib/auth-guard';
+import { apiPaginated } from '@/lib/api-response';
 
 export async function GET(request: NextRequest) {
   const user = await requireRole('OWNER');
@@ -26,5 +27,5 @@ export async function GET(request: NextRequest) {
     prisma.auditLog.count({ where }),
   ]);
 
-  return NextResponse.json({ logs, total, page, limit });
+  return apiPaginated(logs, { total, page, limit });
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireAuth, isError } from '@/lib/auth-guard';
+import { apiPaginated } from '@/lib/api-response';
 import { parseSmartstoreExcel } from '@/lib/excel/smartstore-parser';
 import { parseCoupangExcel } from '@/lib/excel/coupang-parser';
 import { parseRocketGrowthExcel } from '@/lib/excel/rocketgrowth-parser';
@@ -216,5 +217,5 @@ export async function GET(request: NextRequest) {
     prisma.upload.count(),
   ]);
 
-  return NextResponse.json({ uploads, total, page, limit });
+  return apiPaginated(uploads, { total, page, limit });
 }

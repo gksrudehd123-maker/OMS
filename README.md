@@ -519,7 +519,7 @@ ipconfig | grep "IPv4"
 - [x] 핵심 로직 테스트 — Vitest 도입, 마진 계산/로켓그로스 마진/상품키 생성 단위 테스트 (22개)
 
 #### API 품질
-- [ ] API 응답 표준화 — { success, data, error, meta } 일관된 포맷
+- [x] API 응답 표준화 — apiSuccess/apiPaginated/apiError 헬퍼 + 전 API 적용
 - [ ] 입력값 검증 개선 — Zod 스키마 검증 도입 (수동 if문 → 선언적 검증)
 
 ### Phase 11 - SaaS 전환 (다중 셀러 서비스)

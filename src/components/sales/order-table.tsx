@@ -41,7 +41,7 @@ export function OrderTable({ channelId, refreshKey }: { channelId?: string; refr
   const [search, setSearch] = useState('');
   const limit = 20;
 
-  const { data, isLoading: loading } = useQuery<{ orders: Order[]; total: number }>({
+  const { data, isLoading: loading } = useQuery<{ data: Order[]; meta: { total: number } }>({
     queryKey: ['orders', channelId, page, search, refreshKey],
     queryFn: async () => {
       const params = new URLSearchParams({
@@ -55,8 +55,8 @@ export function OrderTable({ channelId, refreshKey }: { channelId?: string; refr
     },
   });
 
-  const orders = data?.orders ?? [];
-  const total = data?.total ?? 0;
+  const orders = data?.data ?? [];
+  const total = data?.meta?.total ?? 0;
   const totalPages = Math.ceil(total / limit);
 
   return (

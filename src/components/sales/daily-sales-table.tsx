@@ -44,8 +44,8 @@ export function DailySalesTable({
   const limit = 20;
 
   const { data, isLoading: loading } = useQuery<{
-    sales: DailySalesItem[];
-    total: number;
+    data: DailySalesItem[];
+    meta: { total: number };
   }>({
     queryKey: ['daily-sales', channelId, page, search, refreshKey],
     queryFn: async () => {
@@ -61,8 +61,8 @@ export function DailySalesTable({
     enabled: !!channelId,
   });
 
-  const sales = data?.sales ?? [];
-  const total = data?.total ?? 0;
+  const sales = data?.data ?? [];
+  const total = data?.meta?.total ?? 0;
   const totalPages = Math.ceil(total / limit);
 
   return (

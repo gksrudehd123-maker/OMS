@@ -49,8 +49,8 @@ export default function AuditLogsPage() {
   const limit = 30;
 
   const { data, isLoading } = useQuery<{
-    logs: AuditLog[];
-    total: number;
+    data: AuditLog[];
+    meta: { total: number };
   }>({
     queryKey: ['audit-logs', page, filterTarget, filterAction],
     queryFn: async () => {
@@ -66,8 +66,8 @@ export default function AuditLogsPage() {
     },
   });
 
-  const logs = data?.logs ?? [];
-  const total = data?.total ?? 0;
+  const logs = data?.data ?? [];
+  const total = data?.meta?.total ?? 0;
   const totalPages = Math.ceil(total / limit);
 
   const formatDate = (dateStr: string) => {

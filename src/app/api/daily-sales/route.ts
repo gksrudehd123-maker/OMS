@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { calculateRGMargin } from '@/lib/helpers/rg-margin-calc';
 import { requireAuth, isError, checkChannelAccess, getChannelFilter, isStaff } from '@/lib/auth-guard';
+import { apiPaginated } from '@/lib/api-response';
 
 export async function GET(request: NextRequest) {
   const user = await requireAuth();
@@ -72,7 +73,5 @@ export async function GET(request: NextRequest) {
     };
   });
 
-  const response = NextResponse.json({ sales: salesWithMargin, total, page, limit });
-  response.headers.set('Cache-Control', 'public, s-maxage=30, stale-while-revalidate=60');
-  return response;
+  return apiPaginated(salesWithMargin, { total, page, limit }, 30);
 }

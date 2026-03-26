@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireAuth, requireRole, isError } from '@/lib/auth-guard';
 import { writeAuditLog } from '@/lib/audit-log';
+import { apiSuccess, apiError } from '@/lib/api-response';
 
 export async function GET(
   request: NextRequest,
@@ -16,13 +17,10 @@ export async function GET(
   });
 
   if (!upload) {
-    return NextResponse.json(
-      { error: '업로드를 찾을 수 없습니다' },
-      { status: 404 },
-    );
+    return apiError('업로드를 찾을 수 없습니다', 404);
   }
 
-  return NextResponse.json(upload);
+  return apiSuccess(upload);
 }
 
 export async function DELETE(
@@ -47,5 +45,5 @@ export async function DELETE(
     summary: `업로드 '${upload?.fileName}' 삭제 (${upload?.totalRows}건)`,
   });
 
-  return NextResponse.json({ success: true });
+  return apiSuccess({ deleted: true });
 }
