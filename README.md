@@ -483,7 +483,7 @@ ipconfig | grep "IPv4"
 - [x] 개별 키워드 순위 추이 차트 (최근 30일) + 네이버 쇼핑 바로가기 링크
 - [x] 전체 키워드 추이 차트 (여러 키워드 다른 색상 라인, 항상 표시)
 - [x] 전체 키워드 일괄 조회 API (/api/keywords/check-all, 스케줄러용)
-- [ ] 자동 순위 조회 스케줄링 (Windows 스케줄러 등록)
+- [x] 자동 순위 조회 스케줄링 (Windows 스케줄러 매일 10:00, auto-keyword-check.bat)
 
 ### Phase 10 - Notion 연동 (CS 관리)
 - [ ] Notion API Integration 설정
