@@ -184,6 +184,7 @@ export default function SalesPage() {
 
       if (savedCount > 0) {
         toast.success(`${savedCount}개 상품 가격이 설정되었습니다`);
+        setRefreshKey((k) => k + 1);
       }
       setShowPriceDialog(false);
     } catch {

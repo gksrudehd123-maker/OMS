@@ -232,6 +232,7 @@ export function UploadZone({
 
       if (savedCount > 0) {
         toast.success(`${savedCount}개 상품 가격이 설정되었습니다`);
+        onUploadComplete();
       }
       setShowPriceDialog(false);
     } catch {
