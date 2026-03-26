@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireAuth, requireRole, isError } from '@/lib/auth-guard';
+import { writeAuditLog } from '@/lib/audit-log';
 
 export async function GET(
   request: NextRequest,
@@ -31,6 +32,20 @@ export async function DELETE(
   const user = await requireRole('OWNER', 'MANAGER');
   if (isError(user)) return user;
 
+  const upload = await prisma.upload.findUnique({
+    where: { id: params.id },
+    select: { fileName: true, channelId: true, totalRows: true },
+  });
   await prisma.upload.delete({ where: { id: params.id } });
+
+  writeAuditLog({
+    userId: user.id,
+    userName: user.name,
+    action: 'DELETE',
+    target: 'Upload',
+    targetId: params.id,
+    summary: `업로드 '${upload?.fileName}' 삭제 (${upload?.totalRows}건)`,
+  });
+
   return NextResponse.json({ success: true });
 }

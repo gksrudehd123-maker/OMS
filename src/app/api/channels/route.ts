@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireAuth, requireRole, isError } from '@/lib/auth-guard';
+import { writeAuditLog } from '@/lib/audit-log';
 
 export async function GET() {
   const user = await requireAuth();
@@ -32,6 +33,15 @@ export async function POST(request: NextRequest) {
 
   const channel = await prisma.channel.create({
     data: { name, code, feeRate: feeRate || 0 },
+  });
+
+  writeAuditLog({
+    userId: user.id,
+    userName: user.name,
+    action: 'CREATE',
+    target: 'Channel',
+    targetId: channel.id,
+    summary: `채널 '${name}' 생성`,
   });
 
   return NextResponse.json(channel, { status: 201 });

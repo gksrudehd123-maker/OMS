@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireAuth, isError, isStaff } from '@/lib/auth-guard';
+import { writeAuditLog } from '@/lib/audit-log';
 
 export async function GET(request: NextRequest) {
   const user = await requireAuth();
@@ -101,6 +102,15 @@ export async function POST(request: NextRequest) {
       sellingPrice,
       memo,
     },
+  });
+
+  writeAuditLog({
+    userId: user.id,
+    userName: user.name,
+    action: 'CREATE',
+    target: 'Product',
+    targetId: product.id,
+    summary: `상품 '${name}' 등록`,
   });
 
   return NextResponse.json(product, { status: 201 });

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireAuth, requireRole, isError, isStaff } from '@/lib/auth-guard';
+import { writeAuditLog, diffChanges } from '@/lib/audit-log';
 
 export async function GET(
   request: NextRequest,
@@ -54,9 +55,21 @@ export async function PATCH(
     }
   }
 
+  const before = await prisma.product.findUnique({ where: { id: params.id } });
   const product = await prisma.product.update({
     where: { id: params.id },
     data,
+  });
+
+  const changes = before ? diffChanges(before as unknown as Record<string, unknown>, data) : undefined;
+  writeAuditLog({
+    userId: user.id,
+    userName: user.name,
+    action: 'UPDATE',
+    target: 'Product',
+    targetId: params.id,
+    summary: `상품 '${product.name}' 수정`,
+    changes,
   });
 
   return NextResponse.json(product);
@@ -72,6 +85,15 @@ export async function DELETE(
   const product = await prisma.product.update({
     where: { id: params.id },
     data: { isActive: false },
+  });
+
+  writeAuditLog({
+    userId: user.id,
+    userName: user.name,
+    action: 'DELETE',
+    target: 'Product',
+    targetId: params.id,
+    summary: `상품 '${product.name}' 비활성화`,
   });
 
   return NextResponse.json(product);

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireRole, isError } from '@/lib/auth-guard';
+import { writeAuditLog, diffChanges } from '@/lib/audit-log';
 
 export async function PATCH(
   request: NextRequest,
@@ -25,6 +26,10 @@ export async function PATCH(
   if (role !== undefined) data.role = role;
   if (allowedChannels !== undefined) data.allowedChannels = allowedChannels;
 
+  const before = await prisma.user.findUnique({
+    where: { id: params.id },
+    select: { name: true, role: true, allowedChannels: true },
+  });
   const updated = await prisma.user.update({
     where: { id: params.id },
     select: {
@@ -36,6 +41,17 @@ export async function PATCH(
       createdAt: true,
     },
     data,
+  });
+
+  const changes = before ? diffChanges(before as unknown as Record<string, unknown>, data) : undefined;
+  writeAuditLog({
+    userId: user.id,
+    userName: user.name,
+    action: 'UPDATE',
+    target: 'User',
+    targetId: params.id,
+    summary: `사용자 '${updated.name}' 정보 수정`,
+    changes,
   });
 
   return NextResponse.json(updated);
@@ -56,7 +72,20 @@ export async function DELETE(
     );
   }
 
+  const target = await prisma.user.findUnique({
+    where: { id: params.id },
+    select: { name: true, email: true },
+  });
   await prisma.user.delete({ where: { id: params.id } });
+
+  writeAuditLog({
+    userId: user.id,
+    userName: user.name,
+    action: 'DELETE',
+    target: 'User',
+    targetId: params.id,
+    summary: `사용자 '${target?.name}' (${target?.email}) 삭제`,
+  });
 
   return NextResponse.json({ success: true });
 }

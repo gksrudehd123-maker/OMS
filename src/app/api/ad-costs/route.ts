@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireAuth, requireRole, isError, checkChannelAccess, getChannelFilter } from '@/lib/auth-guard';
+import { writeAuditLog } from '@/lib/audit-log';
 
 // 광고비 목록 조회
 export async function GET(request: NextRequest) {
@@ -79,6 +80,15 @@ export async function POST(request: NextRequest) {
       include: { channel: { select: { id: true, name: true, code: true } } },
     });
 
+    writeAuditLog({
+      userId: user.id,
+      userName: user.name,
+      action: 'CREATE',
+      target: 'AdCost',
+      targetId: adCost.id,
+      summary: `광고비 ${adCost.channel.name} ${date} ${cost}원 등록`,
+    });
+
     return NextResponse.json(adCost);
   } catch (err) {
     console.error('AdCost create error:', err);
@@ -101,6 +111,20 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: 'ID가 필요합니다' }, { status: 400 });
   }
 
+  const adCost = await prisma.adCost.findUnique({
+    where: { id },
+    include: { channel: { select: { name: true } } },
+  });
   await prisma.adCost.delete({ where: { id } });
+
+  writeAuditLog({
+    userId: user.id,
+    userName: user.name,
+    action: 'DELETE',
+    target: 'AdCost',
+    targetId: id,
+    summary: `광고비 ${adCost?.channel.name} ${adCost?.date.toISOString().slice(0, 10)} 삭제`,
+  });
+
   return NextResponse.json({ success: true });
 }

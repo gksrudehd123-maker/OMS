@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireAuth, requireRole, isError } from '@/lib/auth-guard';
+import { writeAuditLog } from '@/lib/audit-log';
 
 // 설정 키 목록
 const VALID_KEYS = ['defaultShippingCost', 'defaultFreeShippingMin', 'autoReportSchedule'];
@@ -45,11 +46,33 @@ export async function PUT(request: NextRequest) {
       }
     }
 
+    const beforeSettings = await prisma.setting.findMany({
+      where: { key: { in: updates.map((u) => u.key) } },
+    });
+    const beforeMap: Record<string, string> = {};
+    for (const s of beforeSettings) beforeMap[s.key] = s.value;
+
     for (const { key, value } of updates) {
       await prisma.setting.upsert({
         where: { key },
         update: { value },
         create: { key, value },
+      });
+    }
+
+    const changedKeys = updates.filter((u) => beforeMap[u.key] !== u.value);
+    if (changedKeys.length > 0) {
+      const changes: Record<string, { from: unknown; to: unknown }> = {};
+      for (const { key, value } of changedKeys) {
+        changes[key] = { from: beforeMap[key] ?? null, to: value };
+      }
+      writeAuditLog({
+        userId: user.id,
+        userName: user.name,
+        action: 'UPDATE',
+        target: 'Setting',
+        summary: `설정 변경: ${changedKeys.map((c) => c.key).join(', ')}`,
+        changes,
       });
     }
 
