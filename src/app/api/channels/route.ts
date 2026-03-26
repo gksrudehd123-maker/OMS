@@ -13,9 +13,7 @@ export async function GET() {
     orderBy: { createdAt: 'asc' },
   });
 
-  const response = NextResponse.json(channels);
-  response.headers.set('Cache-Control', 'private, no-cache');
-  return response;
+  return NextResponse.json(channels);
 }
 
 export async function POST(request: NextRequest) {

@@ -41,7 +41,6 @@ export async function GET(request: NextRequest) {
   const totalCost = adCosts.reduce((sum, ac) => sum + Number(ac.cost), 0);
 
   const response = NextResponse.json({ adCosts, totalCost });
-  response.headers.set('Cache-Control', 'private, no-cache');
   return response;
 }
 

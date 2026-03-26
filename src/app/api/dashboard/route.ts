@@ -390,6 +390,5 @@ export async function GET(request: NextRequest) {
       .slice(0, 10),
   });
 
-  response.headers.set('Cache-Control', 'private, no-cache');
   return response;
 }

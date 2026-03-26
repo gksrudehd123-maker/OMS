@@ -23,21 +23,13 @@ export function apiSuccess<T>(data: T, status = 200) {
 export function apiPaginated<T>(
   data: T,
   meta: Omit<PaginationMeta, 'totalPages'>,
-  cacheMaxAge?: number,
 ) {
   const totalPages = Math.ceil(meta.total / meta.limit);
-  const response = NextResponse.json({
+  return NextResponse.json({
     success: true,
     data,
     meta: { ...meta, totalPages },
   });
-  if (cacheMaxAge) {
-    response.headers.set(
-      'Cache-Control',
-      `public, s-maxage=${cacheMaxAge}, stale-while-revalidate=${cacheMaxAge * 5}`,
-    );
-  }
-  return response;
 }
 
 /** 에러 응답 */

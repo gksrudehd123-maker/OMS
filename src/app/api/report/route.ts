@@ -266,6 +266,5 @@ export async function GET(request: NextRequest) {
       .sort((a, b) => (b.sales || 0) - (a.sales || 0)),
   });
 
-  response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
   return response;
 }

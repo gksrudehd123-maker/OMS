@@ -21,9 +21,7 @@ export async function GET() {
       result[s.key] = s.value;
     }
 
-    const response = NextResponse.json(result);
-    response.headers.set('Cache-Control', 'private, no-cache');
-    return response;
+    return NextResponse.json(result);
   } catch (err) {
     console.error('Settings GET error:', err);
     return NextResponse.json(
