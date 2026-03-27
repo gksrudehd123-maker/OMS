@@ -9,7 +9,7 @@ import { processOrders } from '@/lib/services/order-processor';
 import { writeAuditLog } from '@/lib/audit-log';
 
 /**
- * GET: 자동 동기화용 (전날 주문 자동 수집)
+ * GET: 자동 동기화용 (전날 주문 자동 수집 — 모든 스마트스토어 채널)
  * Windows 작업 스케줄러에서 호출
  */
 export async function GET() {
@@ -20,22 +20,33 @@ export async function GET() {
   const from = `${dateStr}T00:00:00.000+09:00`;
   const to = `${dateStr}T23:59:59.999+09:00`;
 
-  const fakeRequest = new NextRequest(
-    'http://localhost:3000/api/sync/smartstore',
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ from, to }),
-    },
-  );
+  // 모든 스마트스토어 채널 조회
+  const channels = await prisma.channel.findMany({
+    where: { code: { startsWith: 'SMARTSTORE' } },
+  });
 
-  return POST(fakeRequest);
+  const results = [];
+  for (const ch of channels) {
+    const fakeRequest = new NextRequest(
+      'http://localhost:3000/api/sync/smartstore',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ from, to, channelId: ch.id }),
+      },
+    );
+    const res = await POST(fakeRequest);
+    const data = await res.json();
+    results.push({ channel: ch.name, ...data });
+  }
+
+  return NextResponse.json(results);
 }
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { from, to } = body;
+    const { from, to, channelId } = body;
 
     if (!from || !to) {
       return NextResponse.json(
@@ -44,16 +55,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 스마트스토어 채널 조회
-    const channel = await prisma.channel.findFirst({
-      where: {
-        OR: [
-          { code: 'SMARTSTORE' },
-          { code: 'NAVER' },
-          { name: { contains: '스마트스토어' } },
-        ],
-      },
-    });
+    // 채널 조회 (channelId 지정 시 해당 채널, 아니면 기본 스마트스토어)
+    const channel = channelId
+      ? await prisma.channel.findUnique({ where: { id: channelId } })
+      : await prisma.channel.findFirst({
+          where: {
+            OR: [
+              { code: 'SMARTSTORE' },
+              { code: 'NAVER' },
+              { name: { contains: '스마트스토어' } },
+            ],
+          },
+        });
 
     if (!channel) {
       return NextResponse.json(
@@ -65,8 +78,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 1. 토큰 발급
-    const token = await getNaverToken();
+    // 1. 토큰 발급 (채널 코드별 API 키 분기)
+    const token = await getNaverToken(channel.code);
 
     // 2. 주문 조회 (24시간 제한 → 하루씩 분할)
     const fromDate = from.split('T')[0];
@@ -121,7 +134,7 @@ export async function POST(request: NextRequest) {
     // 4. Upload 레코드 생성 (API 동기화도 이력 관리)
     const upload = await prisma.upload.create({
       data: {
-        fileName: `[API] 스마트스토어 동기화 ${fromDate} ~ ${toDate}`,
+        fileName: `[API] ${channel.name} 동기화 ${fromDate} ~ ${toDate}`,
         channelId: channel.id,
         totalRows: parsedOrders.length,
         successRows: 0,
@@ -148,9 +161,9 @@ export async function POST(request: NextRequest) {
       action: 'API_SYNC',
       target: 'Order',
       targetId: upload.id,
-      summary: `스마트스토어 API 동기화 (${fromDate} ~ ${toDate}) — ${result.successCount}건 성공, 중복 ${duplicateCount}건`,
+      summary: `${channel.name} API 동기화 (${fromDate} ~ ${toDate}) — ${result.successCount}건 성공, 중복 ${duplicateCount}건`,
       changes: {
-        channel: { from: null, to: '스마트스토어' },
+        channel: { from: null, to: channel.name },
         dateRange: { from: fromDate, to: toDate },
         successCount: { from: null, to: result.successCount },
         errorCount: { from: null, to: result.errors.length },

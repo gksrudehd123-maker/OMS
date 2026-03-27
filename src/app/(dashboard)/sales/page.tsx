@@ -78,6 +78,7 @@ export default function SalesPage() {
   const [syncing, setSyncing] = useState(false);
   const [syncFrom, setSyncFrom] = useState('');
   const [syncTo, setSyncTo] = useState('');
+  const [syncChannelId, setSyncChannelId] = useState('');
 
   // RG 판매 날짜
   const [salesDate, setSalesDate] = useState('');
@@ -94,6 +95,9 @@ export default function SalesPage() {
       .then((data) => {
         setChannels(data);
         if (data.length > 0) setSelectedChannel(data[0].id);
+        // API 동기화용 기본 채널 (첫 번째 스마트스토어)
+        const firstSmartstore = data.find((ch: Channel) => ch.code.startsWith('SMARTSTORE'));
+        if (firstSmartstore) setSyncChannelId(firstSmartstore.id);
       });
 
     // 기본 동기화 날짜: 어제 ~ 어제
@@ -133,7 +137,7 @@ export default function SalesPage() {
       const res = await fetch('/api/sync/smartstore', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ from, to }),
+        body: JSON.stringify({ from, to, channelId: syncChannelId || undefined }),
       });
 
       const data = await res.json();
@@ -276,6 +280,22 @@ export default function SalesPage() {
             네이버 커머스 API로 주문 데이터를 자동으로 가져옵니다
           </p>
           <div className="mt-4 flex flex-wrap items-end gap-3">
+            {channels.filter((ch) => ch.code.startsWith('SMARTSTORE')).length > 1 && (
+              <div>
+                <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                  스토어
+                </label>
+                <select
+                  value={syncChannelId}
+                  onChange={(e) => setSyncChannelId(e.target.value)}
+                  className="rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                >
+                  {channels.filter((ch) => ch.code.startsWith('SMARTSTORE')).map((ch) => (
+                    <option key={ch.id} value={ch.id}>{ch.name}</option>
+                  ))}
+                </select>
+              </div>
+            )}
             <div>
               <label className="mb-1 block text-xs font-medium text-muted-foreground">
                 시작일

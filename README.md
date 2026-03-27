@@ -30,7 +30,7 @@
 
 | 채널 | 수집 방식 | 데이터 유형 | DB 테이블 |
 |------|-----------|-------------|-----------|
-| **스마트스토어** | 엑셀 업로드 + API 자동 동기화 | 주문 단건 | `Order` |
+| **스마트스토어** (다중 스토어 지원) | 엑셀 업로드 + API 자동 동기화 | 주문 단건 | `Order` |
 | **쿠팡 윙** | 엑셀 업로드 (DeliveryList) | 주문 단건 | `Order` |
 | **쿠팡 로켓그로스** | 엑셀 업로드 (Statistics) | 일별 상품 집계 | `DailySales` |
 
@@ -147,9 +147,11 @@ NEXT_PUBLIC_HIDE_API_SYNC=false    # true: Vercel에서 API 동기화 UI 숨김
 NEXTAUTH_URL=http://localhost:3000
 NEXTAUTH_SECRET=...                # openssl rand -base64 32
 
-# 네이버 커머스 API (스마트스토어 자동 동기화)
+# 네이버 커머스 API (스마트스토어 — 다중 스토어 지원)
 NAVER_CLIENT_ID=...
 NAVER_CLIENT_SECRET=...
+NAVER_CLIENT_ID_WELSPA=...              # 추가 스토어 (채널 코드: SMARTSTORE_WELSPA)
+NAVER_CLIENT_SECRET_WELSPA=...          # $문자는 \$로 이스케이프 필수
 
 # 네이버 검색 API (키워드 순위 조회)
 NAVER_SEARCH_CLIENT_ID=...
@@ -391,6 +393,7 @@ GitHub Push → Vercel Auto Deploy (main branch → Production)
 - [ ] 잡비용(마케팅 비용) 테이블 — 문자비용 등 외부 데이터 연동 (추후 구현)
 
 #### 기능 개선
+- [ ] API 동기화 장기간 조회 분할 처리 — 7일 단위 자동 분할 + 토큰 갱신 (현재 1개월 조회 시 타임아웃/토큰 만료)
 - [ ] 입력값 검증 개선 — Zod 스키마 검증 도입 (수동 if문 → 선언적 검증)
 
 #### Phase 11 - SaaS 전환 (다중 셀러 서비스)
@@ -417,6 +420,7 @@ GitHub Push → Vercel Auto Deploy (main branch → Production)
 - **매출 관리 개편**: 탭 분리 (API 동기화 + 엑셀 업로드), 데이터 수집 이력 로그, 신규상품 팝업에 브랜드 분류 추가
 - **일별 매출 시간대 수정**: UTC→KST 변환으로 일별 집계 정확도 개선 (자정~오전 9시 주문이 전날로 밀리던 버그 수정)
 - **React Query 전역 캐시 수정**: staleTime/refetchOnWindowFocus 기본값 복원으로 페이지 전환 시 데이터 불일치 해결
+- **다중 스마트스토어 연동**: 채널 코드별 API 키 분기, 동기화 시 스토어 선택 가능, 자동 동기화(GET) 모든 스토어 순회
 
 ---
 

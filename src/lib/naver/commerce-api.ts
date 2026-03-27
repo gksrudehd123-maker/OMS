@@ -6,16 +6,34 @@ const TOKEN_URL = 'https://api.commerce.naver.com/external/v1/oauth2/token';
 const API_BASE = 'https://api.commerce.naver.com/external';
 
 /**
+ * 스토어 코드별 네이버 API 키 반환
+ */
+function getNaverApiKeys(channelCode?: string): { clientId: string; clientSecret: string } {
+  switch (channelCode) {
+    case 'SMARTSTORE_WELSPA':
+      return {
+        clientId: process.env.NAVER_CLIENT_ID_WELSPA || '',
+        clientSecret: process.env.NAVER_CLIENT_SECRET_WELSPA || '',
+      };
+    default:
+      return {
+        clientId: process.env.NAVER_CLIENT_ID || '',
+        clientSecret: process.env.NAVER_CLIENT_SECRET || '',
+      };
+  }
+}
+
+/**
  * 네이버 커머스 API 인증 토큰 발급
  * client_secret_sign = Base64(bcrypt(clientId + "_" + timestamp, clientSecret))
+ * @param channelCode 채널 코드 (기본: SMARTSTORE)
  */
-export async function getNaverToken(): Promise<string> {
-  const clientId = process.env.NAVER_CLIENT_ID;
-  const clientSecret = process.env.NAVER_CLIENT_SECRET;
+export async function getNaverToken(channelCode?: string): Promise<string> {
+  const { clientId, clientSecret } = getNaverApiKeys(channelCode);
 
   if (!clientId || !clientSecret) {
     throw new Error(
-      'NAVER_CLIENT_ID 또는 NAVER_CLIENT_SECRET이 설정되지 않았습니다',
+      `네이버 API 키가 설정되지 않았습니다 (${channelCode || 'SMARTSTORE'})`,
     );
   }
 
