@@ -6,6 +6,7 @@ import {
   convertToParseOrders,
 } from '@/lib/naver/commerce-api';
 import { processOrders } from '@/lib/services/order-processor';
+import { writeAuditLog } from '@/lib/audit-log';
 
 /**
  * GET: 자동 동기화용 (전날 주문 자동 수집)
@@ -138,6 +139,22 @@ export async function POST(request: NextRequest) {
         successRows: result.successCount,
         errorRows: result.errors.length,
         errors: result.errors.length > 0 ? result.errors : undefined,
+      },
+    });
+
+    const duplicateCount = result.errors.filter((e) => e.message.startsWith('중복')).length;
+
+    await writeAuditLog({
+      action: 'API_SYNC',
+      target: 'Order',
+      targetId: upload.id,
+      summary: `스마트스토어 API 동기화 (${fromDate} ~ ${toDate}) — ${result.successCount}건 성공, 중복 ${duplicateCount}건`,
+      changes: {
+        channel: { from: null, to: '스마트스토어' },
+        dateRange: { from: fromDate, to: toDate },
+        successCount: { from: null, to: result.successCount },
+        errorCount: { from: null, to: result.errors.length },
+        duplicateCount: { from: null, to: duplicateCount },
       },
     });
 

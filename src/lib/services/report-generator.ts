@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma';
 import { calculateMargin } from '@/lib/helpers/margin-calc';
 import { calculateRGMargin } from '@/lib/helpers/rg-margin-calc';
 import { EXCLUDED_ORDER_STATUSES } from '@/lib/helpers/status-map';
+import { toKSTDateString } from '@/lib/helpers/date-utils';
 
 export type ReportData = {
   period: { from: string; to: string };
@@ -156,7 +157,7 @@ export async function generateReportData(
       isAnyFreeShipping: orderFreeShipping[order.orderNumber] || false,
     });
 
-    const dateKey = order.orderDate.toISOString().split('T')[0];
+    const dateKey = toKSTDateString(order.orderDate);
     if (!dailyMap[dateKey]) dailyMap[dateKey] = { date: dateKey, sales: 0, margin: 0, orders: 0 };
     dailyMap[dateKey].orders++;
 
@@ -206,7 +207,7 @@ export async function generateReportData(
     const rgSalesAmt = Number(ds.salesAmount);
     totalSales += rgSalesAmt;
 
-    const dateKey = ds.date.toISOString().split('T')[0];
+    const dateKey = toKSTDateString(ds.date);
     if (!dailyMap[dateKey]) dailyMap[dateKey] = { date: dateKey, sales: 0, margin: 0, orders: 0 };
     dailyMap[dateKey].orders += ds.salesQuantity;
     dailyMap[dateKey].sales += rgSalesAmt;

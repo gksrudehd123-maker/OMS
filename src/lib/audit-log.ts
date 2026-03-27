@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma';
 
-type AuditAction = 'CREATE' | 'UPDATE' | 'DELETE';
+type AuditAction = 'CREATE' | 'UPDATE' | 'DELETE' | 'API_SYNC' | 'EXCEL_UPLOAD';
 
 type AuditParams = {
   userId?: string;

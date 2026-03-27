@@ -8,6 +8,7 @@ import { parseRocketGrowthExcel } from '@/lib/excel/rocketgrowth-parser';
 import { processOrders } from '@/lib/services/order-processor';
 import { processDailySales } from '@/lib/services/dailysales-processor';
 import { validateExcelFormat } from '@/lib/excel/validate-format';
+import { writeAuditLog } from '@/lib/audit-log';
 
 // 채널 코드로 파서 분기
 const COUPANG_CHANNEL_CODES = ['coupang_wing', 'coupang_rocket_growth', 'coupang_rocket_delivery'];
@@ -35,7 +36,7 @@ export async function POST(request: NextRequest) {
     // 채널 정보 조회 (파서 분기용)
     const channel = await prisma.channel.findUnique({
       where: { id: channelId },
-      select: { code: true },
+      select: { code: true, name: true },
     });
     if (!channel) {
       return NextResponse.json(
@@ -100,6 +101,22 @@ export async function POST(request: NextRequest) {
         },
       });
 
+      await writeAuditLog({
+        userId: user.id,
+        userName: user.name || undefined,
+        action: 'EXCEL_UPLOAD',
+        target: 'DailySales',
+        targetId: upload.id,
+        summary: `${channel.name} 엑셀 업로드 (${salesDateStr}) — ${result.successCount}건 성공, ${result.errors.length}건 오류`,
+        changes: {
+          channel: { from: null, to: channel.name },
+          salesDate: { from: null, to: salesDateStr },
+          fileName: { from: null, to: file.name },
+          successCount: { from: null, to: result.successCount },
+          errorCount: { from: null, to: result.errors.length },
+        },
+      });
+
       // 신규 상품 목록 조회 (RG 전용 필드 포함)
       const newProducts =
         result.newProductIds.size > 0
@@ -159,6 +176,22 @@ export async function POST(request: NextRequest) {
         successRows: result.successCount,
         errorRows: result.errors.length,
         errors: result.errors.length > 0 ? result.errors : undefined,
+      },
+    });
+
+    await writeAuditLog({
+      userId: user.id,
+      userName: user.name || undefined,
+      action: 'EXCEL_UPLOAD',
+      target: 'Order',
+      targetId: upload.id,
+      summary: `${channel.name} 엑셀 업로드 — ${result.successCount}건 성공, ${result.errors.length}건 오류`,
+      changes: {
+        channel: { from: null, to: channel.name },
+        fileName: { from: null, to: file.name },
+        successCount: { from: null, to: result.successCount },
+        errorCount: { from: null, to: result.errors.length },
+        duplicateCount: { from: null, to: result.errors.filter((e) => e.message.startsWith('중복')).length },
       },
     });
 

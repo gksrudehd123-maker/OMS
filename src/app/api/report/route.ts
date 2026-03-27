@@ -4,6 +4,7 @@ import { calculateMargin } from '@/lib/helpers/margin-calc';
 import { calculateRGMargin } from '@/lib/helpers/rg-margin-calc';
 import { requireAuth, isError, checkChannelAccess, getChannelFilter, isStaff } from '@/lib/auth-guard';
 import { EXCLUDED_ORDER_STATUSES } from '@/lib/helpers/status-map';
+import { toKSTDateString } from '@/lib/helpers/date-utils';
 
 export async function GET(request: NextRequest) {
   const user = await requireAuth();
@@ -132,7 +133,7 @@ export async function GET(request: NextRequest) {
       isAnyFreeShipping: orderFreeShipping[order.orderNumber] || false,
     });
 
-    const dateKey = order.orderDate.toISOString().split('T')[0];
+    const dateKey = toKSTDateString(order.orderDate);
     if (!dailyMap[dateKey]) dailyMap[dateKey] = { date: dateKey, sales: 0, margin: 0, orders: 0 };
     dailyMap[dateKey].orders++;
 
@@ -183,7 +184,7 @@ export async function GET(request: NextRequest) {
     const rgSalesAmt = Number(ds.salesAmount);
     totalSales += rgSalesAmt;
 
-    const dateKey = ds.date.toISOString().split('T')[0];
+    const dateKey = toKSTDateString(ds.date);
     if (!dailyMap[dateKey]) dailyMap[dateKey] = { date: dateKey, sales: 0, margin: 0, orders: 0 };
     dailyMap[dateKey].orders += ds.salesQuantity;
     dailyMap[dateKey].sales += rgSalesAmt;

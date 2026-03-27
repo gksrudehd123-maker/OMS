@@ -41,6 +41,8 @@ type PriceInput = {
   costPrice: string;
   shippingCost: string;
   freeShippingMin: string;
+  brand: string;
+  brandCategory: string;
 };
 
 type RGPriceInput = {
@@ -48,7 +50,24 @@ type RGPriceInput = {
   feeRate: string;
   fulfillmentFee: string;
   couponDiscount: string;
+  brand: string;
+  brandCategory: string;
 };
+
+const BRANDS = [
+  {
+    name: '방짜',
+    categories: ['배터리 KF-9', '배터리 KF-11', '배터리 KF-3.5', '배터리 AN-10500B', '배터리 AN-9000B', '기포기 KF'],
+  },
+  {
+    name: '웰스파',
+    categories: ['대용량복대', '무릎찜질기', '차량용 전기정판'],
+  },
+  {
+    name: '카모도',
+    categories: ['마스크'],
+  },
+];
 
 export function UploadZone({
   channelId,
@@ -129,6 +148,8 @@ export function UploadZone({
                 feeRate: '',
                 fulfillmentFee: '',
                 couponDiscount: '0',
+                brand: '',
+                brandCategory: '',
               };
             }
             setRGPriceInputs(inputs);
@@ -140,6 +161,8 @@ export function UploadZone({
                 costPrice: '',
                 shippingCost: '3000',
                 freeShippingMin: '30000',
+                brand: '',
+                brandCategory: '',
               };
             }
             setPriceInputs(inputs);
@@ -206,6 +229,18 @@ export function UploadZone({
             });
             if (res.ok) savedCount++;
           }
+
+          if (input.brand && input.brandCategory) {
+            await fetch('/api/products/brand', {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                productId: product.id,
+                brand: input.brand,
+                brandCategory: input.brandCategory,
+              }),
+            });
+          }
         } else {
           const input = priceInputs[product.id];
           if (!input) continue;
@@ -226,6 +261,18 @@ export function UploadZone({
               }),
             });
             if (res.ok) savedCount++;
+          }
+
+          if (input.brand && input.brandCategory) {
+            await fetch('/api/products/brand', {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                productId: product.id,
+                brand: input.brand,
+                brandCategory: input.brandCategory,
+              }),
+            });
           }
         }
       }
@@ -420,6 +467,37 @@ export function UploadZone({
                         className="w-full rounded-lg border border-input bg-background px-3 py-1.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-ring"
                       />
                     </div>
+                    <div className="space-y-1">
+                      <label className="text-xs text-muted-foreground">브랜드</label>
+                      <select
+                        value={rgPriceInputs[product.id]?.brand || ''}
+                        onChange={(e) => {
+                          updateRGPrice(product.id, 'brand', e.target.value);
+                          updateRGPrice(product.id, 'brandCategory', '');
+                        }}
+                        className="w-full rounded-lg border border-input bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                      >
+                        <option value="">선택 안함</option>
+                        {BRANDS.map((b) => (
+                          <option key={b.name} value={b.name}>{b.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                    {rgPriceInputs[product.id]?.brand && (
+                      <div className="space-y-1">
+                        <label className="text-xs text-muted-foreground">분류</label>
+                        <select
+                          value={rgPriceInputs[product.id]?.brandCategory || ''}
+                          onChange={(e) => updateRGPrice(product.id, 'brandCategory', e.target.value)}
+                          className="w-full rounded-lg border border-input bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                        >
+                          <option value="">분류 선택</option>
+                          {BRANDS.find((b) => b.name === rgPriceInputs[product.id]?.brand)?.categories.map((cat) => (
+                            <option key={cat} value={cat}>{cat}</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   /* 기존 필드 (스마트스토어/쿠팡 윙) */
@@ -492,6 +570,37 @@ export function UploadZone({
                         className="w-full rounded-lg border border-input bg-background px-3 py-1.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-ring"
                       />
                     </div>
+                    <div className="space-y-1">
+                      <label className="text-xs text-muted-foreground">브랜드</label>
+                      <select
+                        value={priceInputs[product.id]?.brand || ''}
+                        onChange={(e) => {
+                          updatePrice(product.id, 'brand', e.target.value);
+                          updatePrice(product.id, 'brandCategory', '');
+                        }}
+                        className="w-full rounded-lg border border-input bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                      >
+                        <option value="">선택 안함</option>
+                        {BRANDS.map((b) => (
+                          <option key={b.name} value={b.name}>{b.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                    {priceInputs[product.id]?.brand && (
+                      <div className="space-y-1">
+                        <label className="text-xs text-muted-foreground">분류</label>
+                        <select
+                          value={priceInputs[product.id]?.brandCategory || ''}
+                          onChange={(e) => updatePrice(product.id, 'brandCategory', e.target.value)}
+                          className="w-full rounded-lg border border-input bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                        >
+                          <option value="">분류 선택</option>
+                          {BRANDS.find((b) => b.name === priceInputs[product.id]?.brand)?.categories.map((cat) => (
+                            <option key={cat} value={cat}>{cat}</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

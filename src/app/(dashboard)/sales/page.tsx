@@ -27,6 +27,11 @@ const DailySalesTable = dynamic(
   { loading: () => <Skeleton className="h-96 w-full rounded-xl" /> },
 );
 
+const SyncHistory = dynamic(
+  () => import('@/components/sales/sync-history').then((m) => m.SyncHistory),
+  { loading: () => <Skeleton className="h-32 w-full rounded-xl" /> },
+);
+
 type Channel = {
   id: string;
   name: string;
@@ -44,12 +49,30 @@ type PriceInput = {
   costPrice: string;
   shippingCost: string;
   freeShippingMin: string;
+  brand: string;
+  brandCategory: string;
 };
+
+const BRANDS = [
+  {
+    name: '방짜',
+    categories: ['배터리 KF-9', '배터리 KF-11', '배터리 KF-3.5', '배터리 AN-10500B', '배터리 AN-9000B', '기포기 KF'],
+  },
+  {
+    name: '웰스파',
+    categories: ['대용량복대', '무릎찜질기', '차량용 전기정판'],
+  },
+  {
+    name: '카모도',
+    categories: ['마스크'],
+  },
+];
 
 export default function SalesPage() {
   const [channels, setChannels] = useState<Channel[]>([]);
   const [selectedChannel, setSelectedChannel] = useState('');
   const [refreshKey, setRefreshKey] = useState(0);
+  const [activeTab, setActiveTab] = useState<'excel' | 'api'>('api');
 
   // API 동기화 state
   const [syncing, setSyncing] = useState(false);
@@ -138,6 +161,8 @@ export default function SalesPage() {
               costPrice: '',
               shippingCost: '3000',
               freeShippingMin: '30000',
+              brand: '',
+              brandCategory: '',
             };
           }
           setPriceInputs(inputs);
@@ -180,6 +205,19 @@ export default function SalesPage() {
           });
           if (res.ok) savedCount++;
         }
+
+        // 브랜드 분류 저장
+        if (input.brand && input.brandCategory) {
+          await fetch('/api/products/brand', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              productId: product.id,
+              brand: input.brand,
+              brandCategory: input.brandCategory,
+            }),
+          });
+        }
       }
 
       if (savedCount > 0) {
@@ -204,8 +242,34 @@ export default function SalesPage() {
         </p>
       </div>
 
-      {/* API 동기화 영역 (로컬 환경에서만 표시) */}
-      {!process.env.NEXT_PUBLIC_HIDE_API_SYNC && (
+      {/* 탭 */}
+      <div className="flex gap-1 border-b border-border">
+        {!process.env.NEXT_PUBLIC_HIDE_API_SYNC && (
+          <button
+            onClick={() => setActiveTab('api')}
+            className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${
+              activeTab === 'api'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            API 동기화
+          </button>
+        )}
+        <button
+          onClick={() => setActiveTab('excel')}
+          className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${
+            activeTab === 'excel'
+              ? 'border-primary text-primary'
+              : 'border-transparent text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          엑셀 업로드
+        </button>
+      </div>
+
+      {/* 탭 콘텐츠 */}
+      {activeTab === 'api' && !process.env.NEXT_PUBLIC_HIDE_API_SYNC ? (
         <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
           <h2 className="text-lg font-semibold">스마트스토어 API 동기화</h2>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -248,47 +312,49 @@ export default function SalesPage() {
             </button>
           </div>
         </div>
+      ) : (
+        <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
+          <div className="mb-4 flex flex-wrap items-center gap-4">
+            <h2 className="text-lg font-semibold">엑셀 업로드</h2>
+            <select
+              value={selectedChannel}
+              onChange={(e) => setSelectedChannel(e.target.value)}
+              className="rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              {channels.length === 0 && (
+                <option value="">채널을 먼저 등록해주세요</option>
+              )}
+              {channels.map((ch) => (
+                <option key={ch.id} value={ch.id}>
+                  {ch.name}
+                </option>
+              ))}
+            </select>
+            {isRocketGrowth && (
+              <div>
+                <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                  판매 날짜
+                </label>
+                <input
+                  type="date"
+                  value={salesDate}
+                  onChange={(e) => setSalesDate(e.target.value)}
+                  className="rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+              </div>
+            )}
+          </div>
+          <UploadZone
+            channelId={selectedChannel}
+            channelCode={selectedChannelCode}
+            salesDate={isRocketGrowth ? salesDate : undefined}
+            onUploadComplete={() => setRefreshKey((k) => k + 1)}
+          />
+        </div>
       )}
 
-      {/* 엑셀 업로드 영역 */}
-      <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
-        <div className="mb-4 flex flex-wrap items-center gap-4">
-          <h2 className="text-lg font-semibold">엑셀 업로드</h2>
-          <select
-            value={selectedChannel}
-            onChange={(e) => setSelectedChannel(e.target.value)}
-            className="rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-          >
-            {channels.length === 0 && (
-              <option value="">채널을 먼저 등록해주세요</option>
-            )}
-            {channels.map((ch) => (
-              <option key={ch.id} value={ch.id}>
-                {ch.name}
-              </option>
-            ))}
-          </select>
-          {isRocketGrowth && (
-            <div>
-              <label className="mb-1 block text-xs font-medium text-muted-foreground">
-                판매 날짜
-              </label>
-              <input
-                type="date"
-                value={salesDate}
-                onChange={(e) => setSalesDate(e.target.value)}
-                className="rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-              />
-            </div>
-          )}
-        </div>
-        <UploadZone
-          channelId={selectedChannel}
-          channelCode={selectedChannelCode}
-          salesDate={isRocketGrowth ? salesDate : undefined}
-          onUploadComplete={() => setRefreshKey((k) => k + 1)}
-        />
-      </div>
+      {/* 최근 데이터 수집 이력 */}
+      <SyncHistory refreshKey={refreshKey} />
 
       {/* 주문/판매 목록 */}
       <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
@@ -364,6 +430,37 @@ export default function SalesPage() {
                       className="w-full rounded-lg border border-input bg-background px-3 py-1.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-ring"
                     />
                   </div>
+                  <div className="space-y-1">
+                    <label className="text-xs text-muted-foreground">브랜드</label>
+                    <select
+                      value={priceInputs[product.id]?.brand || ''}
+                      onChange={(e) => {
+                        updatePrice(product.id, 'brand', e.target.value);
+                        updatePrice(product.id, 'brandCategory', '');
+                      }}
+                      className="w-full rounded-lg border border-input bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    >
+                      <option value="">선택 안함</option>
+                      {BRANDS.map((b) => (
+                        <option key={b.name} value={b.name}>{b.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  {priceInputs[product.id]?.brand && (
+                    <div className="space-y-1">
+                      <label className="text-xs text-muted-foreground">분류</label>
+                      <select
+                        value={priceInputs[product.id]?.brandCategory || ''}
+                        onChange={(e) => updatePrice(product.id, 'brandCategory', e.target.value)}
+                        className="w-full rounded-lg border border-input bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                      >
+                        <option value="">분류 선택</option>
+                        {BRANDS.find((b) => b.name === priceInputs[product.id]?.brand)?.categories.map((cat) => (
+                          <option key={cat} value={cat}>{cat}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
