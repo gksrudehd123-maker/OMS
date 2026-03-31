@@ -40,6 +40,7 @@ export async function GET(request: NextRequest) {
     return {
       id: kw.id,
       keyword: kw.keyword,
+      isMain: kw.isMain,
       latestRank: latest?.rank ?? null,
       latestPage: latest?.page ?? null,
       latestDate: latest?.date ?? null,

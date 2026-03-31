@@ -2,6 +2,8 @@
 
 import { useQuery } from '@tanstack/react-query';
 import {
+  AreaChart,
+  Area,
   LineChart,
   Line,
   XAxis,
@@ -10,6 +12,7 @@ import {
   Tooltip,
   ResponsiveContainer,
   Legend,
+  LabelList,
 } from 'recharts';
 
 type RankHistory = {
@@ -20,40 +23,51 @@ type RankHistory = {
 
 const COLORS = ['#3B82F6', '#EF4444', '#22C55E', '#F59E0B', '#8B5CF6', '#EC4899', '#06B6D4', '#F97316'];
 
-export function RankChart({ keywordId }: { keywordId: string }) {
+export function RankChart({ keywordId, month }: { keywordId: string; month?: string }) {
   const { data: history = [], isLoading } = useQuery<RankHistory[]>({
-    queryKey: ['keyword-history', keywordId],
+    queryKey: ['keyword-history', keywordId, month],
     queryFn: async () => {
       const res = await fetch(`/api/keywords/${keywordId}/history`);
       return res.json();
     },
   });
 
+  // 월 필터 적용
+  const filtered = month
+    ? history.filter((h) => h.date.startsWith(month))
+    : history;
+
   if (isLoading) {
     return <div className="h-64 flex items-center justify-center text-sm text-muted-foreground">로딩 중...</div>;
   }
 
-  if (history.length === 0) {
+  if (filtered.length === 0) {
     return (
       <div className="h-48 flex items-center justify-center text-sm text-muted-foreground">
-        순위 데이터가 없습니다. 조회 버튼을 클릭해주세요.
+        {month ? `${month}월 순위 데이터가 없습니다` : '순위 데이터가 없습니다. 조회 버튼을 클릭해주세요.'}
       </div>
     );
   }
 
-  const chartData = history.map((h) => ({
+  const chartData = filtered.map((h) => ({
     date: new Date(h.date).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' }),
     rank: h.rank,
   }));
 
-  const ranks = history.filter((h) => h.rank !== null).map((h) => h.rank as number);
+  const ranks = filtered.filter((h) => h.rank !== null).map((h) => h.rank as number);
   const maxRank = ranks.length > 0 ? Math.max(...ranks) : 100;
   const yMax = Math.min(Math.ceil(maxRank / 10) * 10 + 10, 110);
 
   return (
     <div className="h-64">
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={chartData}>
+        <AreaChart data={chartData}>
+          <defs>
+            <linearGradient id="rankGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.05} />
+              <stop offset="95%" stopColor="#3B82F6" stopOpacity={0.3} />
+            </linearGradient>
+          </defs>
           <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
           <XAxis dataKey="date" tick={{ fill: '#9CA3AF', fontSize: 11 }} />
           <YAxis
@@ -76,16 +90,26 @@ export function RankChart({ keywordId }: { keywordId: string }) {
               );
             }}
           />
-          <Line
+          <Area
             type="monotone"
             dataKey="rank"
             stroke="#3B82F6"
             strokeWidth={2.5}
+            fill="url(#rankGradient)"
+            baseValue={yMax}
             dot={{ r: 4, fill: '#3B82F6', strokeWidth: 2, stroke: '#fff' }}
             activeDot={{ r: 6, fill: '#3B82F6', strokeWidth: 2, stroke: '#fff' }}
             connectNulls={false}
-          />
-        </LineChart>
+          >
+            <LabelList
+              dataKey="rank"
+              position="top"
+              offset={10}
+              style={{ fill: '#3B82F6', fontSize: 11, fontWeight: 700 }}
+              formatter={(v: number | null) => (v !== null ? `${v}위` : '')}
+            />
+          </Area>
+        </AreaChart>
       </ResponsiveContainer>
     </div>
   );

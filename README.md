@@ -17,7 +17,8 @@
 - **데이터 수집**: 엑셀 업로드 + 네이버 API 자동 동기화 (당일 데이터 업로드 차단), 수집 이력 로그
 - **매출 합산 규칙**: 취소/취소완료/반품/교환 주문은 매출에서 자동 제외
 - **광고비 관리**: 채널+날짜별 광고비 입력, ROAS 분석
-- **키워드 순위 추적**: 네이버 쇼핑 키워드 순위 조회 + 일별 추이 차트
+- **광고 손익분기**: 상품별 월 광고비 대비 손익분기 수량 계산, 실제 판매 대비 달성률 추적, 대시보드 탭
+- **키워드 순위 추적**: 네이버 쇼핑 키워드 순위 조회 + 일별 추이 에어리어 차트 + 메인 키워드 설정
 - **리포트 생성**: PDF/엑셀 리포트 다운로드 + 주간/월간 자동 리포트
 - **인증/권한**: 로그인 + RBAC (OWNER/MANAGER/STAFF) + 채널별 접근 제한
 - **감사 로그**: 데이터 변경 이력 추적 (생성/수정/삭제/업로드/동기화)
@@ -282,15 +283,21 @@ OMS/
 Role: OWNER |         ├──────────────────┤  ├──────────────┤
   MANAGER | STAFF     │ productId FK     │  │ userId       │
                       │ keyword          │  │ userName     │
-                      │ ranks[]          │  │ action       │
-                      └──────────────────┘  │ target       │
-                      ┌──────────────────┐  │ summary      │
-                      │   KeywordRank    │  │ changes (JSON│
-                      ├──────────────────┤  └──────────────┘
-                      │ keywordId FK     │
-                      │ rank / page      │
-                      │ date             │
-                      └──────────────────┘
+                      │ isMain           │  │ action       │
+                      │ ranks[]          │  │ target       │
+                      └──────────────────┘  │ summary      │
+                      ┌──────────────────┐  │ changes (JSON│
+                      │   KeywordRank    │  └──────────────┘
+                      ├──────────────────┤
+                      │ keywordId FK     │  ┌───────────────────┐
+                      │ rank / page      │  │ ProductAdBudget   │
+                      │ date             │  ├───────────────────┤
+                      └──────────────────┘  │ month             │
+                                            │ channelId FK      │
+                                            │ productId FK      │
+                                            │ adCost            │
+                                            │ memo              │
+                                            └───────────────────┘
 ★ = 로켓그로스 전용
 ```
 
@@ -357,8 +364,9 @@ GitHub Push → Vercel Auto Deploy (main branch → Production)
 | products | `requireAuth` | `requireAuth` | `OWNER, MANAGER` | `OWNER, MANAGER` |
 | channels | `requireAuth` | `OWNER` | `OWNER` | - |
 | ad-costs | `requireAuth` + 채널 검증 | `OWNER, MANAGER` | - | `OWNER, MANAGER` |
+| ad-budgets | `requireAuth` + 채널 검증 | `OWNER, MANAGER` | - | `OWNER, MANAGER` |
 | upload | `requireAuth` | `requireAuth` | - | `OWNER, MANAGER` |
-| keywords | `requireAuth` | `requireAuth` | - | `requireAuth` |
+| keywords | `requireAuth` | `requireAuth` | `requireAuth` | `requireAuth` |
 | settings | `requireAuth` | - | `OWNER` | - |
 | users | `OWNER` | - | `OWNER` | `OWNER` |
 | audit-logs | `OWNER` | - | - | - |
@@ -421,6 +429,7 @@ GitHub Push → Vercel Auto Deploy (main branch → Production)
 - **일별 매출 시간대 수정**: UTC→KST 변환으로 일별 집계 정확도 개선 (자정~오전 9시 주문이 전날로 밀리던 버그 수정)
 - **React Query 전역 캐시 수정**: staleTime/refetchOnWindowFocus 기본값 복원으로 페이지 전환 시 데이터 불일치 해결
 - **다중 스마트스토어 연동**: 채널 코드별 API 키 분기, 동기화 시 스토어 선택 가능, 자동 동기화(GET) 모든 스토어 순회
+- **광고 손익분기**: 상품별 월 광고비 대비 손익분기 계산기, ProductAdBudget 테이블, 대시보드 탭(상품 카드 + 지표 + 달성률 프로그레스바), 메인 키워드 설정 + 월별 순위 에어리어 차트, 같은 상품명 전체 옵션 판매 수량 합산
 
 ---
 

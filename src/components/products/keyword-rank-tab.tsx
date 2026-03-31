@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Search, Plus, Trash2, RefreshCw, TrendingUp, TrendingDown, Loader2, ExternalLink, Crown, Trophy } from 'lucide-react';
+import { Search, Plus, Trash2, RefreshCw, TrendingUp, TrendingDown, Loader2, ExternalLink, Crown, Trophy, Star } from 'lucide-react';
 import { toast } from 'sonner';
 import dynamic from 'next/dynamic';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -22,6 +22,7 @@ type Product = { id: string; name: string };
 type KeywordData = {
   id: string;
   keyword: string;
+  isMain: boolean;
   latestRank: number | null;
   latestPage: number | null;
   latestDate: string | null;
@@ -50,6 +51,7 @@ function RankCard({
   onClick,
   onCheck,
   onDelete,
+  onSetMain,
 }: {
   kw: KeywordData;
   selected: boolean;
@@ -57,6 +59,7 @@ function RankCard({
   onClick: () => void;
   onCheck: () => void;
   onDelete: () => void;
+  onSetMain: () => void;
 }) {
   const style = getRankStyle(kw.latestRank);
   const pct = kw.latestRank !== null ? Math.max(0, 100 - kw.latestRank) : 0;
@@ -73,7 +76,20 @@ function RankCard({
       {/* 상단: 키워드명 + 액션 */}
       <div className="flex items-start justify-between">
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold truncate">{kw.keyword}</p>
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={(e) => { e.stopPropagation(); onSetMain(); }}
+              className={`rounded p-0.5 transition-colors ${
+                kw.isMain
+                  ? 'text-yellow-500'
+                  : 'text-gray-300 hover:text-yellow-400 dark:text-gray-600 dark:hover:text-yellow-400'
+              }`}
+              title={kw.isMain ? '메인 키워드 해제' : '메인 키워드로 설정'}
+            >
+              <Star className={`h-4 w-4 ${kw.isMain ? 'fill-yellow-500' : ''}`} />
+            </button>
+            <p className="text-sm font-semibold truncate">{kw.keyword}</p>
+          </div>
           {kw.latestDate && (
             <p className="text-[10px] text-muted-foreground mt-0.5">
               {new Date(kw.latestDate).toLocaleDateString('ko-KR')} 기준
@@ -215,6 +231,24 @@ export function KeywordRankTab() {
       queryClient.invalidateQueries({ queryKey: ['keywords', selectedProductId] });
       queryClient.invalidateQueries({ queryKey: ['keyword-history'] });
       queryClient.invalidateQueries({ queryKey: ['all-keyword-history'] });
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
+  const setMainMutation = useMutation({
+    mutationFn: async ({ id, isMain }: { id: string; isMain: boolean }) => {
+      const res = await fetch(`/api/keywords/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isMain }),
+      });
+      if (!res.ok) { const err = await res.json(); throw new Error(err.error || '설정 실패'); }
+      return res.json();
+    },
+    onSuccess: (_data, variables) => {
+      toast.success(variables.isMain ? '메인 키워드로 설정되었습니다' : '메인 키워드가 해제되었습니다');
+      queryClient.invalidateQueries({ queryKey: ['keywords', selectedProductId] });
+      queryClient.invalidateQueries({ queryKey: ['ad-budgets'] });
     },
     onError: (err: Error) => toast.error(err.message),
   });
@@ -382,6 +416,7 @@ export function KeywordRankTab() {
                   checking={checkingId === kw.id}
                   onClick={() => setSelectedKeywordId(kw.id === selectedKeywordId ? null : kw.id)}
                   onCheck={() => checkRank(kw.id)}
+                  onSetMain={() => setMainMutation.mutate({ id: kw.id, isMain: !kw.isMain })}
                   onDelete={() => {
                     if (confirm(`"${kw.keyword}" 키워드를 삭제하시겠습니까?`)) deleteMutation.mutate(kw.id);
                   }}

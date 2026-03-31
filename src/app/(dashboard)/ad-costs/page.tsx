@@ -6,6 +6,7 @@ import { Toaster, toast } from 'sonner';
 import { Plus, Trash2, Megaphone } from 'lucide-react';
 import { ProgressBar } from '@/components/ui/progress-bar';
 import { Skeleton } from '@/components/ui/skeleton';
+import BreakEvenCalculator from '@/components/ad-costs/break-even-calculator';
 
 type Channel = {
   id: string;
@@ -203,6 +204,9 @@ export default function AdCostsPage() {
           </button>
         </div>
       </div>
+
+      {/* 손익분기 계산기 */}
+      <BreakEvenCalculator />
 
       {/* 광고비 내역 */}
       <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">

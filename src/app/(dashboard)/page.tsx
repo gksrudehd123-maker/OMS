@@ -14,8 +14,13 @@ const SalesDashboardTab = dynamic(
   { loading: () => <Skeleton className="h-64 w-full rounded-lg" /> },
 );
 
+const AdBudgetTab = dynamic(
+  () => import('@/components/dashboard/ad-budget-tab').then((m) => m.AdBudgetTab),
+  { loading: () => <Skeleton className="h-64 w-full rounded-lg" /> },
+);
+
 export default function DashboardPage() {
-  const [activeTab, setActiveTab] = useState<'monthly' | 'dashboard'>('monthly');
+  const [activeTab, setActiveTab] = useState<'monthly' | 'dashboard' | 'ad-budget'>('monthly');
 
   return (
     <div className="space-y-6">
@@ -39,6 +44,16 @@ export default function DashboardPage() {
           월별 매출 데이터
         </button>
         <button
+          onClick={() => setActiveTab('ad-budget')}
+          className={`-mb-px border-b-2 px-4 py-2 text-sm font-medium transition-colors ${
+            activeTab === 'ad-budget'
+              ? 'border-primary text-primary'
+              : 'border-transparent text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          광고 손익분기
+        </button>
+        <button
           onClick={() => setActiveTab('dashboard')}
           className={`-mb-px border-b-2 px-4 py-2 text-sm font-medium transition-colors ${
             activeTab === 'dashboard'
@@ -51,7 +66,9 @@ export default function DashboardPage() {
       </div>
 
       {/* 탭 콘텐츠 */}
-      {activeTab === 'monthly' ? <MonthlySalesTab /> : <SalesDashboardTab />}
+      {activeTab === 'monthly' && <MonthlySalesTab />}
+      {activeTab === 'dashboard' && <SalesDashboardTab />}
+      {activeTab === 'ad-budget' && <AdBudgetTab />}
     </div>
   );
 }
