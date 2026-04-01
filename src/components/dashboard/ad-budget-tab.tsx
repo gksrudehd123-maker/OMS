@@ -293,13 +293,16 @@ function ProductCard({
       <div className="border-t border-border">
         <button
           onClick={() => setKeywordOpen(!keywordOpen)}
-          className="flex w-full items-center justify-between px-5 py-3 text-sm font-medium hover:bg-muted/50 transition-colors"
+          className="flex w-full items-center justify-between px-5 py-4 text-base font-semibold hover:bg-muted/50 transition-colors"
         >
-          <span>키워드 순위 추적</span>
+          <span className="flex items-center gap-2">
+            <Search className="h-4.5 w-4.5 text-primary" />
+            키워드 순위 추적
+          </span>
           {keywordOpen ? (
-            <ChevronUp className="h-4 w-4" />
+            <ChevronUp className="h-5 w-5" />
           ) : (
-            <ChevronDown className="h-4 w-4" />
+            <ChevronDown className="h-5 w-5" />
           )}
         </button>
         {keywordOpen && (

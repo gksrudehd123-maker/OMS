@@ -433,6 +433,7 @@ GitHub Push → Vercel Auto Deploy (main branch → Production)
 - **코드 품질 개선**: Prettier 포맷팅 전체 적용 (64개 파일), JSX unescaped entities 수정, 타입 에러 수정 — Vercel 빌드 실패 해결
 - **글로벌 로딩 오버레이**: API 호출/데이터 조회 시 전체 화면 로딩 표시 (TanStack Query 자동 감지, 클릭 차단)
 - **날짜 KST 통일**: 키워드 순위 조회, 월별 대시보드, 자동 리포트의 날짜 기준을 UTC→KST로 수정 (Vercel 배포 환경 대응)
+- **키워드 순위 추적 UI 개선**: 광고 손익분기 카드 하단 키워드 순위 추적 버튼 가시성 향상 (텍스트 확대, 아이콘 추가, 클릭 영역 확대)
 
 ---
 
