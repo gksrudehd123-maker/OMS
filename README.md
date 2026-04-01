@@ -431,6 +431,7 @@ GitHub Push → Vercel Auto Deploy (main branch → Production)
 - **다중 스마트스토어 연동**: 채널 코드별 API 키 분기, 동기화 시 스토어 선택 가능, 자동 동기화(GET) 모든 스토어 순회
 - **광고 손익분기**: 상품별 월 광고비 대비 손익분기 계산기, ProductAdBudget 테이블, 대시보드 탭(상품 카드 + 지표 + 달성률 프로그레스바), 메인 키워드 설정 + 월별 순위 에어리어 차트, 같은 상품명 전체 옵션 판매 수량 합산
 - **코드 품질 개선**: Prettier 포맷팅 전체 적용 (64개 파일), JSX unescaped entities 수정, 타입 에러 수정 — Vercel 빌드 실패 해결
+- **글로벌 로딩 오버레이**: API 호출/데이터 조회 시 전체 화면 로딩 표시 (TanStack Query 자동 감지, 클릭 차단)
 
 ---
 
