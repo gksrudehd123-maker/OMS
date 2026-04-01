@@ -185,6 +185,10 @@ NAVER_CLIENT_SECRET_WELSPA=...          # $문자는 \$로 이스케이프 필�
 NAVER_SEARCH_CLIENT_ID=...
 NAVER_SEARCH_CLIENT_SECRET=...
 NAVER_STORE_NAME=...
+
+# Notion API (CS 관리)
+NOTION_API_KEY=...                      # Notion Integration Token
+NOTION_CS_DATABASE_ID=...               # CS 데이터베이스 ID
 ```
 
 ---
