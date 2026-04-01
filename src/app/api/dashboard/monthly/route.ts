@@ -19,9 +19,10 @@ export async function GET(request: NextRequest) {
   const yearParam = searchParams.get('year');
   const monthParam = searchParams.get('month');
 
-  const now = new Date();
-  const year = yearParam ? parseInt(yearParam, 10) : now.getFullYear();
-  const month = monthParam ? parseInt(monthParam, 10) : now.getMonth() + 1;
+  // KST 기준 현재 날짜
+  const now = new Date(new Date().getTime() + 9 * 60 * 60 * 1000);
+  const year = yearParam ? parseInt(yearParam, 10) : now.getUTCFullYear();
+  const month = monthParam ? parseInt(monthParam, 10) : now.getUTCMonth() + 1;
 
   const from = new Date(year, month - 1, 1);
   const to = new Date(year, month, 0, 23, 59, 59); // 해당 월 말일

@@ -21,7 +21,8 @@ export async function GET() {
       });
     }
 
-    const now = new Date();
+    // KST 기준 현재 날짜
+    const now = new Date(new Date().getTime() + 9 * 60 * 60 * 1000);
     let from: string;
     let to: string;
     let type: string;
@@ -29,17 +30,21 @@ export async function GET() {
     if (schedule === 'weekly') {
       // 지난주 월~일
       const lastSunday = new Date(now);
-      lastSunday.setDate(now.getDate() - now.getDay());
+      lastSunday.setUTCDate(now.getUTCDate() - now.getUTCDay());
       const lastMonday = new Date(lastSunday);
-      lastMonday.setDate(lastSunday.getDate() - 6);
+      lastMonday.setUTCDate(lastSunday.getUTCDate() - 6);
 
       from = lastMonday.toISOString().split('T')[0];
       to = lastSunday.toISOString().split('T')[0];
       type = 'weekly';
     } else {
       // 지난달 1일~말일
-      const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-      const lastDay = new Date(now.getFullYear(), now.getMonth(), 0);
+      const lastMonth = new Date(
+        Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1),
+      );
+      const lastDay = new Date(
+        Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 0),
+      );
 
       from = lastMonth.toISOString().split('T')[0];
       to = lastDay.toISOString().split('T')[0];

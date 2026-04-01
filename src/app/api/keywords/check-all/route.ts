@@ -17,8 +17,10 @@ export async function POST() {
     include: { product: { select: { storeProductId: true } } },
   });
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  // KST 기준 오늘 날짜
+  const now = new Date();
+  const kstDate = new Date(now.getTime() + 9 * 60 * 60 * 1000);
+  const today = new Date(kstDate.toISOString().split('T')[0] + 'T00:00:00.000Z');
 
   const results = [];
   for (const kw of keywords) {

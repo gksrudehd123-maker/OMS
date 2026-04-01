@@ -45,8 +45,10 @@ export async function POST(request: NextRequest) {
     kw.product.storeProductId || undefined,
   );
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  // KST 기준 오늘 날짜
+  const now = new Date();
+  const kstDate = new Date(now.getTime() + 9 * 60 * 60 * 1000);
+  const today = new Date(kstDate.toISOString().split('T')[0] + 'T00:00:00.000Z');
 
   // 매칭된 상품 썸네일/storeProductId 업데이트
   if (result.matchedItem) {
