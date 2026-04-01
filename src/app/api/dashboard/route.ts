@@ -2,7 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { calculateMargin } from '@/lib/helpers/margin-calc';
 import { calculateRGMargin } from '@/lib/helpers/rg-margin-calc';
-import { requireAuth, isError, checkChannelAccess, getChannelFilter, isStaff } from '@/lib/auth-guard';
+import {
+  requireAuth,
+  isError,
+  checkChannelAccess,
+  getChannelFilter,
+  isStaff,
+} from '@/lib/auth-guard';
 import { EXCLUDED_ORDER_STATUSES } from '@/lib/helpers/status-map';
 import { toKSTDateString } from '@/lib/helpers/date-utils';
 
@@ -19,12 +25,13 @@ export async function GET(request: NextRequest) {
   const channelError = checkChannelAccess(user, channelId);
   if (channelError) return channelError;
 
-  const dateFilter = from || to
-    ? {
-        ...(from ? { gte: new Date(from) } : {}),
-        ...(to ? { lte: new Date(to + 'T23:59:59') } : {}),
-      }
-    : undefined;
+  const dateFilter =
+    from || to
+      ? {
+          ...(from ? { gte: new Date(from) } : {}),
+          ...(to ? { lte: new Date(to + 'T23:59:59') } : {}),
+        }
+      : undefined;
 
   const orderWhere: Record<string, unknown> = {
     orderStatus: { notIn: EXCLUDED_ORDER_STATUSES },
@@ -108,7 +115,11 @@ export async function GET(request: NextRequest) {
   const totalAdCostAmount = Number(adCostAgg._sum.cost ?? 0);
 
   // ── 이전 기간 비교 데이터 (전일/전주/전월 비교용) ──
-  let prevKpi: { totalSales: number; totalMargin: number; totalOrders: number } | null = null;
+  let prevKpi: {
+    totalSales: number;
+    totalMargin: number;
+    totalOrders: number;
+  } | null = null;
 
   if (from && to) {
     const fromDate = new Date(from);
@@ -146,7 +157,13 @@ export async function GET(request: NextRequest) {
           orderNumber: true,
           quantity: true,
           product: {
-            select: { sellingPrice: true, costPrice: true, feeRate: true, shippingCost: true, freeShippingMin: true },
+            select: {
+              sellingPrice: true,
+              costPrice: true,
+              feeRate: true,
+              shippingCost: true,
+              freeShippingMin: true,
+            },
           },
           channel: { select: { feeRate: true } },
         },
@@ -157,7 +174,12 @@ export async function GET(request: NextRequest) {
           salesAmount: true,
           salesQuantity: true,
           product: {
-            select: { costPrice: true, feeRate: true, fulfillmentFee: true, couponDiscount: true },
+            select: {
+              costPrice: true,
+              feeRate: true,
+              fulfillmentFee: true,
+              couponDiscount: true,
+            },
           },
         },
       }),
@@ -168,31 +190,47 @@ export async function GET(request: NextRequest) {
     const prevOrderTotals: Record<string, number> = {};
     for (const o of prevOrders) {
       const sp = o.product.sellingPrice ? Number(o.product.sellingPrice) : 0;
-      prevOrderTotals[o.orderNumber] = (prevOrderTotals[o.orderNumber] || 0) + sp * o.quantity;
+      prevOrderTotals[o.orderNumber] =
+        (prevOrderTotals[o.orderNumber] || 0) + sp * o.quantity;
     }
     const prevOrderFS: Record<string, boolean> = {};
     for (const o of prevOrders) {
       if (prevOrderFS[o.orderNumber]) continue;
-      const freeMin = o.product.freeShippingMin ? Number(o.product.freeShippingMin) : null;
-      if ((freeMin !== null && (prevOrderTotals[o.orderNumber] || 0) >= freeMin) || Number(o.product.shippingCost) === 0) {
+      const freeMin = o.product.freeShippingMin
+        ? Number(o.product.freeShippingMin)
+        : null;
+      if (
+        (freeMin !== null &&
+          (prevOrderTotals[o.orderNumber] || 0) >= freeMin) ||
+        Number(o.product.shippingCost) === 0
+      ) {
         prevOrderFS[o.orderNumber] = true;
       }
     }
 
-    let prevSales = 0, prevMargin = 0, prevOrderCount = 0;
+    let prevSales = 0,
+      prevMargin = 0,
+      prevOrderCount = 0;
     for (const o of prevOrders) {
       const m = calculateMargin({
-        sellingPrice: o.product.sellingPrice ? Number(o.product.sellingPrice) : null,
+        sellingPrice: o.product.sellingPrice
+          ? Number(o.product.sellingPrice)
+          : null,
         costPrice: o.product.costPrice ? Number(o.product.costPrice) : null,
         quantity: o.quantity,
         feeRate: Number(o.channel.feeRate),
         productFeeRate: o.product.feeRate ? Number(o.product.feeRate) : null,
         shippingCost: Number(o.product.shippingCost),
-        freeShippingMin: o.product.freeShippingMin ? Number(o.product.freeShippingMin) : null,
+        freeShippingMin: o.product.freeShippingMin
+          ? Number(o.product.freeShippingMin)
+          : null,
         orderTotal: prevOrderTotals[o.orderNumber] || 0,
         isAnyFreeShipping: prevOrderFS[o.orderNumber] || false,
       });
-      if (m.isCalculable) { prevSales += m.salesAmount; prevMargin += m.margin; }
+      if (m.isCalculable) {
+        prevSales += m.salesAmount;
+        prevMargin += m.margin;
+      }
       prevOrderCount++;
     }
 
@@ -202,8 +240,12 @@ export async function GET(request: NextRequest) {
         salesQuantity: ds.salesQuantity,
         costPrice: ds.product.costPrice ? Number(ds.product.costPrice) : null,
         feeRate: ds.product.feeRate ? Number(ds.product.feeRate) : null,
-        fulfillmentFee: ds.product.fulfillmentFee ? Number(ds.product.fulfillmentFee) : null,
-        couponDiscount: ds.product.couponDiscount ? Number(ds.product.couponDiscount) : null,
+        fulfillmentFee: ds.product.fulfillmentFee
+          ? Number(ds.product.fulfillmentFee)
+          : null,
+        couponDiscount: ds.product.couponDiscount
+          ? Number(ds.product.couponDiscount)
+          : null,
       });
       prevSales += Number(ds.salesAmount);
       if (rgM.isCalculable) prevMargin += rgM.margin;
@@ -229,15 +271,20 @@ export async function GET(request: NextRequest) {
   const orderTotals: Record<string, number> = {};
   for (const o of orders) {
     const sp = o.product.sellingPrice ? Number(o.product.sellingPrice) : 0;
-    orderTotals[o.orderNumber] = (orderTotals[o.orderNumber] || 0) + sp * o.quantity;
+    orderTotals[o.orderNumber] =
+      (orderTotals[o.orderNumber] || 0) + sp * o.quantity;
   }
 
   const orderFreeShipping: Record<string, boolean> = {};
   for (const o of orders) {
     if (orderFreeShipping[o.orderNumber]) continue; // 이미 무료배송 확정
-    const freeMin = o.product.freeShippingMin ? Number(o.product.freeShippingMin) : null;
-    if ((freeMin !== null && (orderTotals[o.orderNumber] || 0) >= freeMin) ||
-        Number(o.product.shippingCost) === 0) {
+    const freeMin = o.product.freeShippingMin
+      ? Number(o.product.freeShippingMin)
+      : null;
+    if (
+      (freeMin !== null && (orderTotals[o.orderNumber] || 0) >= freeMin) ||
+      Number(o.product.shippingCost) === 0
+    ) {
       orderFreeShipping[o.orderNumber] = true;
     }
   }
@@ -247,29 +294,59 @@ export async function GET(request: NextRequest) {
   let totalMargin = 0;
   let calculableCount = 0;
 
-  const dailyMap: Record<string, { date: string; sales: number; margin: number; orders: number }> = {};
-  const channelMap: Record<string, { name: string; sales: number; margin: number; orders: number }> = {};
-  const productMarginMap: Record<string, { name: string; optionInfo: string; sales: number; margin: number; orders: number }> = {};
+  const dailyMap: Record<
+    string,
+    { date: string; sales: number; margin: number; orders: number }
+  > = {};
+  const channelMap: Record<
+    string,
+    { name: string; sales: number; margin: number; orders: number }
+  > = {};
+  const productMarginMap: Record<
+    string,
+    {
+      name: string;
+      optionInfo: string;
+      sales: number;
+      margin: number;
+      orders: number;
+    }
+  > = {};
 
   for (const order of orders) {
     const margin = calculateMargin({
-      sellingPrice: order.product.sellingPrice ? Number(order.product.sellingPrice) : null,
-      costPrice: order.product.costPrice ? Number(order.product.costPrice) : null,
+      sellingPrice: order.product.sellingPrice
+        ? Number(order.product.sellingPrice)
+        : null,
+      costPrice: order.product.costPrice
+        ? Number(order.product.costPrice)
+        : null,
       quantity: order.quantity,
       feeRate: Number(order.channel.feeRate),
-      productFeeRate: order.product.feeRate ? Number(order.product.feeRate) : null,
+      productFeeRate: order.product.feeRate
+        ? Number(order.product.feeRate)
+        : null,
       shippingCost: Number(order.product.shippingCost),
-      freeShippingMin: order.product.freeShippingMin ? Number(order.product.freeShippingMin) : null,
+      freeShippingMin: order.product.freeShippingMin
+        ? Number(order.product.freeShippingMin)
+        : null,
       orderTotal: orderTotals[order.orderNumber] || 0,
       isAnyFreeShipping: orderFreeShipping[order.orderNumber] || false,
     });
 
     const dateKey = toKSTDateString(order.orderDate);
-    if (!dailyMap[dateKey]) dailyMap[dateKey] = { date: dateKey, sales: 0, margin: 0, orders: 0 };
+    if (!dailyMap[dateKey])
+      dailyMap[dateKey] = { date: dateKey, sales: 0, margin: 0, orders: 0 };
     dailyMap[dateKey].orders++;
 
     const chId = order.channelId;
-    if (!channelMap[chId]) channelMap[chId] = { name: order.channel.name, sales: 0, margin: 0, orders: 0 };
+    if (!channelMap[chId])
+      channelMap[chId] = {
+        name: order.channel.name,
+        sales: 0,
+        margin: 0,
+        orders: 0,
+      };
     channelMap[chId].orders++;
 
     if (margin.isCalculable) {
@@ -285,7 +362,13 @@ export async function GET(request: NextRequest) {
 
       const pid = order.productId;
       if (!productMarginMap[pid]) {
-        productMarginMap[pid] = { name: order.product.name, optionInfo: order.product.optionInfo, sales: 0, margin: 0, orders: 0 };
+        productMarginMap[pid] = {
+          name: order.product.name,
+          optionInfo: order.product.optionInfo,
+          sales: 0,
+          margin: 0,
+          orders: 0,
+        };
       }
       productMarginMap[pid].sales += margin.salesAmount;
       productMarginMap[pid].margin += margin.margin;
@@ -301,8 +384,12 @@ export async function GET(request: NextRequest) {
       salesQuantity: ds.salesQuantity,
       costPrice: ds.product.costPrice ? Number(ds.product.costPrice) : null,
       feeRate: ds.product.feeRate ? Number(ds.product.feeRate) : null,
-      fulfillmentFee: ds.product.fulfillmentFee ? Number(ds.product.fulfillmentFee) : null,
-      couponDiscount: ds.product.couponDiscount ? Number(ds.product.couponDiscount) : null,
+      fulfillmentFee: ds.product.fulfillmentFee
+        ? Number(ds.product.fulfillmentFee)
+        : null,
+      couponDiscount: ds.product.couponDiscount
+        ? Number(ds.product.couponDiscount)
+        : null,
     });
 
     rgSalesCount++;
@@ -310,18 +397,31 @@ export async function GET(request: NextRequest) {
     totalSales += rgSalesAmt;
 
     const dateKey = toKSTDateString(ds.date);
-    if (!dailyMap[dateKey]) dailyMap[dateKey] = { date: dateKey, sales: 0, margin: 0, orders: 0 };
+    if (!dailyMap[dateKey])
+      dailyMap[dateKey] = { date: dateKey, sales: 0, margin: 0, orders: 0 };
     dailyMap[dateKey].orders += ds.salesQuantity;
     dailyMap[dateKey].sales += rgSalesAmt;
 
     const chId = ds.channelId;
-    if (!channelMap[chId]) channelMap[chId] = { name: ds.channel.name, sales: 0, margin: 0, orders: 0 };
+    if (!channelMap[chId])
+      channelMap[chId] = {
+        name: ds.channel.name,
+        sales: 0,
+        margin: 0,
+        orders: 0,
+      };
     channelMap[chId].orders += ds.salesQuantity;
     channelMap[chId].sales += rgSalesAmt;
 
     const pid = ds.productId;
     if (!productMarginMap[pid]) {
-      productMarginMap[pid] = { name: ds.product.name, optionInfo: ds.product.optionInfo, sales: 0, margin: 0, orders: 0 };
+      productMarginMap[pid] = {
+        name: ds.product.name,
+        optionInfo: ds.product.optionInfo,
+        sales: 0,
+        margin: 0,
+        orders: 0,
+      };
     }
     productMarginMap[pid].sales += rgSalesAmt;
     productMarginMap[pid].orders += ds.salesQuantity;
@@ -336,7 +436,8 @@ export async function GET(request: NextRequest) {
   }
 
   const netMargin = totalMargin - totalAdCostAmount;
-  const avgMarginRate = totalSales > 0 ? Math.round((netMargin / totalSales) * 1000) / 10 : 0;
+  const avgMarginRate =
+    totalSales > 0 ? Math.round((netMargin / totalSales) * 1000) / 10 : 0;
 
   const staff = isStaff(user);
 
@@ -367,28 +468,36 @@ export async function GET(request: NextRequest) {
     channelData: Object.entries(channelMap)
       .map(([chId, ch]) => {
         const adCost = channelAdCostMap[chId] || 0;
-        const roas = adCost > 0 ? Math.round((ch.sales / adCost) * 100) / 100 : null;
+        const roas =
+          adCost > 0 ? Math.round((ch.sales / adCost) * 100) / 100 : null;
         return {
           name: ch.name,
           sales: Math.round(ch.sales),
           margin: staff ? undefined : Math.round(ch.margin),
-          marginRate: staff ? undefined : (ch.sales > 0 ? Math.round((ch.margin / ch.sales) * 1000) / 10 : 0),
+          marginRate: staff
+            ? undefined
+            : ch.sales > 0
+              ? Math.round((ch.margin / ch.sales) * 1000) / 10
+              : 0,
           orders: ch.orders,
           adCost: staff ? undefined : Math.round(adCost),
           roas: staff ? undefined : roas,
         };
       })
       .sort((a, b) => b.sales - a.sales),
-    productMarginRank: staff ? [] : Object.values(productMarginMap)
-      .map((p) => ({
-        ...p,
-        sales: Math.round(p.sales),
-        margin: Math.round(p.margin),
-        marginRate: p.sales > 0 ? Math.round((p.margin / p.sales) * 1000) / 10 : 0,
-        label: p.optionInfo ? `${p.name} (${p.optionInfo})` : p.name,
-      }))
-      .sort((a, b) => b.margin - a.margin)
-      .slice(0, 10),
+    productMarginRank: staff
+      ? []
+      : Object.values(productMarginMap)
+          .map((p) => ({
+            ...p,
+            sales: Math.round(p.sales),
+            margin: Math.round(p.margin),
+            marginRate:
+              p.sales > 0 ? Math.round((p.margin / p.sales) * 1000) / 10 : 0,
+            label: p.optionInfo ? `${p.name} (${p.optionInfo})` : p.name,
+          }))
+          .sort((a, b) => b.margin - a.margin)
+          .slice(0, 10),
   });
 
   return response;

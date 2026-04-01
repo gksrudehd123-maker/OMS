@@ -29,7 +29,7 @@ interface NaverShoppingResponse {
 }
 
 export interface RankResult {
-  rank: number | null;  // null이면 100위 밖
+  rank: number | null; // null이면 100위 밖
   page: number | null;
   matchedItem?: {
     title: string;
@@ -52,7 +52,9 @@ async function searchShopping(
   const clientSecret = process.env.NAVER_SEARCH_CLIENT_SECRET;
 
   if (!clientId || !clientSecret) {
-    throw new Error('NAVER_SEARCH_CLIENT_ID와 NAVER_SEARCH_CLIENT_SECRET 환경 변수가 필요합니다');
+    throw new Error(
+      'NAVER_SEARCH_CLIENT_ID와 NAVER_SEARCH_CLIENT_SECRET 환경 변수가 필요합니다',
+    );
   }
 
   const params = new URLSearchParams({

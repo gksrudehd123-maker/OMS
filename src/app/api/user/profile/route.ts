@@ -10,10 +10,7 @@ export async function PATCH(request: NextRequest) {
   const { name } = body;
 
   if (!name || !name.trim()) {
-    return NextResponse.json(
-      { error: '이름을 입력해주세요' },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: '이름을 입력해주세요' }, { status: 400 });
   }
 
   const updated = await prisma.user.update({

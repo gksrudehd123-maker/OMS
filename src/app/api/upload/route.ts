@@ -11,7 +11,11 @@ import { validateExcelFormat } from '@/lib/excel/validate-format';
 import { writeAuditLog } from '@/lib/audit-log';
 
 // 채널 코드로 파서 분기
-const COUPANG_CHANNEL_CODES = ['coupang_wing', 'coupang_rocket_growth', 'coupang_rocket_delivery'];
+const COUPANG_CHANNEL_CODES = [
+  'coupang_wing',
+  'coupang_rocket_growth',
+  'coupang_rocket_delivery',
+];
 
 export async function POST(request: NextRequest) {
   const user = await requireAuth();
@@ -45,7 +49,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const isRocketGrowth = channel.code.toLowerCase() === 'coupang_rocket_growth';
+    const isRocketGrowth =
+      channel.code.toLowerCase() === 'coupang_rocket_growth';
 
     // RG일 때 salesDate 필수
     if (isRocketGrowth && !salesDateStr) {
@@ -58,12 +63,12 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(await file.arrayBuffer());
 
     // 채널-엑셀 양식 검증
-    const validation = await validateExcelFormat(buffer, channel.code.toLowerCase());
+    const validation = await validateExcelFormat(
+      buffer,
+      channel.code.toLowerCase(),
+    );
     if (!validation.valid) {
-      return NextResponse.json(
-        { error: validation.error },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: validation.error }, { status: 400 });
     }
 
     // RG 분기
@@ -76,7 +81,8 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      const { sales: parsedSales, errors } = await parseRocketGrowthExcel(buffer);
+      const { sales: parsedSales, errors } =
+        await parseRocketGrowthExcel(buffer);
 
       // Upload 레코드 생성
       const upload = await prisma.upload.create({
@@ -90,7 +96,13 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      const result = await processDailySales(parsedSales, channelId, upload.id, salesDate, errors);
+      const result = await processDailySales(
+        parsedSales,
+        channelId,
+        upload.id,
+        salesDate,
+        errors,
+      );
 
       const updatedUpload = await prisma.upload.update({
         where: { id: upload.id },
@@ -149,7 +161,9 @@ export async function POST(request: NextRequest) {
     }
 
     // 기존 주문 기반 처리 (스마트스토어 / 쿠팡 윙)
-    const isCoupang = COUPANG_CHANNEL_CODES.includes(channel.code.toLowerCase());
+    const isCoupang = COUPANG_CHANNEL_CODES.includes(
+      channel.code.toLowerCase(),
+    );
     const { orders: parsedOrders, errors } = isCoupang
       ? await parseCoupangExcel(buffer)
       : await parseSmartstoreExcel(buffer);
@@ -167,7 +181,12 @@ export async function POST(request: NextRequest) {
     });
 
     // 공통 주문 처리
-    const result = await processOrders(parsedOrders, channelId, upload.id, errors);
+    const result = await processOrders(
+      parsedOrders,
+      channelId,
+      upload.id,
+      errors,
+    );
 
     // Upload 결과 업데이트
     const updatedUpload = await prisma.upload.update({
@@ -191,7 +210,10 @@ export async function POST(request: NextRequest) {
         fileName: { from: null, to: file.name },
         successCount: { from: null, to: result.successCount },
         errorCount: { from: null, to: result.errors.length },
-        duplicateCount: { from: null, to: result.errors.filter((e) => e.message.startsWith('중복')).length },
+        duplicateCount: {
+          from: null,
+          to: result.errors.filter((e) => e.message.startsWith('중복')).length,
+        },
       },
     });
 

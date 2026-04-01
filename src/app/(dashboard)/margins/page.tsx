@@ -145,13 +145,7 @@ export default function MarginsPage() {
       ]
     : [];
 
-  const SortHeader = ({
-    label,
-    field,
-  }: {
-    label: string;
-    field: SortKey;
-  }) => (
+  const SortHeader = ({ label, field }: { label: string; field: SortKey }) => (
     <th
       className="cursor-pointer pb-2 text-right font-medium select-none hover:text-foreground"
       onClick={() => handleSort(field)}
@@ -224,9 +218,7 @@ export default function MarginsPage() {
                 <p className="mt-2 font-mono text-xl font-semibold sm:text-2xl">
                   {item.value}
                 </p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {item.sub}
-                </p>
+                <p className="mt-1 text-xs text-muted-foreground">{item.sub}</p>
               </div>
             ))}
           </div>
@@ -243,10 +235,7 @@ export default function MarginsPage() {
                 <div className="mt-4 h-64">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={marginDistribution}>
-                      <CartesianGrid
-                        strokeDasharray="3 3"
-                        stroke="#e5e7eb"
-                      />
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                       <XAxis
                         dataKey="range"
                         tick={{ fill: '#6b7280', fontSize: 11 }}
@@ -261,9 +250,7 @@ export default function MarginsPage() {
                           const d = payload[0].payload;
                           return (
                             <div className="rounded-lg border border-border bg-card p-3 shadow-md">
-                              <p className="text-sm font-medium">
-                                {d.range}
-                              </p>
+                              <p className="text-sm font-medium">{d.range}</p>
                               <p className="text-sm font-mono">
                                 {d.count}개 상품
                               </p>
@@ -302,10 +289,7 @@ export default function MarginsPage() {
                 <div className="mt-4 h-64">
                   <ResponsiveContainer width="100%" height="100%">
                     <ScatterChart>
-                      <CartesianGrid
-                        strokeDasharray="3 3"
-                        stroke="#e5e7eb"
-                      />
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                       <XAxis
                         dataKey="sales"
                         name="매출"

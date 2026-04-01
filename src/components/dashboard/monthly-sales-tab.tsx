@@ -15,17 +15,26 @@ import { ProgressBar } from '@/components/ui/progress-bar';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const MonthlyDailyChart = dynamic(
-  () => import('@/components/charts/monthly-charts').then((m) => m.MonthlyDailyChart),
+  () =>
+    import('@/components/charts/monthly-charts').then(
+      (m) => m.MonthlyDailyChart,
+    ),
   { loading: () => <Skeleton className="h-72 w-full rounded-lg" /> },
 );
 
 const ChannelSalesChart = dynamic(
-  () => import('@/components/charts/monthly-charts').then((m) => m.ChannelSalesChart),
+  () =>
+    import('@/components/charts/monthly-charts').then(
+      (m) => m.ChannelSalesChart,
+    ),
   { loading: () => <Skeleton className="h-[260px] w-full rounded-lg" /> },
 );
 
 const ChannelAdCostChart = dynamic(
-  () => import('@/components/charts/monthly-charts').then((m) => m.ChannelAdCostChart),
+  () =>
+    import('@/components/charts/monthly-charts').then(
+      (m) => m.ChannelAdCostChart,
+    ),
   { loading: () => <Skeleton className="h-[260px] w-full rounded-lg" /> },
 );
 
@@ -77,9 +86,10 @@ export function MonthlySalesTab() {
   useEffect(() => {
     if (data && !data.hasData && !autoFallback) {
       setAutoFallback(true);
-      const prev = selectedMonth.month === 1
-        ? { year: selectedMonth.year - 1, month: 12 }
-        : { year: selectedMonth.year, month: selectedMonth.month - 1 };
+      const prev =
+        selectedMonth.month === 1
+          ? { year: selectedMonth.year - 1, month: 12 }
+          : { year: selectedMonth.year, month: selectedMonth.month - 1 };
       setSelectedMonth(prev);
     }
   }, [data, autoFallback, selectedMonth]);
@@ -99,7 +109,11 @@ export function MonthlySalesTab() {
     const currentYear = now.getFullYear();
     const currentMonth = now.getMonth() + 1;
     // 미래 월은 이동 불가
-    if (selectedMonth.year === currentYear && selectedMonth.month >= currentMonth) return;
+    if (
+      selectedMonth.year === currentYear &&
+      selectedMonth.month >= currentMonth
+    )
+      return;
     setSelectedMonth((prev) =>
       prev.month === 12
         ? { year: prev.year + 1, month: 1 }
@@ -109,7 +123,10 @@ export function MonthlySalesTab() {
 
   const isCurrentMonth = (() => {
     const now = new Date();
-    return selectedMonth.year === now.getFullYear() && selectedMonth.month === now.getMonth() + 1;
+    return (
+      selectedMonth.year === now.getFullYear() &&
+      selectedMonth.month === now.getMonth() + 1
+    );
   })();
 
   const kpi = data?.kpi;
@@ -124,7 +141,10 @@ export function MonthlySalesTab() {
     },
     {
       label: '월 마진',
-      value: kpi?.totalMargin !== undefined ? `₩${kpi.totalMargin.toLocaleString()}` : '-',
+      value:
+        kpi?.totalMargin !== undefined
+          ? `₩${kpi.totalMargin.toLocaleString()}`
+          : '-',
       icon: TrendingUp,
       color:
         kpi && kpi.totalMargin !== undefined && kpi.totalMargin >= 0
@@ -137,7 +157,10 @@ export function MonthlySalesTab() {
     },
     {
       label: '총 광고비',
-      value: kpi?.totalAdCost !== undefined ? `₩${kpi.totalAdCost.toLocaleString()}` : '-',
+      value:
+        kpi?.totalAdCost !== undefined
+          ? `₩${kpi.totalAdCost.toLocaleString()}`
+          : '-',
       icon: Megaphone,
       color: 'text-orange-600 dark:text-orange-400',
       bgColor: 'bg-orange-50 dark:bg-orange-950',
@@ -196,7 +219,9 @@ export function MonthlySalesTab() {
                 className="rounded-xl border border-border bg-card p-4 shadow-sm transition-shadow hover:shadow-md sm:p-6"
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">{card.label}</span>
+                  <span className="text-sm text-muted-foreground">
+                    {card.label}
+                  </span>
                   <div className={`rounded-lg p-2 ${card.bgColor}`}>
                     <card.icon className={`h-4 w-4 ${card.color}`} />
                   </div>
@@ -216,7 +241,10 @@ export function MonthlySalesTab() {
         {loading ? (
           <Skeleton className="mt-4 h-72 w-full rounded-lg" />
         ) : (
-          <MonthlyDailyChart data={data?.dailyData || []} channelNames={data?.channelNames || []} />
+          <MonthlyDailyChart
+            data={data?.dailyData || []}
+            channelNames={data?.channelNames || []}
+          />
         )}
       </div>
 
@@ -264,9 +292,16 @@ export function MonthlySalesTab() {
                 </div>
                 <div className="mt-3 space-y-1.5">
                   {bs.categories.map((cat) => (
-                    <div key={cat.category} className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">{cat.category}</span>
-                      <span className="font-mono">{cat.quantity.toLocaleString()}개</span>
+                    <div
+                      key={cat.category}
+                      className="flex items-center justify-between text-sm"
+                    >
+                      <span className="text-muted-foreground">
+                        {cat.category}
+                      </span>
+                      <span className="font-mono">
+                        {cat.quantity.toLocaleString()}개
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -278,7 +313,9 @@ export function MonthlySalesTab() {
 
       {/* 잡비용 (준비 중) */}
       <div className="rounded-xl border border-dashed border-border bg-card p-8 sm:p-10">
-        <h2 className="text-lg font-semibold text-muted-foreground">잡비용 (마케팅 비용)</h2>
+        <h2 className="text-lg font-semibold text-muted-foreground">
+          잡비용 (마케팅 비용)
+        </h2>
         <p className="mt-2 text-sm text-muted-foreground">
           문자 비용 등 외부 데이터 연동 - 준비 중
         </p>

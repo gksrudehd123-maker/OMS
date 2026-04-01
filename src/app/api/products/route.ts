@@ -57,7 +57,17 @@ export async function GET(request: NextRequest) {
 
   const staff = isStaff(user);
   const sanitized = staff
-    ? products.map(({ costPrice: _, feeRate: _f, shippingCost: _s, freeShippingMin: _fm, couponDiscount: _cd, fulfillmentFee: _ff, ...rest }) => rest)
+    ? products.map(
+        ({
+          costPrice: _,
+          feeRate: _f,
+          shippingCost: _s,
+          freeShippingMin: _fm,
+          couponDiscount: _cd,
+          fulfillmentFee: _ff,
+          ...rest
+        }) => rest,
+      )
     : products;
 
   return apiPaginated(sanitized, { total, page, limit });

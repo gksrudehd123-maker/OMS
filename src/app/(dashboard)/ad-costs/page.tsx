@@ -28,7 +28,9 @@ export default function AdCostsPage() {
   // 필터
   const now = new Date();
   const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-  const [filterFrom, setFilterFrom] = useState(firstDay.toISOString().split('T')[0]);
+  const [filterFrom, setFilterFrom] = useState(
+    firstDay.toISOString().split('T')[0],
+  );
   const [filterTo, setFilterTo] = useState(now.toISOString().split('T')[0]);
   const [filterChannel, setFilterChannel] = useState('');
 
@@ -52,7 +54,10 @@ export default function AdCostsPage() {
     }
   }, [channels, formChannel]);
 
-  const { data: adCostsData, isLoading: loading } = useQuery<{ adCosts: AdCost[]; totalCost: number }>({
+  const { data: adCostsData, isLoading: loading } = useQuery<{
+    adCosts: AdCost[];
+    totalCost: number;
+  }>({
     queryKey: ['adCosts', filterFrom, filterTo, filterChannel],
     queryFn: async () => {
       const params = new URLSearchParams();
@@ -68,7 +73,12 @@ export default function AdCostsPage() {
   const totalCost = adCostsData?.totalCost ?? 0;
 
   const createMutation = useMutation({
-    mutationFn: async (body: { channelId: string; date: string; cost: string; memo: string | null }) => {
+    mutationFn: async (body: {
+      channelId: string;
+      date: string;
+      cost: string;
+      memo: string | null;
+    }) => {
       const res = await fetch('/api/ad-costs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

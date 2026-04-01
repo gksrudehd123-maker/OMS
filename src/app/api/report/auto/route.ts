@@ -16,7 +16,9 @@ export async function GET() {
     const schedule = setting?.value || 'off'; // "weekly" | "monthly" | "off"
 
     if (schedule === 'off') {
-      return NextResponse.json({ message: '자동 리포트가 비활성화되어 있습니다' });
+      return NextResponse.json({
+        message: '자동 리포트가 비활성화되어 있습니다',
+      });
     }
 
     const now = new Date();

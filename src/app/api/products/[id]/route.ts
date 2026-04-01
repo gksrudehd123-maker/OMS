@@ -24,7 +24,15 @@ export async function GET(
   }
 
   if (isStaff(user)) {
-    const { costPrice: _, feeRate: _f, shippingCost: _s, freeShippingMin: _fm, couponDiscount: _cd, fulfillmentFee: _ff, ...rest } = product;
+    const {
+      costPrice: _,
+      feeRate: _f,
+      shippingCost: _s,
+      freeShippingMin: _fm,
+      couponDiscount: _cd,
+      fulfillmentFee: _ff,
+      ...rest
+    } = product;
     return apiSuccess(rest);
   }
 
@@ -42,9 +50,16 @@ export async function PATCH(
 
   // 허용된 필드만 업데이트
   const allowedFields = [
-    'sellingPrice', 'costPrice', 'feeRate', 'shippingCost',
-    'freeShippingMin', 'couponDiscount', 'fulfillmentFee',
-    'memo', 'isActive', 'categoryId',
+    'sellingPrice',
+    'costPrice',
+    'feeRate',
+    'shippingCost',
+    'freeShippingMin',
+    'couponDiscount',
+    'fulfillmentFee',
+    'memo',
+    'isActive',
+    'categoryId',
   ];
   const data: Record<string, unknown> = {};
   for (const key of allowedFields) {
@@ -59,7 +74,9 @@ export async function PATCH(
     data,
   });
 
-  const changes = before ? diffChanges(before as unknown as Record<string, unknown>, data) : undefined;
+  const changes = before
+    ? diffChanges(before as unknown as Record<string, unknown>, data)
+    : undefined;
   writeAuditLog({
     userId: user.id,
     userName: user.name,

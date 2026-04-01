@@ -211,7 +211,10 @@ export default function AuditLogsPage() {
                     <td className="px-4 py-3">{log.summary}</td>
                   </tr>
                   {expandedId === log.id && log.changes && (
-                    <tr key={`${log.id}-detail`} className="border-b border-border">
+                    <tr
+                      key={`${log.id}-detail`}
+                      className="border-b border-border"
+                    >
                       <td colSpan={5} className="bg-muted/30 px-6 py-3">
                         <div className="space-y-1 text-xs">
                           {Object.entries(log.changes).map(

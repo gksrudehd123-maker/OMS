@@ -47,7 +47,9 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.id = user.id;
         token.role = (user as unknown as { role: string }).role;
-        token.allowedChannels = (user as unknown as { allowedChannels: string[] }).allowedChannels;
+        token.allowedChannels = (
+          user as unknown as { allowedChannels: string[] }
+        ).allowedChannels;
       }
       return token;
     },

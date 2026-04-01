@@ -73,7 +73,9 @@ export default function RegisterPage() {
       });
 
       if (result?.error) {
-        setError('가입은 완료되었으나 로그인에 실패했습니다. 로그인 페이지에서 다시 시도해주세요.');
+        setError(
+          '가입은 완료되었으나 로그인에 실패했습니다. 로그인 페이지에서 다시 시도해주세요.',
+        );
       } else {
         setSuccess(true);
         setTimeout(() => {
@@ -91,9 +93,7 @@ export default function RegisterPage() {
       <div className="w-full max-w-sm space-y-6">
         <div className="text-center">
           <h1 className="text-3xl font-bold text-primary">OMS</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            계정 만들기
-          </p>
+          <p className="mt-2 text-sm text-muted-foreground">계정 만들기</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -151,9 +151,7 @@ export default function RegisterPage() {
             />
           </div>
 
-          {error && (
-            <p className="text-sm text-red-500">{error}</p>
-          )}
+          {error && <p className="text-sm text-red-500">{error}</p>}
 
           <button
             type="submit"

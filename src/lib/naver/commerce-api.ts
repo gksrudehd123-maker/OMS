@@ -8,7 +8,10 @@ const API_BASE = 'https://api.commerce.naver.com/external';
 /**
  * 스토어 코드별 네이버 API 키 반환
  */
-function getNaverApiKeys(channelCode?: string): { clientId: string; clientSecret: string } {
+function getNaverApiKeys(channelCode?: string): {
+  clientId: string;
+  clientSecret: string;
+} {
   switch (channelCode) {
     case 'SMARTSTORE_WELSPA':
       return {

@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { requireAuth, requireRole, isError, checkChannelAccess, getChannelFilter } from '@/lib/auth-guard';
+import {
+  requireAuth,
+  requireRole,
+  isError,
+  checkChannelAccess,
+  getChannelFilter,
+} from '@/lib/auth-guard';
 import { writeAuditLog } from '@/lib/audit-log';
 import { apiSuccess, apiError } from '@/lib/api-response';
 

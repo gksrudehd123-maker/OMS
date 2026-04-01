@@ -3,7 +3,13 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { Calculator, TrendingUp, Package, AlertCircle, Plus } from 'lucide-react';
+import {
+  Calculator,
+  TrendingUp,
+  Package,
+  AlertCircle,
+  Plus,
+} from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 type Channel = {
@@ -237,7 +243,8 @@ export default function BreakEvenCalculator() {
 
   // 손익분기 계산
   const result = useMemo(() => {
-    if (!selectedProduct || !channel || !adCost || Number(adCost) <= 0) return null;
+    if (!selectedProduct || !channel || !adCost || Number(adCost) <= 0)
+      return null;
     return calculateBreakEven(selectedProduct, channel, Number(adCost));
   }, [selectedProduct, channel, adCost]);
 
@@ -284,7 +291,9 @@ export default function BreakEvenCalculator() {
       <div className="mt-4 flex flex-wrap items-end gap-3">
         {/* 월 선택 */}
         <div>
-          <label className="mb-1 block text-xs font-medium text-muted-foreground">월</label>
+          <label className="mb-1 block text-xs font-medium text-muted-foreground">
+            월
+          </label>
           <input
             type="month"
             value={selectedMonth}
@@ -295,7 +304,9 @@ export default function BreakEvenCalculator() {
 
         {/* 채널 선택 */}
         <div>
-          <label className="mb-1 block text-xs font-medium text-muted-foreground">채널</label>
+          <label className="mb-1 block text-xs font-medium text-muted-foreground">
+            채널
+          </label>
           <select
             value={selectedChannelId}
             onChange={(e) => {
@@ -314,7 +325,9 @@ export default function BreakEvenCalculator() {
 
         {/* 상품 선택 */}
         <div className="min-w-[200px] flex-1">
-          <label className="mb-1 block text-xs font-medium text-muted-foreground">상품</label>
+          <label className="mb-1 block text-xs font-medium text-muted-foreground">
+            상품
+          </label>
           {productsLoading ? (
             <Skeleton className="h-[38px] w-full rounded-lg" />
           ) : (
@@ -356,19 +369,25 @@ export default function BreakEvenCalculator() {
               {/* 결과 카드 */}
               <div className="grid gap-3 sm:grid-cols-3">
                 <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
-                  <p className="text-xs font-medium text-muted-foreground">개당 순이익</p>
+                  <p className="text-xs font-medium text-muted-foreground">
+                    개당 순이익
+                  </p>
                   <p className="mt-1 text-2xl font-bold text-primary">
                     ₩{result.unitMargin.toLocaleString()}
                   </p>
                 </div>
                 <div className="rounded-lg border border-orange-200 bg-orange-50 p-4 dark:border-orange-800 dark:bg-orange-950">
-                  <p className="text-xs font-medium text-muted-foreground">손익분기 수량</p>
+                  <p className="text-xs font-medium text-muted-foreground">
+                    손익분기 수량
+                  </p>
                   <p className="mt-1 text-2xl font-bold text-orange-600 dark:text-orange-400">
                     {result.breakEvenQty.toLocaleString()}개
                   </p>
                 </div>
                 <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-800 dark:bg-emerald-950">
-                  <p className="text-xs font-medium text-muted-foreground">손익분기 매출</p>
+                  <p className="text-xs font-medium text-muted-foreground">
+                    손익분기 매출
+                  </p>
                   <p className="mt-1 text-2xl font-bold text-emerald-600 dark:text-emerald-400">
                     ₩{result.breakEvenSales.toLocaleString()}
                   </p>
@@ -383,7 +402,9 @@ export default function BreakEvenCalculator() {
                   className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
                 >
                   <Plus className="h-4 w-4" />
-                  {addBudgetMutation.isPending ? '등록 중...' : '광고 손익분기에 추가'}
+                  {addBudgetMutation.isPending
+                    ? '등록 중...'
+                    : '광고 손익분기에 추가'}
                 </button>
               </div>
 

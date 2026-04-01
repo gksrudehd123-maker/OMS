@@ -32,7 +32,8 @@ type User = {
 const ROLE_LABELS: Record<string, { label: string; color: string }> = {
   OWNER: {
     label: '소유자',
-    color: 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300',
+    color:
+      'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300',
   },
   MANAGER: {
     label: '관리자',
@@ -80,7 +81,11 @@ export default function UsersPage() {
   const activeChannels = channels.filter((ch) => ch.isActive);
 
   const createMutation = useMutation({
-    mutationFn: async (body: { email: string; password: string; name: string }) => {
+    mutationFn: async (body: {
+      email: string;
+      password: string;
+      name: string;
+    }) => {
       const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -114,11 +119,21 @@ export default function UsersPage() {
       toast.error('비밀번호는 8자 이상이어야 합니다');
       return;
     }
-    createMutation.mutate({ name: newName, email: newEmail, password: newPassword });
+    createMutation.mutate({
+      name: newName,
+      email: newEmail,
+      password: newPassword,
+    });
   };
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, body }: { id: string; body: Record<string, unknown> }) => {
+    mutationFn: async ({
+      id,
+      body,
+    }: {
+      id: string;
+      body: Record<string, unknown>;
+    }) => {
       const res = await fetch(`/api/users/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -197,10 +212,12 @@ export default function UsersPage() {
 
   const getChannelNames = (channelIds: string[]) => {
     if (channelIds.length === 0) return '전체';
-    return channelIds
-      .map((id) => channels.find((ch) => ch.id === id)?.name)
-      .filter(Boolean)
-      .join(', ') || '전체';
+    return (
+      channelIds
+        .map((id) => channels.find((ch) => ch.id === id)?.name)
+        .filter(Boolean)
+        .join(', ') || '전체'
+    );
   };
 
   const isMe = (userId: string) => session?.user?.id === userId;
@@ -262,7 +279,8 @@ export default function UsersPage() {
             </div>
           </div>
           <p className="mt-2 text-xs text-muted-foreground">
-            새 사용자는 STAFF 역할로 등록됩니다. 등록 후 역할과 채널 권한을 변경할 수 있습니다.
+            새 사용자는 STAFF 역할로 등록됩니다. 등록 후 역할과 채널 권한을
+            변경할 수 있습니다.
           </p>
           <div className="mt-4 flex gap-2">
             <button
@@ -287,22 +305,42 @@ export default function UsersPage() {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border bg-muted/50">
-              <th className="whitespace-nowrap px-4 py-3 text-left font-medium">이름</th>
-              <th className="whitespace-nowrap px-4 py-3 text-left font-medium">이메일</th>
-              <th className="whitespace-nowrap px-4 py-3 text-left font-medium">역할</th>
-              <th className="whitespace-nowrap px-4 py-3 text-left font-medium">접근 채널</th>
-              <th className="whitespace-nowrap px-4 py-3 text-left font-medium">가입일</th>
+              <th className="whitespace-nowrap px-4 py-3 text-left font-medium">
+                이름
+              </th>
+              <th className="whitespace-nowrap px-4 py-3 text-left font-medium">
+                이메일
+              </th>
+              <th className="whitespace-nowrap px-4 py-3 text-left font-medium">
+                역할
+              </th>
+              <th className="whitespace-nowrap px-4 py-3 text-left font-medium">
+                접근 채널
+              </th>
+              <th className="whitespace-nowrap px-4 py-3 text-left font-medium">
+                가입일
+              </th>
             </tr>
           </thead>
           <tbody>
             {isLoading ? (
               Array.from({ length: 3 }).map((_, i) => (
                 <tr key={i} className="border-b border-border">
-                  <td className="px-4 py-3"><Skeleton className="h-4 w-20" /></td>
-                  <td className="px-4 py-3"><Skeleton className="h-4 w-36" /></td>
-                  <td className="px-4 py-3"><Skeleton className="h-5 w-14 rounded-full" /></td>
-                  <td className="px-4 py-3"><Skeleton className="h-4 w-24" /></td>
-                  <td className="px-4 py-3"><Skeleton className="h-4 w-20" /></td>
+                  <td className="px-4 py-3">
+                    <Skeleton className="h-4 w-20" />
+                  </td>
+                  <td className="px-4 py-3">
+                    <Skeleton className="h-4 w-36" />
+                  </td>
+                  <td className="px-4 py-3">
+                    <Skeleton className="h-5 w-14 rounded-full" />
+                  </td>
+                  <td className="px-4 py-3">
+                    <Skeleton className="h-4 w-24" />
+                  </td>
+                  <td className="px-4 py-3">
+                    <Skeleton className="h-4 w-20" />
+                  </td>
                 </tr>
               ))
             ) : users.length === 0 ? (
@@ -324,7 +362,9 @@ export default function UsersPage() {
                   <td className="whitespace-nowrap px-4 py-3 font-medium">
                     {u.name}
                     {isMe(u.id) && (
-                      <span className="ml-1.5 text-xs text-muted-foreground">(나)</span>
+                      <span className="ml-1.5 text-xs text-muted-foreground">
+                        (나)
+                      </span>
                     )}
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 text-muted-foreground">
@@ -338,7 +378,9 @@ export default function UsersPage() {
                     </span>
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 text-muted-foreground">
-                    {u.role === 'OWNER' ? '전체' : getChannelNames(u.allowedChannels)}
+                    {u.role === 'OWNER'
+                      ? '전체'
+                      : getChannelNames(u.allowedChannels)}
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 text-muted-foreground">
                     {new Date(u.createdAt).toLocaleDateString('ko-KR')}
@@ -380,7 +422,9 @@ export default function UsersPage() {
                 <label className="text-sm font-medium">역할</label>
                 {isMe(editUser.id) ? (
                   <div className="rounded-lg bg-muted/50 px-3 py-2 text-sm">
-                    <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${ROLE_LABELS[editUser.role]?.color}`}>
+                    <span
+                      className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${ROLE_LABELS[editUser.role]?.color}`}
+                    >
                       {ROLE_LABELS[editUser.role]?.label}
                     </span>
                     <span className="ml-2 text-xs text-muted-foreground">
@@ -471,7 +515,9 @@ export default function UsersPage() {
           {deleteConfirm && (
             <div className="space-y-4">
               <p className="text-sm text-muted-foreground">
-                <span className="font-medium text-foreground">{deleteConfirm.name}</span>
+                <span className="font-medium text-foreground">
+                  {deleteConfirm.name}
+                </span>
                 ({deleteConfirm.email}) 사용자를 삭제하시겠습니까?
               </p>
               <p className="text-xs text-red-600 dark:text-red-400">

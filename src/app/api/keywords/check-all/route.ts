@@ -7,7 +7,10 @@ import { checkKeywordRank } from '@/lib/naver/shopping-search';
 export async function POST() {
   const storeName = process.env.NAVER_STORE_NAME;
   if (!storeName) {
-    return NextResponse.json({ error: 'NAVER_STORE_NAME 환경 변수가 필요합니다' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'NAVER_STORE_NAME 환경 변수가 필요합니다' },
+      { status: 500 },
+    );
   }
 
   const keywords = await prisma.productKeyword.findMany({

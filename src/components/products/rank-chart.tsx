@@ -21,9 +21,24 @@ type RankHistory = {
   date: string;
 };
 
-const COLORS = ['#3B82F6', '#EF4444', '#22C55E', '#F59E0B', '#8B5CF6', '#EC4899', '#06B6D4', '#F97316'];
+const COLORS = [
+  '#3B82F6',
+  '#EF4444',
+  '#22C55E',
+  '#F59E0B',
+  '#8B5CF6',
+  '#EC4899',
+  '#06B6D4',
+  '#F97316',
+];
 
-export function RankChart({ keywordId, month }: { keywordId: string; month?: string }) {
+export function RankChart({
+  keywordId,
+  month,
+}: {
+  keywordId: string;
+  month?: string;
+}) {
   const { data: history = [], isLoading } = useQuery<RankHistory[]>({
     queryKey: ['keyword-history', keywordId, month],
     queryFn: async () => {
@@ -38,23 +53,34 @@ export function RankChart({ keywordId, month }: { keywordId: string; month?: str
     : history;
 
   if (isLoading) {
-    return <div className="h-64 flex items-center justify-center text-sm text-muted-foreground">로딩 중...</div>;
+    return (
+      <div className="h-64 flex items-center justify-center text-sm text-muted-foreground">
+        로딩 중...
+      </div>
+    );
   }
 
   if (filtered.length === 0) {
     return (
       <div className="h-48 flex items-center justify-center text-sm text-muted-foreground">
-        {month ? `${month}월 순위 데이터가 없습니다` : '순위 데이터가 없습니다. 조회 버튼을 클릭해주세요.'}
+        {month
+          ? `${month}월 순위 데이터가 없습니다`
+          : '순위 데이터가 없습니다. 조회 버튼을 클릭해주세요.'}
       </div>
     );
   }
 
   const chartData = filtered.map((h) => ({
-    date: new Date(h.date).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' }),
+    date: new Date(h.date).toLocaleDateString('ko-KR', {
+      month: 'short',
+      day: 'numeric',
+    }),
     rank: h.rank,
   }));
 
-  const ranks = filtered.filter((h) => h.rank !== null).map((h) => h.rank as number);
+  const ranks = filtered
+    .filter((h) => h.rank !== null)
+    .map((h) => h.rank as number);
   const maxRank = ranks.length > 0 ? Math.max(...ranks) : 100;
   const yMax = Math.min(Math.ceil(maxRank / 10) * 10 + 10, 110);
 
@@ -74,7 +100,13 @@ export function RankChart({ keywordId, month }: { keywordId: string; month?: str
             reversed
             domain={[1, yMax]}
             tick={{ fill: '#9CA3AF', fontSize: 11 }}
-            label={{ value: '순위', angle: -90, position: 'insideLeft', fill: '#9CA3AF', fontSize: 11 }}
+            label={{
+              value: '순위',
+              angle: -90,
+              position: 'insideLeft',
+              fill: '#9CA3AF',
+              fontSize: 11,
+            }}
           />
           <Tooltip
             content={({ active, payload }) => {
@@ -98,7 +130,12 @@ export function RankChart({ keywordId, month }: { keywordId: string; month?: str
             fill="url(#rankGradient)"
             baseValue={yMax}
             dot={{ r: 4, fill: '#3B82F6', strokeWidth: 2, stroke: '#fff' }}
-            activeDot={{ r: 6, fill: '#3B82F6', strokeWidth: 2, stroke: '#fff' }}
+            activeDot={{
+              r: 6,
+              fill: '#3B82F6',
+              strokeWidth: 2,
+              stroke: '#fff',
+            }}
             connectNulls={false}
           >
             <LabelList
@@ -106,7 +143,7 @@ export function RankChart({ keywordId, month }: { keywordId: string; month?: str
               position="top"
               offset={10}
               style={{ fill: '#3B82F6', fontSize: 11, fontWeight: 700 }}
-              formatter={(v: number | null) => (v !== null ? `${v}위` : '')}
+              formatter={(v) => (v != null ? `${v}위` : '')}
             />
           </Area>
         </AreaChart>
@@ -118,7 +155,11 @@ export function RankChart({ keywordId, month }: { keywordId: string; month?: str
 /**
  * 전체 키워드 추이 차트 (여러 키워드를 한 차트에)
  */
-export function AllKeywordsChart({ keywords }: { keywords: { id: string; keyword: string }[] }) {
+export function AllKeywordsChart({
+  keywords,
+}: {
+  keywords: { id: string; keyword: string }[];
+}) {
   // 모든 키워드의 히스토리를 병렬로 가져오기
   const { data: allData, isLoading } = useQuery({
     queryKey: ['all-keyword-history', keywords.map((k) => k.id).join(',')],
@@ -128,7 +169,7 @@ export function AllKeywordsChart({ keywords }: { keywords: { id: string; keyword
           const res = await fetch(`/api/keywords/${kw.id}/history`);
           const history: RankHistory[] = await res.json();
           return { keyword: kw.keyword, history };
-        })
+        }),
       );
       return results;
     },
@@ -136,7 +177,11 @@ export function AllKeywordsChart({ keywords }: { keywords: { id: string; keyword
   });
 
   if (isLoading) {
-    return <div className="h-64 flex items-center justify-center text-sm text-muted-foreground">로딩 중...</div>;
+    return (
+      <div className="h-64 flex items-center justify-center text-sm text-muted-foreground">
+        로딩 중...
+      </div>
+    );
   }
 
   if (!allData || allData.every((d) => d.history.length === 0)) {
@@ -151,7 +196,10 @@ export function AllKeywordsChart({ keywords }: { keywords: { id: string; keyword
   const dateMap = new Map<string, Record<string, number | null>>();
   for (const { keyword, history } of allData) {
     for (const h of history) {
-      const dateKey = new Date(h.date).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
+      const dateKey = new Date(h.date).toLocaleDateString('ko-KR', {
+        month: 'short',
+        day: 'numeric',
+      });
       if (!dateMap.has(dateKey)) dateMap.set(dateKey, {});
       dateMap.get(dateKey)![keyword] = h.rank;
     }
@@ -161,16 +209,33 @@ export function AllKeywordsChart({ keywords }: { keywords: { id: string; keyword
     .map(([date, ranks]) => ({ date, ...ranks }))
     .sort((a, b) => {
       // 날짜 정렬
-      const aDate = allData.flatMap((d) => d.history).find((h) =>
-        new Date(h.date).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' }) === a.date
-      )?.date || '';
-      const bDate = allData.flatMap((d) => d.history).find((h) =>
-        new Date(h.date).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' }) === b.date
-      )?.date || '';
+      const aDate =
+        allData
+          .flatMap((d) => d.history)
+          .find(
+            (h) =>
+              new Date(h.date).toLocaleDateString('ko-KR', {
+                month: 'short',
+                day: 'numeric',
+              }) === a.date,
+          )?.date || '';
+      const bDate =
+        allData
+          .flatMap((d) => d.history)
+          .find(
+            (h) =>
+              new Date(h.date).toLocaleDateString('ko-KR', {
+                month: 'short',
+                day: 'numeric',
+              }) === b.date,
+          )?.date || '';
       return aDate.localeCompare(bDate);
     });
 
-  const allRanks = allData.flatMap((d) => d.history).filter((h) => h.rank !== null).map((h) => h.rank as number);
+  const allRanks = allData
+    .flatMap((d) => d.history)
+    .filter((h) => h.rank !== null)
+    .map((h) => h.rank as number);
   const maxRank = allRanks.length > 0 ? Math.max(...allRanks) : 100;
   const yMax = Math.min(Math.ceil(maxRank / 10) * 10 + 10, 110);
 
@@ -184,18 +249,29 @@ export function AllKeywordsChart({ keywords }: { keywords: { id: string; keyword
             reversed
             domain={[1, yMax]}
             tick={{ fill: '#9CA3AF', fontSize: 11 }}
-            label={{ value: '순위', angle: -90, position: 'insideLeft', fill: '#9CA3AF', fontSize: 11 }}
+            label={{
+              value: '순위',
+              angle: -90,
+              position: 'insideLeft',
+              fill: '#9CA3AF',
+              fontSize: 11,
+            }}
           />
           <Tooltip
             content={({ active, payload, label }) => {
               if (!active || !payload?.length) return null;
               return (
                 <div className="rounded-lg border border-border bg-card p-3 shadow-md">
-                  <p className="text-xs text-muted-foreground mb-1.5">{label}</p>
+                  <p className="text-xs text-muted-foreground mb-1.5">
+                    {label}
+                  </p>
                   <div className="space-y-1">
                     {payload.map((p, i) => (
                       <div key={i} className="flex items-center gap-2 text-sm">
-                        <div className="h-2 w-2 rounded-full" style={{ backgroundColor: p.color }} />
+                        <div
+                          className="h-2 w-2 rounded-full"
+                          style={{ backgroundColor: p.color }}
+                        />
                         <span className="text-muted-foreground">{p.name}</span>
                         <span className="font-mono font-bold ml-auto">
                           {p.value !== null ? `${p.value}위` : '-'}
@@ -208,7 +284,9 @@ export function AllKeywordsChart({ keywords }: { keywords: { id: string; keyword
             }}
           />
           <Legend
-            formatter={(value: string) => <span className="text-xs">{value}</span>}
+            formatter={(value: string) => (
+              <span className="text-xs">{value}</span>
+            )}
           />
           {allData.map((d, i) => (
             <Line
@@ -217,7 +295,12 @@ export function AllKeywordsChart({ keywords }: { keywords: { id: string; keyword
               dataKey={d.keyword}
               stroke={COLORS[i % COLORS.length]}
               strokeWidth={2}
-              dot={{ r: 3, fill: COLORS[i % COLORS.length], strokeWidth: 1.5, stroke: '#fff' }}
+              dot={{
+                r: 3,
+                fill: COLORS[i % COLORS.length],
+                strokeWidth: 1.5,
+                stroke: '#fff',
+              }}
               connectNulls={false}
             />
           ))}

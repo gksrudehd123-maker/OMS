@@ -1,7 +1,13 @@
 import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { calculateRGMargin } from '@/lib/helpers/rg-margin-calc';
-import { requireAuth, isError, checkChannelAccess, getChannelFilter, isStaff } from '@/lib/auth-guard';
+import {
+  requireAuth,
+  isError,
+  checkChannelAccess,
+  getChannelFilter,
+  isStaff,
+} from '@/lib/auth-guard';
 import { apiPaginated } from '@/lib/api-response';
 
 export async function GET(request: NextRequest) {

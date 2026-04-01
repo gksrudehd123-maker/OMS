@@ -10,7 +10,10 @@ export async function GET(request: NextRequest) {
 
   const productId = new URL(request.url).searchParams.get('productId');
   if (!productId) {
-    return NextResponse.json({ error: 'productId가 필요합니다' }, { status: 400 });
+    return NextResponse.json(
+      { error: 'productId가 필요합니다' },
+      { status: 400 },
+    );
   }
 
   // 상품 썸네일 조회
@@ -33,9 +36,10 @@ export async function GET(request: NextRequest) {
   const result = keywords.map((kw) => {
     const latest = kw.ranks[0] || null;
     const prev = kw.ranks[1] || null;
-    const change = latest?.rank != null && prev?.rank != null
-      ? prev.rank - latest.rank // 양수 = 순위 상승
-      : null;
+    const change =
+      latest?.rank != null && prev?.rank != null
+        ? prev.rank - latest.rank // 양수 = 순위 상승
+        : null;
 
     return {
       id: kw.id,
@@ -67,7 +71,10 @@ export async function POST(request: NextRequest) {
   const { productId, keyword } = await request.json();
 
   if (!productId || !keyword?.trim()) {
-    return NextResponse.json({ error: '상품ID와 키워드가 필요합니다' }, { status: 400 });
+    return NextResponse.json(
+      { error: '상품ID와 키워드가 필요합니다' },
+      { status: 400 },
+    );
   }
 
   // 중복 체크
@@ -75,7 +82,10 @@ export async function POST(request: NextRequest) {
     where: { productId_keyword: { productId, keyword: keyword.trim() } },
   });
   if (existing) {
-    return NextResponse.json({ error: '이미 등록된 키워드입니다' }, { status: 400 });
+    return NextResponse.json(
+      { error: '이미 등록된 키워드입니다' },
+      { status: 400 },
+    );
   }
 
   const created = await prisma.productKeyword.create({

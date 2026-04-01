@@ -155,7 +155,9 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    const duplicateCount = result.errors.filter((e) => e.message.startsWith('중복')).length;
+    const duplicateCount = result.errors.filter((e) =>
+      e.message.startsWith('중복'),
+    ).length;
 
     await writeAuditLog({
       action: 'API_SYNC',

@@ -15,7 +15,8 @@ type SessionUser = {
 // 인증 확인 — 로그인 필수 + Rate Limiting
 export async function requireAuth(): Promise<SessionUser | NextResponse> {
   const headersList = headers();
-  const ip = headersList.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+  const ip =
+    headersList.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
   const limited = rateLimit(ip);
   if (limited) return limited;
 
@@ -34,7 +35,10 @@ export async function requireRole(
   if (result instanceof NextResponse) return result;
 
   if (!roles.includes(result.role)) {
-    return NextResponse.json({ error: '접근 권한이 없습니다' }, { status: 403 });
+    return NextResponse.json(
+      { error: '접근 권한이 없습니다' },
+      { status: 403 },
+    );
   }
   return result;
 }
@@ -48,7 +52,10 @@ export function checkChannelAccess(
   if (user.role === 'OWNER') return null;
   if (user.allowedChannels.length === 0) return null; // 빈 배열 = 전체 허용
   if (user.allowedChannels.includes(channelId)) return null;
-  return NextResponse.json({ error: '해당 채널에 접근 권한이 없습니다' }, { status: 403 });
+  return NextResponse.json(
+    { error: '해당 채널에 접근 권한이 없습니다' },
+    { status: 403 },
+  );
 }
 
 // 사용자의 허용 채널 조건을 Prisma where에 추가
@@ -64,6 +71,8 @@ export function isStaff(user: SessionUser): boolean {
 }
 
 // 타입 가드: NextResponse인지 확인
-export function isError(result: SessionUser | NextResponse): result is NextResponse {
+export function isError(
+  result: SessionUser | NextResponse,
+): result is NextResponse {
   return result instanceof NextResponse;
 }

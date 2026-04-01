@@ -31,7 +31,12 @@ const navItems = [
   { href: '/ad-costs', label: '광고비 관리', icon: Megaphone },
   { href: '/reports', label: '리포트', icon: FileBarChart },
   { href: '/users', label: '사용자 관리', icon: Users, ownerOnly: true },
-  { href: '/audit-logs', label: '감사 로그', icon: ScrollText, ownerOnly: true },
+  {
+    href: '/audit-logs',
+    label: '감사 로그',
+    icon: ScrollText,
+    ownerOnly: true,
+  },
   { href: '/settings', label: '설정', icon: Settings },
 ];
 

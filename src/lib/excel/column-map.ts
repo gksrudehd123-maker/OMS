@@ -57,11 +57,11 @@ export const COUPANG_REQUIRED_COLUMNS = [
 
 // 쿠팡 로켓그로스 판매통계 엑셀 컬럼 매핑
 export const ROCKETGROWTH_COLUMNS: Record<string, string> = {
-  '노출상품ID': 'exposureProductId',
-  '옵션ID': 'optionId',
-  '옵션명': 'optionName',
-  '상품타입': 'productType',
-  '카테고리': 'categoryName',
+  노출상품ID: 'exposureProductId',
+  옵션ID: 'optionId',
+  옵션명: 'optionName',
+  상품타입: 'productType',
+  카테고리: 'categoryName',
   '아이템위너 비율(%)': 'itemWinnerRate',
 };
 

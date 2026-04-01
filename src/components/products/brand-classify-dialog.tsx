@@ -15,7 +15,14 @@ type UnclassifiedProduct = {
 const BRANDS = [
   {
     name: '방짜',
-    categories: ['배터리 KF-9', '배터리 KF-11', '배터리 KF-3.5', '배터리 AN-10500B', '배터리 AN-9000B', '기포기 KF'],
+    categories: [
+      '배터리 KF-9',
+      '배터리 KF-11',
+      '배터리 KF-3.5',
+      '배터리 AN-10500B',
+      '배터리 AN-9000B',
+      '기포기 KF',
+    ],
   },
   {
     name: '웰스파',
@@ -27,7 +34,11 @@ const BRANDS = [
   },
 ];
 
-export function BrandClassifyDialog({ onClose: onCloseProp }: { onClose: () => void }) {
+export function BrandClassifyDialog({
+  onClose: onCloseProp,
+}: {
+  onClose: () => void;
+}) {
   const queryClient = useQueryClient();
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
   const [classified, setClassified] = useState<Set<string>>(new Set());
@@ -52,7 +63,12 @@ export function BrandClassifyDialog({ onClose: onCloseProp }: { onClose: () => v
   };
 
   const mutation = useMutation({
-    mutationFn: async (body: { productId: string; brand?: string; brandCategory?: string; brandNone?: boolean }) => {
+    mutationFn: async (body: {
+      productId: string;
+      brand?: string;
+      brandCategory?: string;
+      brandNone?: boolean;
+    }) => {
       const res = await fetch('/api/products/brand', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -80,7 +96,11 @@ export function BrandClassifyDialog({ onClose: onCloseProp }: { onClose: () => v
 
   const handleSelectCategory = async (brand: string, category: string) => {
     if (!current) return;
-    await mutation.mutateAsync({ productId: current.id, brand, brandCategory: category });
+    await mutation.mutateAsync({
+      productId: current.id,
+      brand,
+      brandCategory: category,
+    });
     toast.success(`${brand} > ${category} 분류 완료`);
     markDone(current.id);
   };
@@ -106,7 +126,9 @@ export function BrandClassifyDialog({ onClose: onCloseProp }: { onClose: () => v
             <Tag className="mx-auto h-12 w-12 text-green-500" />
             <h2 className="mt-4 text-lg font-semibold">분류 완료!</h2>
             <p className="mt-2 text-sm text-muted-foreground">
-              {list.length === 0 ? '미분류 상품이 없습니다.' : '모든 상품 분류가 완료되었습니다.'}
+              {list.length === 0
+                ? '미분류 상품이 없습니다.'
+                : '모든 상품 분류가 완료되었습니다.'}
             </p>
             <button
               onClick={onClose}
@@ -129,7 +151,9 @@ export function BrandClassifyDialog({ onClose: onCloseProp }: { onClose: () => v
         <div className="flex items-center justify-between border-b border-border px-6 py-4">
           <div>
             <h2 className="text-lg font-semibold">브랜드 분류</h2>
-            <p className="text-xs text-muted-foreground">남은 상품: {remaining}개</p>
+            <p className="text-xs text-muted-foreground">
+              남은 상품: {remaining}개
+            </p>
           </div>
           <button onClick={onClose} className="rounded-lg p-1 hover:bg-accent">
             <X className="h-5 w-5" />
@@ -153,7 +177,9 @@ export function BrandClassifyDialog({ onClose: onCloseProp }: { onClose: () => v
             <div className="min-w-0 flex-1">
               <p className="font-medium truncate">{current.name}</p>
               {current.optionInfo && (
-                <p className="text-sm text-muted-foreground truncate">{current.optionInfo}</p>
+                <p className="text-sm text-muted-foreground truncate">
+                  {current.optionInfo}
+                </p>
               )}
             </div>
           </div>
@@ -164,7 +190,9 @@ export function BrandClassifyDialog({ onClose: onCloseProp }: { onClose: () => v
           {!selectedBrand ? (
             // 브랜드 선택
             <div className="space-y-2">
-              <p className="text-sm font-medium text-muted-foreground mb-3">브랜드를 선택하세요</p>
+              <p className="text-sm font-medium text-muted-foreground mb-3">
+                브랜드를 선택하세요
+              </p>
               {BRANDS.map((b) => (
                 <button
                   key={b.name}
@@ -186,18 +214,22 @@ export function BrandClassifyDialog({ onClose: onCloseProp }: { onClose: () => v
                 >
                   ← 브랜드 다시 선택
                 </button>
-                <span className="text-sm font-medium text-muted-foreground">/ {selectedBrand}</span>
+                <span className="text-sm font-medium text-muted-foreground">
+                  / {selectedBrand}
+                </span>
               </div>
-              {BRANDS.find((b) => b.name === selectedBrand)?.categories.map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => handleSelectCategory(selectedBrand, cat)}
-                  disabled={mutation.isPending}
-                  className="flex w-full items-center rounded-lg border border-border px-4 py-3 text-left hover:bg-accent transition-colors disabled:opacity-50"
-                >
-                  <span>{cat}</span>
-                </button>
-              ))}
+              {BRANDS.find((b) => b.name === selectedBrand)?.categories.map(
+                (cat) => (
+                  <button
+                    key={cat}
+                    onClick={() => handleSelectCategory(selectedBrand, cat)}
+                    disabled={mutation.isPending}
+                    className="flex w-full items-center rounded-lg border border-border px-4 py-3 text-left hover:bg-accent transition-colors disabled:opacity-50"
+                  >
+                    <span>{cat}</span>
+                  </button>
+                ),
+              )}
             </div>
           )}
         </div>

@@ -16,17 +16,26 @@ import { ProgressBar } from '@/components/ui/progress-bar';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const SalesTrendChart = dynamic(
-  () => import('@/components/charts/dashboard-charts').then((m) => m.SalesTrendChart),
+  () =>
+    import('@/components/charts/dashboard-charts').then(
+      (m) => m.SalesTrendChart,
+    ),
   { loading: () => <Skeleton className="h-72 w-full rounded-lg" /> },
 );
 
 const ChannelBarChart = dynamic(
-  () => import('@/components/charts/dashboard-charts').then((m) => m.ChannelBarChart),
+  () =>
+    import('@/components/charts/dashboard-charts').then(
+      (m) => m.ChannelBarChart,
+    ),
   { loading: () => <Skeleton className="h-[300px] w-full rounded-lg" /> },
 );
 
 const ProductRankChart = dynamic(
-  () => import('@/components/charts/dashboard-charts').then((m) => m.ProductRankChart),
+  () =>
+    import('@/components/charts/dashboard-charts').then(
+      (m) => m.ProductRankChart,
+    ),
   { loading: () => <Skeleton className="h-[300px] w-full rounded-lg" /> },
 );
 
@@ -49,11 +58,30 @@ type DashboardData = {
   kpi: KPI;
   prevKpi?: PrevKPI;
   dailyData: { date: string; sales: number; margin: number; orders: number }[];
-  channelData: { name: string; sales: number; margin: number; marginRate: number; orders: number; adCost?: number; roas?: number | null }[];
-  productMarginRank: { name: string; optionInfo: string; label: string; sales: number; margin: number; marginRate: number; orders: number }[];
+  channelData: {
+    name: string;
+    sales: number;
+    margin: number;
+    marginRate: number;
+    orders: number;
+    adCost?: number;
+    roas?: number | null;
+  }[];
+  productMarginRank: {
+    name: string;
+    optionInfo: string;
+    label: string;
+    sales: number;
+    margin: number;
+    marginRate: number;
+    orders: number;
+  }[];
 };
 
-function calcChange(current: number, prev: number | undefined): { pct: number; direction: 'up' | 'down' | 'same' } | null {
+function calcChange(
+  current: number,
+  prev: number | undefined,
+): { pct: number; direction: 'up' | 'down' | 'same' } | null {
   if (prev === undefined || prev === 0) return null;
   const pct = Math.round(((current - prev) / Math.abs(prev)) * 1000) / 10;
   return { pct, direction: pct > 0 ? 'up' : pct < 0 ? 'down' : 'same' };
@@ -80,9 +108,12 @@ export function SalesDashboardTab() {
   const prevKpi = data?.prevKpi;
   const dailyData = data?.dailyData || [];
 
-  const salesChange = kpi && prevKpi ? calcChange(kpi.totalSales, prevKpi.totalSales) : null;
-  const marginChange = kpi && prevKpi ? calcChange(kpi.totalMargin, prevKpi.totalMargin) : null;
-  const ordersChange = kpi && prevKpi ? calcChange(kpi.totalOrders, prevKpi.totalOrders) : null;
+  const salesChange =
+    kpi && prevKpi ? calcChange(kpi.totalSales, prevKpi.totalSales) : null;
+  const marginChange =
+    kpi && prevKpi ? calcChange(kpi.totalMargin, prevKpi.totalMargin) : null;
+  const ordersChange =
+    kpi && prevKpi ? calcChange(kpi.totalOrders, prevKpi.totalOrders) : null;
 
   const kpiCards = [
     {
@@ -185,14 +216,20 @@ export function SalesDashboardTab() {
                     {card.value}
                   </span>
                   {card.change && (
-                    <span className={`ml-2 text-xs font-medium ${
-                      card.change.direction === 'up'
-                        ? 'text-green-600 dark:text-green-400'
+                    <span
+                      className={`ml-2 text-xs font-medium ${
+                        card.change.direction === 'up'
+                          ? 'text-green-600 dark:text-green-400'
+                          : card.change.direction === 'down'
+                            ? 'text-red-600 dark:text-red-400'
+                            : 'text-muted-foreground'
+                      }`}
+                    >
+                      {card.change.direction === 'up'
+                        ? '▲'
                         : card.change.direction === 'down'
-                          ? 'text-red-600 dark:text-red-400'
-                          : 'text-muted-foreground'
-                    }`}>
-                      {card.change.direction === 'up' ? '▲' : card.change.direction === 'down' ? '▼' : ''}
+                          ? '▼'
+                          : ''}
                       {Math.abs(card.change.pct)}%
                     </span>
                   )}

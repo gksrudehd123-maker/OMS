@@ -7,7 +7,9 @@ import { rateLimit } from '@/lib/rate-limit';
 export async function POST(request: NextRequest) {
   try {
     // Rate Limiting (분당 10회 — 브루트포스 방어)
-    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+    const ip =
+      request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+      'unknown';
     const limited = rateLimit(`register:${ip}`, 10);
     if (limited) return limited;
 

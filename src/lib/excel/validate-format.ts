@@ -1,12 +1,20 @@
 import XlsxPopulate from 'xlsx-populate';
-import { REQUIRED_COLUMNS, COUPANG_REQUIRED_COLUMNS, ROCKETGROWTH_REQUIRED_COLUMNS } from './column-map';
+import {
+  REQUIRED_COLUMNS,
+  COUPANG_REQUIRED_COLUMNS,
+  ROCKETGROWTH_REQUIRED_COLUMNS,
+} from './column-map';
 
 // 스마트스토어 엑셀 고유 헤더 (쿠팡에는 없는 것)
 const SMARTSTORE_SIGNATURE = ['상품주문번호', '주문일시', '주문상태'];
 // 쿠팡 엑셀 고유 헤더 (스마트스토어에는 없는 것)
 const COUPANG_SIGNATURE = ['묶음배송번호', '등록상품명', '노출상품ID'];
 
-export type DetectedFormat = 'smartstore' | 'coupang' | 'rocketgrowth' | 'unknown';
+export type DetectedFormat =
+  | 'smartstore'
+  | 'coupang'
+  | 'rocketgrowth'
+  | 'unknown';
 export type ExpectedFormat = 'smartstore' | 'coupang' | 'rocketgrowth';
 
 export type FormatValidation = {
@@ -32,9 +40,7 @@ export async function validateExcelFormat(
   let expectedFormat: ExpectedFormat;
   if (channelCode === 'coupang_rocket_growth') {
     expectedFormat = 'rocketgrowth';
-  } else if (
-    channelCode.startsWith('coupang_')
-  ) {
+  } else if (channelCode.startsWith('coupang_')) {
     expectedFormat = 'coupang';
   } else {
     expectedFormat = 'smartstore';

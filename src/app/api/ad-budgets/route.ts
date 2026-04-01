@@ -1,6 +1,12 @@
 import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { requireAuth, requireRole, isError, checkChannelAccess, getChannelFilter } from '@/lib/auth-guard';
+import {
+  requireAuth,
+  requireRole,
+  isError,
+  checkChannelAccess,
+  getChannelFilter,
+} from '@/lib/auth-guard';
 import { writeAuditLog } from '@/lib/audit-log';
 import { apiSuccess, apiError } from '@/lib/api-response';
 import { EXCLUDED_ORDER_STATUSES } from '@/lib/helpers/status-map';
@@ -60,7 +66,11 @@ export async function GET(request: NextRequest) {
   const budgetsWithSales = await Promise.all(
     budgets.map(async (budget) => {
       const monthStart = new Date(`${budget.month}-01`);
-      const monthEnd = new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 0);
+      const monthEnd = new Date(
+        monthStart.getFullYear(),
+        monthStart.getMonth() + 1,
+        0,
+      );
       monthEnd.setHours(23, 59, 59, 999);
 
       // 같은 상품명의 모든 productId 조회

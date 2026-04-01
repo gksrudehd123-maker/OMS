@@ -2,7 +2,15 @@
 
 import { useRef, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { FileSpreadsheet, FileText, Download, Loader2, Printer, Trash2, Clock } from 'lucide-react';
+import {
+  FileSpreadsheet,
+  FileText,
+  Download,
+  Loader2,
+  Printer,
+  Trash2,
+  Clock,
+} from 'lucide-react';
 import { DateRangeFilter } from '@/components/common/date-range-filter';
 import { ChannelFilter } from '@/components/common/channel-filter';
 import { ProgressBar } from '@/components/ui/progress-bar';
@@ -101,7 +109,9 @@ export default function ReportsPage() {
 
   const deleteReportMutation = useMutation({
     mutationFn: async (id: string) => {
-      const res = await fetch(`/api/report/generated/${id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/report/generated/${id}`, {
+        method: 'DELETE',
+      });
       if (!res.ok) throw new Error('삭제 실패');
     },
     onSuccess: () => {
@@ -157,7 +167,17 @@ export default function ReportsPage() {
 
       // --- 상품별 시트 ---
       const productRows = [
-        ['상품명', '옵션', '수량', '매출', '원가', '수수료', '배송비', '마진', '마진율(%)'],
+        [
+          '상품명',
+          '옵션',
+          '수량',
+          '매출',
+          '원가',
+          '수수료',
+          '배송비',
+          '마진',
+          '마진율(%)',
+        ],
         ...data.productData.map((r) => [
           r.name,
           r.optionInfo,
@@ -172,8 +192,15 @@ export default function ReportsPage() {
       ];
       const productWs = XLSX.utils.aoa_to_sheet(productRows);
       productWs['!cols'] = [
-        { wch: 25 }, { wch: 20 }, { wch: 8 }, { wch: 15 },
-        { wch: 15 }, { wch: 12 }, { wch: 12 }, { wch: 15 }, { wch: 10 },
+        { wch: 25 },
+        { wch: 20 },
+        { wch: 8 },
+        { wch: 15 },
+        { wch: 15 },
+        { wch: 12 },
+        { wch: 12 },
+        { wch: 15 },
+        { wch: 10 },
       ];
       XLSX.utils.book_append_sheet(wb, productWs, '상품별 실적');
 
@@ -230,7 +257,14 @@ export default function ReportsPage() {
         // 섹션이 한 페이지보다 긴 경우 (테이블 등)
         const pageContentHeight = pdfHeight - margin * 2;
         if (sectionHeight <= pageContentHeight) {
-          doc.addImage(imgData, 'PNG', margin, margin, contentWidth, sectionHeight);
+          doc.addImage(
+            imgData,
+            'PNG',
+            margin,
+            margin,
+            contentWidth,
+            sectionHeight,
+          );
         } else {
           let remainingHeight = sectionHeight;
           let yOffset = 0;
@@ -238,7 +272,14 @@ export default function ReportsPage() {
           while (remainingHeight > 0) {
             if (!first) doc.addPage();
             first = false;
-            doc.addImage(imgData, 'PNG', margin, margin - yOffset, contentWidth, sectionHeight);
+            doc.addImage(
+              imgData,
+              'PNG',
+              margin,
+              margin - yOffset,
+              contentWidth,
+              sectionHeight,
+            );
             remainingHeight -= pageContentHeight;
             yOffset += pageContentHeight;
           }
@@ -271,10 +312,19 @@ export default function ReportsPage() {
     return `${d.getMonth() + 1}/${d.getDate()}`;
   };
 
-  const PIE_COLORS = ['#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6', '#10B981', '#EC4899'];
+  const PIE_COLORS = [
+    '#3B82F6',
+    '#F59E0B',
+    '#EF4444',
+    '#8B5CF6',
+    '#10B981',
+    '#EC4899',
+  ];
 
   const channelBreakdown = data
-    ? data.channelData.filter((ch) => ch.sales > 0).map((ch) => ({ name: ch.name, value: ch.sales }))
+    ? data.channelData
+        .filter((ch) => ch.sales > 0)
+        .map((ch) => ({ name: ch.name, value: ch.sales }))
     : [];
 
   return (
@@ -290,7 +340,10 @@ export default function ReportsPage() {
       </div>
 
       {/* 기간 선택 + 조회 */}
-      <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6" data-print-hide>
+      <div
+        className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6"
+        data-print-hide
+      >
         <div className="space-y-4">
           <ChannelFilter value={channelId} onChange={setChannelId} />
           <DateRangeFilter
@@ -371,349 +424,522 @@ export default function ReportsPage() {
 
           {/* PDF 캡처 영역 */}
           <div ref={reportRef} className="space-y-6">
-          {/* KPI 요약 + 매출/마진 추이 차트 */}
-          <div data-pdf-section className="space-y-6">
-          <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
-            <h2 className="text-lg font-semibold">KPI 요약</h2>
-            <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {[
-                { label: '총 매출', value: fmt(data.kpi.totalSales) },
-                { label: '총 원가', value: fmt(data.kpi.totalCost) },
-                { label: '총 수수료', value: fmt(data.kpi.totalFee) },
-                { label: '총 배송비', value: fmt(data.kpi.totalShipping) },
-                {
-                  label: '총 마진',
-                  value: fmt(data.kpi.totalMargin),
-                  highlight: true,
-                },
-                {
-                  label: '평균 마진율',
-                  value: `${(Math.round(data.kpi.avgMarginRate * 10) / 10).toFixed(1)}%`,
-                },
-                { label: '총 주문수', value: `${data.kpi.totalOrders}건` },
-              ].map((item) => (
-                <div
-                  key={item.label}
-                  className={`rounded-lg border p-4 ${
-                    item.highlight
-                      ? 'border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-950'
-                      : 'border-border'
-                  }`}
-                >
-                  <p className="text-xs text-muted-foreground">{item.label}</p>
-                  <p className="mt-1 font-mono text-lg font-semibold">
-                    {item.value}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* 매출/마진 추이 차트 */}
-          {data.dailyData.length > 0 && (
-            <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
-              <h2 className="text-lg font-semibold">매출/마진 추이</h2>
-              <div className="mt-4 h-72">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={data.dailyData}>
-                    <defs>
-                      <linearGradient id="rptSalesGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3} />
-                        <stop offset="95%" stopColor="#3B82F6" stopOpacity={0} />
-                      </linearGradient>
-                      <linearGradient id="rptMarginGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#22C55E" stopOpacity={0.3} />
-                        <stop offset="95%" stopColor="#22C55E" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis dataKey="date" tickFormatter={formatDate} tick={{ fill: '#6b7280', fontSize: 12 }} />
-                    <YAxis tickFormatter={formatCurrency} tick={{ fill: '#6b7280', fontSize: 12 }} />
-                    <Tooltip
-                      content={({ active, payload, label }) => {
-                        if (!active || !payload?.length) return null;
-                        return (
-                          <div className="rounded-lg border border-border bg-card p-3 shadow-md">
-                            <p className="text-xs text-muted-foreground mb-2">{label}</p>
-                            {payload.map((entry) => (
-                              <p key={entry.name} className="text-sm font-mono" style={{ color: entry.color }}>
-                                {entry.name === 'sales' ? '매출' : '마진'}: ₩{Number(entry.value).toLocaleString()}
-                              </p>
-                            ))}
-                          </div>
-                        );
-                      }}
-                    />
-                    <Area type="monotone" dataKey="sales" stroke="#3B82F6" fill="url(#rptSalesGrad)" strokeWidth={2} name="sales" />
-                    <Area type="monotone" dataKey="margin" stroke="#22C55E" fill="url(#rptMarginGrad)" strokeWidth={2} name="margin" />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-              <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
-                <div className="flex items-center gap-1.5">
-                  <div className="h-2.5 w-2.5 rounded-full bg-blue-500" />매출
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <div className="h-2.5 w-2.5 rounded-full bg-green-500" />마진
-                </div>
-              </div>
-            </div>
-          )}
-          </div>
-
-          {/* 채널별 매출 비율 + 상품별 출고 수량 + 일별 매출 */}
-          <div data-pdf-section className="space-y-6">
-          <div className="grid gap-4 lg:grid-cols-2">
-            {/* 매출 구성 비율 (파이 차트) */}
-            <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
-              <h2 className="text-lg font-semibold">채널별 매출 비율</h2>
-              <div className="mt-4 h-52">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={channelBreakdown}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={45}
-                      outerRadius={80}
-                      paddingAngle={3}
-                      dataKey="value"
-                      label={(({ name, percent }: { name?: string; percent?: number }) => `${name ?? ''} ${((percent ?? 0) * 100).toFixed(0)}%`) as never}
+            {/* KPI 요약 + 매출/마진 추이 차트 */}
+            <div data-pdf-section className="space-y-6">
+              <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
+                <h2 className="text-lg font-semibold">KPI 요약</h2>
+                <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                  {[
+                    { label: '총 매출', value: fmt(data.kpi.totalSales) },
+                    { label: '총 원가', value: fmt(data.kpi.totalCost) },
+                    { label: '총 수수료', value: fmt(data.kpi.totalFee) },
+                    { label: '총 배송비', value: fmt(data.kpi.totalShipping) },
+                    {
+                      label: '총 마진',
+                      value: fmt(data.kpi.totalMargin),
+                      highlight: true,
+                    },
+                    {
+                      label: '평균 마진율',
+                      value: `${(Math.round(data.kpi.avgMarginRate * 10) / 10).toFixed(1)}%`,
+                    },
+                    { label: '총 주문수', value: `${data.kpi.totalOrders}건` },
+                  ].map((item) => (
+                    <div
+                      key={item.label}
+                      className={`rounded-lg border p-4 ${
+                        item.highlight
+                          ? 'border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-950'
+                          : 'border-border'
+                      }`}
                     >
-                      {channelBreakdown.map((_, index) => (
-                        <Cell key={index} fill={PIE_COLORS[index % PIE_COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      formatter={((value: unknown, name: unknown) => [`₩${Number(value).toLocaleString()}`, String(name)]) as never}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-              <div className="mt-3 space-y-1.5">
-                {channelBreakdown.map((item, index) => (
-                  <div key={item.name} className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-2">
-                      <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: PIE_COLORS[index % PIE_COLORS.length] }} />
-                      <span className="text-muted-foreground">{item.name}</span>
+                      <p className="text-xs text-muted-foreground">
+                        {item.label}
+                      </p>
+                      <p className="mt-1 font-mono text-lg font-semibold">
+                        {item.value}
+                      </p>
                     </div>
-                    <span className="font-mono">{fmt(item.value)}</span>
+                  ))}
+                </div>
+              </div>
+
+              {/* 매출/마진 추이 차트 */}
+              {data.dailyData.length > 0 && (
+                <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
+                  <h2 className="text-lg font-semibold">매출/마진 추이</h2>
+                  <div className="mt-4 h-72">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={data.dailyData}>
+                        <defs>
+                          <linearGradient
+                            id="rptSalesGrad"
+                            x1="0"
+                            y1="0"
+                            x2="0"
+                            y2="1"
+                          >
+                            <stop
+                              offset="5%"
+                              stopColor="#3B82F6"
+                              stopOpacity={0.3}
+                            />
+                            <stop
+                              offset="95%"
+                              stopColor="#3B82F6"
+                              stopOpacity={0}
+                            />
+                          </linearGradient>
+                          <linearGradient
+                            id="rptMarginGrad"
+                            x1="0"
+                            y1="0"
+                            x2="0"
+                            y2="1"
+                          >
+                            <stop
+                              offset="5%"
+                              stopColor="#22C55E"
+                              stopOpacity={0.3}
+                            />
+                            <stop
+                              offset="95%"
+                              stopColor="#22C55E"
+                              stopOpacity={0}
+                            />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                        <XAxis
+                          dataKey="date"
+                          tickFormatter={formatDate}
+                          tick={{ fill: '#6b7280', fontSize: 12 }}
+                        />
+                        <YAxis
+                          tickFormatter={formatCurrency}
+                          tick={{ fill: '#6b7280', fontSize: 12 }}
+                        />
+                        <Tooltip
+                          content={({ active, payload, label }) => {
+                            if (!active || !payload?.length) return null;
+                            return (
+                              <div className="rounded-lg border border-border bg-card p-3 shadow-md">
+                                <p className="text-xs text-muted-foreground mb-2">
+                                  {label}
+                                </p>
+                                {payload.map((entry) => (
+                                  <p
+                                    key={entry.name}
+                                    className="text-sm font-mono"
+                                    style={{ color: entry.color }}
+                                  >
+                                    {entry.name === 'sales' ? '매출' : '마진'}:
+                                    ₩{Number(entry.value).toLocaleString()}
+                                  </p>
+                                ))}
+                              </div>
+                            );
+                          }}
+                        />
+                        <Area
+                          type="monotone"
+                          dataKey="sales"
+                          stroke="#3B82F6"
+                          fill="url(#rptSalesGrad)"
+                          strokeWidth={2}
+                          name="sales"
+                        />
+                        <Area
+                          type="monotone"
+                          dataKey="margin"
+                          stroke="#22C55E"
+                          fill="url(#rptMarginGrad)"
+                          strokeWidth={2}
+                          name="margin"
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
                   </div>
-                ))}
-                <div className="flex items-center justify-between border-t border-border pt-1.5 text-sm font-medium">
-                  <span>총 매출</span>
-                  <span className="font-mono">{fmt(data.kpi.totalSales)}</span>
+                  <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-1.5">
+                      <div className="h-2.5 w-2.5 rounded-full bg-blue-500" />
+                      매출
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <div className="h-2.5 w-2.5 rounded-full bg-green-500" />
+                      마진
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* 채널별 매출 비율 + 상품별 출고 수량 + 일별 매출 */}
+            <div data-pdf-section className="space-y-6">
+              <div className="grid gap-4 lg:grid-cols-2">
+                {/* 매출 구성 비율 (파이 차트) */}
+                <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
+                  <h2 className="text-lg font-semibold">채널별 매출 비율</h2>
+                  <div className="mt-4 h-52">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={channelBreakdown}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={45}
+                          outerRadius={80}
+                          paddingAngle={3}
+                          dataKey="value"
+                          label={
+                            (({
+                              name,
+                              percent,
+                            }: {
+                              name?: string;
+                              percent?: number;
+                            }) =>
+                              `${name ?? ''} ${((percent ?? 0) * 100).toFixed(0)}%`) as never
+                          }
+                        >
+                          {channelBreakdown.map((_, index) => (
+                            <Cell
+                              key={index}
+                              fill={PIE_COLORS[index % PIE_COLORS.length]}
+                            />
+                          ))}
+                        </Pie>
+                        <Tooltip
+                          formatter={
+                            ((value: unknown, name: unknown) => [
+                              `₩${Number(value).toLocaleString()}`,
+                              String(name),
+                            ]) as never
+                          }
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="mt-3 space-y-1.5">
+                    {channelBreakdown.map((item, index) => (
+                      <div
+                        key={item.name}
+                        className="flex items-center justify-between text-sm"
+                      >
+                        <div className="flex items-center gap-2">
+                          <div
+                            className="h-2.5 w-2.5 rounded-full"
+                            style={{
+                              backgroundColor:
+                                PIE_COLORS[index % PIE_COLORS.length],
+                            }}
+                          />
+                          <span className="text-muted-foreground">
+                            {item.name}
+                          </span>
+                        </div>
+                        <span className="font-mono">{fmt(item.value)}</span>
+                      </div>
+                    ))}
+                    <div className="flex items-center justify-between border-t border-border pt-1.5 text-sm font-medium">
+                      <span>총 매출</span>
+                      <span className="font-mono">
+                        {fmt(data.kpi.totalSales)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 상품별 출고 수량 Top 5 */}
+                <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
+                  <h2 className="text-lg font-semibold">
+                    상품별 출고 수량 Top 5
+                  </h2>
+                  <div className="mt-4 h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart
+                        data={(() => {
+                          const grouped: Record<
+                            string,
+                            { name: string; quantity: number; sales: number }
+                          > = {};
+                          for (const p of data.productData) {
+                            if (p.quantity <= 0) continue;
+                            if (!grouped[p.name]) {
+                              grouped[p.name] = {
+                                name: p.name,
+                                quantity: 0,
+                                sales: 0,
+                              };
+                            }
+                            grouped[p.name].quantity += p.quantity;
+                            grouped[p.name].sales += p.sales;
+                          }
+                          return Object.values(grouped)
+                            .sort((a, b) => b.quantity - a.quantity)
+                            .slice(0, 5)
+                            .map((p) => ({
+                              ...p,
+                              label:
+                                p.name.length > 12
+                                  ? p.name.slice(0, 12) + '...'
+                                  : p.name,
+                            }));
+                        })()}
+                        layout="vertical"
+                        margin={{ left: 10, right: 20 }}
+                      >
+                        <CartesianGrid
+                          strokeDasharray="3 3"
+                          stroke="#e5e7eb"
+                          horizontal={false}
+                        />
+                        <XAxis
+                          type="number"
+                          tick={{ fill: '#6b7280', fontSize: 11 }}
+                        />
+                        <YAxis
+                          type="category"
+                          dataKey="label"
+                          width={120}
+                          tick={{ fill: '#6b7280', fontSize: 11 }}
+                        />
+                        <Tooltip
+                          content={({ active, payload }) => {
+                            if (!active || !payload?.length) return null;
+                            const d = payload[0].payload as {
+                              name: string;
+                              quantity: number;
+                              sales: number;
+                              label: string;
+                            };
+                            return (
+                              <div className="rounded-lg border border-border bg-card p-3 shadow-md max-w-[250px]">
+                                <p className="text-xs font-medium truncate">
+                                  {d.name}
+                                </p>
+                                <div className="mt-2 space-y-1 font-mono text-sm">
+                                  <p>출고 수량: {d.quantity}개</p>
+                                  <p>매출: ₩{d.sales.toLocaleString()}</p>
+                                </div>
+                              </div>
+                            );
+                          }}
+                        />
+                        <Bar dataKey="quantity" radius={[0, 4, 4, 0]}>
+                          {Array.from({ length: 5 }).map((_, index) => (
+                            <Cell
+                              key={index}
+                              fill={`hsl(217, 91%, ${50 + index * 5}%)`}
+                            />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              </div>
+
+              {/* 일별 매출 테이블 */}
+              <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
+                <h2 className="text-lg font-semibold">일별 매출</h2>
+                <div className="mt-4 overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b text-left text-muted-foreground">
+                        <th className="pb-2 font-medium">날짜</th>
+                        <th className="pb-2 text-right font-medium">매출</th>
+                        <th className="pb-2 text-right font-medium">마진</th>
+                        <th className="pb-2 text-right font-medium">주문수</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {data.dailyData.map((row) => (
+                        <tr
+                          key={row.date}
+                          className="border-b border-border/50"
+                        >
+                          <td className="py-2">{row.date}</td>
+                          <td className="py-2 text-right font-mono">
+                            {fmt(row.sales)}
+                          </td>
+                          <td
+                            className={`py-2 text-right font-mono ${row.margin >= 0 ? 'text-green-600' : 'text-red-600'}`}
+                          >
+                            {fmt(row.margin)}
+                          </td>
+                          <td className="py-2 text-right">{row.orders}건</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             </div>
 
-            {/* 상품별 출고 수량 Top 5 */}
-            <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
-              <h2 className="text-lg font-semibold">상품별 출고 수량 Top 5</h2>
-              <div className="mt-4 h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={(() => {
-                      const grouped: Record<string, { name: string; quantity: number; sales: number }> = {};
-                      for (const p of data.productData) {
-                        if (p.quantity <= 0) continue;
-                        if (!grouped[p.name]) {
-                          grouped[p.name] = { name: p.name, quantity: 0, sales: 0 };
-                        }
-                        grouped[p.name].quantity += p.quantity;
-                        grouped[p.name].sales += p.sales;
-                      }
-                      return Object.values(grouped)
-                        .sort((a, b) => b.quantity - a.quantity)
-                        .slice(0, 5)
-                        .map((p) => ({
-                          ...p,
-                          label: p.name.length > 12 ? p.name.slice(0, 12) + '...' : p.name,
-                        }));
-                    })()}
-                    layout="vertical"
-                    margin={{ left: 10, right: 20 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" horizontal={false} />
-                    <XAxis type="number" tick={{ fill: '#6b7280', fontSize: 11 }} />
-                    <YAxis type="category" dataKey="label" width={120} tick={{ fill: '#6b7280', fontSize: 11 }} />
-                    <Tooltip
-                      content={({ active, payload }) => {
-                        if (!active || !payload?.length) return null;
-                        const d = payload[0].payload as { name: string; quantity: number; sales: number; label: string };
-                        return (
-                          <div className="rounded-lg border border-border bg-card p-3 shadow-md max-w-[250px]">
-                            <p className="text-xs font-medium truncate">{d.name}</p>
-                            <div className="mt-2 space-y-1 font-mono text-sm">
-                              <p>출고 수량: {d.quantity}개</p>
-                              <p>매출: ₩{d.sales.toLocaleString()}</p>
-                            </div>
-                          </div>
-                        );
-                      }}
-                    />
-                    <Bar dataKey="quantity" radius={[0, 4, 4, 0]}>
-                      {Array.from({ length: 5 }).map((_, index) => (
-                          <Cell key={index} fill={`hsl(217, 91%, ${50 + index * 5}%)`} />
-                        ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
+            {/* 상품별 실적 테이블 */}
+            <div
+              data-pdf-section
+              className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6"
+            >
+              <h2 className="text-lg font-semibold">상품별 실적</h2>
+              <div className="mt-4 overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b text-left text-muted-foreground">
+                      <th className="pb-2 font-medium">상품명</th>
+                      <th className="pb-2 font-medium">옵션</th>
+                      <th className="pb-2 text-right font-medium">수량</th>
+                      <th className="pb-2 text-right font-medium">매출</th>
+                      <th className="pb-2 text-right font-medium">원가</th>
+                      <th className="pb-2 text-right font-medium">수수료</th>
+                      <th className="pb-2 text-right font-medium">배송비</th>
+                      <th className="pb-2 text-right font-medium">마진</th>
+                      <th className="pb-2 text-right font-medium">마진율</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.productData
+                      .filter((r) => r.quantity > 0)
+                      .map((row, i) => (
+                        <tr key={i} className="border-b border-border/50">
+                          <td className="max-w-[200px] truncate py-2">
+                            {row.name}
+                          </td>
+                          <td className="max-w-[150px] truncate py-2 text-muted-foreground">
+                            {row.optionInfo}
+                          </td>
+                          <td className="py-2 text-right">{row.quantity}</td>
+                          <td className="py-2 text-right font-mono">
+                            {fmt(row.sales)}
+                          </td>
+                          <td className="py-2 text-right font-mono">
+                            {fmt(row.cost)}
+                          </td>
+                          <td className="py-2 text-right font-mono">
+                            {fmt(row.fee)}
+                          </td>
+                          <td className="py-2 text-right font-mono">
+                            {fmt(row.shipping)}
+                          </td>
+                          <td
+                            className={`py-2 text-right font-mono ${row.margin >= 0 ? 'text-green-600' : 'text-red-600'}`}
+                          >
+                            {fmt(row.margin)}
+                          </td>
+                          <td
+                            className={`py-2 text-right ${row.marginRate >= 0 ? 'text-green-600' : 'text-red-600'}`}
+                          >
+                            {(Math.round(row.marginRate * 10) / 10).toFixed(1)}%
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
               </div>
             </div>
-          </div>
 
-          {/* 일별 매출 테이블 */}
-          <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
-            <h2 className="text-lg font-semibold">일별 매출</h2>
-            <div className="mt-4 overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b text-left text-muted-foreground">
-                    <th className="pb-2 font-medium">날짜</th>
-                    <th className="pb-2 text-right font-medium">매출</th>
-                    <th className="pb-2 text-right font-medium">마진</th>
-                    <th className="pb-2 text-right font-medium">주문수</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.dailyData.map((row) => (
-                    <tr key={row.date} className="border-b border-border/50">
-                      <td className="py-2">{row.date}</td>
-                      <td className="py-2 text-right font-mono">
-                        {fmt(row.sales)}
-                      </td>
-                      <td
-                        className={`py-2 text-right font-mono ${row.margin >= 0 ? 'text-green-600' : 'text-red-600'}`}
-                      >
-                        {fmt(row.margin)}
-                      </td>
-                      <td className="py-2 text-right">{row.orders}건</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-          </div>
-
-          {/* 상품별 실적 테이블 */}
-          <div data-pdf-section className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
-            <h2 className="text-lg font-semibold">상품별 실적</h2>
-            <div className="mt-4 overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b text-left text-muted-foreground">
-                    <th className="pb-2 font-medium">상품명</th>
-                    <th className="pb-2 font-medium">옵션</th>
-                    <th className="pb-2 text-right font-medium">수량</th>
-                    <th className="pb-2 text-right font-medium">매출</th>
-                    <th className="pb-2 text-right font-medium">원가</th>
-                    <th className="pb-2 text-right font-medium">수수료</th>
-                    <th className="pb-2 text-right font-medium">배송비</th>
-                    <th className="pb-2 text-right font-medium">마진</th>
-                    <th className="pb-2 text-right font-medium">마진율</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.productData.filter((r) => r.quantity > 0).map((row, i) => (
-                    <tr key={i} className="border-b border-border/50">
-                      <td className="max-w-[200px] truncate py-2">
-                        {row.name}
-                      </td>
-                      <td className="max-w-[150px] truncate py-2 text-muted-foreground">
-                        {row.optionInfo}
-                      </td>
-                      <td className="py-2 text-right">{row.quantity}</td>
-                      <td className="py-2 text-right font-mono">
-                        {fmt(row.sales)}
-                      </td>
-                      <td className="py-2 text-right font-mono">
-                        {fmt(row.cost)}
-                      </td>
-                      <td className="py-2 text-right font-mono">
-                        {fmt(row.fee)}
-                      </td>
-                      <td className="py-2 text-right font-mono">
-                        {fmt(row.shipping)}
-                      </td>
-                      <td
-                        className={`py-2 text-right font-mono ${row.margin >= 0 ? 'text-green-600' : 'text-red-600'}`}
-                      >
-                        {fmt(row.margin)}
-                      </td>
-                      <td
-                        className={`py-2 text-right ${row.marginRate >= 0 ? 'text-green-600' : 'text-red-600'}`}
-                      >
-                        {(Math.round(row.marginRate * 10) / 10).toFixed(1)}%
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* 채널별 비교 테이블 */}
-          {data.channelData.length > 0 && (
-          <div data-pdf-section className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
-            <h2 className="text-lg font-semibold">채널별 비교</h2>
-            <div className="mt-4 overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b text-left text-muted-foreground">
-                    <th className="pb-2 font-medium">채널</th>
-                    <th className="pb-2 text-right font-medium">주문수</th>
-                    <th className="pb-2 text-right font-medium">매출</th>
-                    <th className="pb-2 text-right font-medium">원가</th>
-                    <th className="pb-2 text-right font-medium">수수료</th>
-                    <th className="pb-2 text-right font-medium">배송비</th>
-                    <th className="pb-2 text-right font-medium">마진</th>
-                    <th className="pb-2 text-right font-medium">마진율</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.channelData.map((ch) => (
-                    <tr key={ch.name} className="border-b border-border/50">
-                      <td className="py-2 font-medium">{ch.name}</td>
-                      <td className="py-2 text-right">{ch.orders}건</td>
-                      <td className="py-2 text-right font-mono">{fmt(ch.sales)}</td>
-                      <td className="py-2 text-right font-mono">{fmt(ch.cost)}</td>
-                      <td className="py-2 text-right font-mono">{fmt(ch.fee)}</td>
-                      <td className="py-2 text-right font-mono">{fmt(ch.shipping)}</td>
-                      <td className={`py-2 text-right font-mono ${ch.margin >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        {fmt(ch.margin)}
-                      </td>
-                      <td className={`py-2 text-right ${ch.marginRate >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        {ch.marginRate.toFixed(1)}%
-                      </td>
-                    </tr>
-                  ))}
-                  <tr className="border-t-2 border-border font-medium">
-                    <td className="py-2">합계</td>
-                    <td className="py-2 text-right">{data.channelData.reduce((s, c) => s + c.orders, 0)}건</td>
-                    <td className="py-2 text-right font-mono">{fmt(data.channelData.reduce((s, c) => s + c.sales, 0))}</td>
-                    <td className="py-2 text-right font-mono">{fmt(data.channelData.reduce((s, c) => s + c.cost, 0))}</td>
-                    <td className="py-2 text-right font-mono">{fmt(data.channelData.reduce((s, c) => s + c.fee, 0))}</td>
-                    <td className="py-2 text-right font-mono">{fmt(data.channelData.reduce((s, c) => s + c.shipping, 0))}</td>
-                    <td className={`py-2 text-right font-mono ${data.kpi.totalMargin >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {fmt(data.kpi.totalMargin)}
-                    </td>
-                    <td className={`py-2 text-right ${data.kpi.avgMarginRate >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {data.kpi.avgMarginRate.toFixed(1)}%
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-          )}
+            {/* 채널별 비교 테이블 */}
+            {data.channelData.length > 0 && (
+              <div
+                data-pdf-section
+                className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6"
+              >
+                <h2 className="text-lg font-semibold">채널별 비교</h2>
+                <div className="mt-4 overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b text-left text-muted-foreground">
+                        <th className="pb-2 font-medium">채널</th>
+                        <th className="pb-2 text-right font-medium">주문수</th>
+                        <th className="pb-2 text-right font-medium">매출</th>
+                        <th className="pb-2 text-right font-medium">원가</th>
+                        <th className="pb-2 text-right font-medium">수수료</th>
+                        <th className="pb-2 text-right font-medium">배송비</th>
+                        <th className="pb-2 text-right font-medium">마진</th>
+                        <th className="pb-2 text-right font-medium">마진율</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {data.channelData.map((ch) => (
+                        <tr key={ch.name} className="border-b border-border/50">
+                          <td className="py-2 font-medium">{ch.name}</td>
+                          <td className="py-2 text-right">{ch.orders}건</td>
+                          <td className="py-2 text-right font-mono">
+                            {fmt(ch.sales)}
+                          </td>
+                          <td className="py-2 text-right font-mono">
+                            {fmt(ch.cost)}
+                          </td>
+                          <td className="py-2 text-right font-mono">
+                            {fmt(ch.fee)}
+                          </td>
+                          <td className="py-2 text-right font-mono">
+                            {fmt(ch.shipping)}
+                          </td>
+                          <td
+                            className={`py-2 text-right font-mono ${ch.margin >= 0 ? 'text-green-600' : 'text-red-600'}`}
+                          >
+                            {fmt(ch.margin)}
+                          </td>
+                          <td
+                            className={`py-2 text-right ${ch.marginRate >= 0 ? 'text-green-600' : 'text-red-600'}`}
+                          >
+                            {ch.marginRate.toFixed(1)}%
+                          </td>
+                        </tr>
+                      ))}
+                      <tr className="border-t-2 border-border font-medium">
+                        <td className="py-2">합계</td>
+                        <td className="py-2 text-right">
+                          {data.channelData.reduce((s, c) => s + c.orders, 0)}건
+                        </td>
+                        <td className="py-2 text-right font-mono">
+                          {fmt(
+                            data.channelData.reduce((s, c) => s + c.sales, 0),
+                          )}
+                        </td>
+                        <td className="py-2 text-right font-mono">
+                          {fmt(
+                            data.channelData.reduce((s, c) => s + c.cost, 0),
+                          )}
+                        </td>
+                        <td className="py-2 text-right font-mono">
+                          {fmt(data.channelData.reduce((s, c) => s + c.fee, 0))}
+                        </td>
+                        <td className="py-2 text-right font-mono">
+                          {fmt(
+                            data.channelData.reduce(
+                              (s, c) => s + c.shipping,
+                              0,
+                            ),
+                          )}
+                        </td>
+                        <td
+                          className={`py-2 text-right font-mono ${data.kpi.totalMargin >= 0 ? 'text-green-600' : 'text-red-600'}`}
+                        >
+                          {fmt(data.kpi.totalMargin)}
+                        </td>
+                        <td
+                          className={`py-2 text-right ${data.kpi.avgMarginRate >= 0 ? 'text-green-600' : 'text-red-600'}`}
+                        >
+                          {data.kpi.avgMarginRate.toFixed(1)}%
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
           </div>
         </>
       )}
 
       {!data && !loading && (
-        <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6" data-print-hide>
+        <div
+          className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6"
+          data-print-hide
+        >
           <div className="flex h-48 flex-col items-center justify-center gap-2 text-muted-foreground">
             <Download className="h-8 w-8" />
             <p className="text-sm">기간을 선택하고 조회 버튼을 눌러주세요</p>
@@ -732,26 +958,40 @@ export default function ReportsPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border bg-muted/50">
-                  <th className="whitespace-nowrap px-4 py-3 text-left font-medium">유형</th>
-                  <th className="whitespace-nowrap px-4 py-3 text-left font-medium">기간</th>
-                  <th className="whitespace-nowrap px-4 py-3 text-left font-medium">생성일</th>
-                  <th className="whitespace-nowrap px-4 py-3 text-center font-medium">관리</th>
+                  <th className="whitespace-nowrap px-4 py-3 text-left font-medium">
+                    유형
+                  </th>
+                  <th className="whitespace-nowrap px-4 py-3 text-left font-medium">
+                    기간
+                  </th>
+                  <th className="whitespace-nowrap px-4 py-3 text-left font-medium">
+                    생성일
+                  </th>
+                  <th className="whitespace-nowrap px-4 py-3 text-center font-medium">
+                    관리
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {generatedReports.map((r) => (
-                  <tr key={r.id} className="border-b border-border last:border-0 hover:bg-muted/30">
+                  <tr
+                    key={r.id}
+                    className="border-b border-border last:border-0 hover:bg-muted/30"
+                  >
                     <td className="whitespace-nowrap px-4 py-3">
-                      <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
-                        r.type === 'weekly'
-                          ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
-                          : 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300'
-                      }`}>
+                      <span
+                        className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
+                          r.type === 'weekly'
+                            ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
+                            : 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300'
+                        }`}
+                      >
                         {r.type === 'weekly' ? '주간' : '월간'}
                       </span>
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-muted-foreground">
-                      {new Date(r.periodFrom).toLocaleDateString('ko-KR')} ~ {new Date(r.periodTo).toLocaleDateString('ko-KR')}
+                      {new Date(r.periodFrom).toLocaleDateString('ko-KR')} ~{' '}
+                      {new Date(r.periodTo).toLocaleDateString('ko-KR')}
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-muted-foreground">
                       {new Date(r.createdAt).toLocaleString('ko-KR')}

@@ -14,7 +14,10 @@ export async function PATCH(
   const { isMain } = body;
 
   if (typeof isMain !== 'boolean') {
-    return NextResponse.json({ error: 'isMain 값이 필요합니다' }, { status: 400 });
+    return NextResponse.json(
+      { error: 'isMain 값이 필요합니다' },
+      { status: 400 },
+    );
   }
 
   const keyword = await prisma.productKeyword.findUnique({
@@ -22,7 +25,10 @@ export async function PATCH(
   });
 
   if (!keyword) {
-    return NextResponse.json({ error: '키워드를 찾을 수 없습니다' }, { status: 404 });
+    return NextResponse.json(
+      { error: '키워드를 찾을 수 없습니다' },
+      { status: 404 },
+    );
   }
 
   // 같은 상품의 다른 키워드 isMain 해제 후 설정

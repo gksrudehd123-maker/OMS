@@ -119,13 +119,16 @@ export async function generateReportData(
   const orderTotals: Record<string, number> = {};
   for (const o of orders) {
     const sp = o.product.sellingPrice ? Number(o.product.sellingPrice) : 0;
-    orderTotals[o.orderNumber] = (orderTotals[o.orderNumber] || 0) + sp * o.quantity;
+    orderTotals[o.orderNumber] =
+      (orderTotals[o.orderNumber] || 0) + sp * o.quantity;
   }
 
   const orderFreeShipping: Record<string, boolean> = {};
   for (const o of orders) {
     if (orderFreeShipping[o.orderNumber]) continue;
-    const freeMin = o.product.freeShippingMin ? Number(o.product.freeShippingMin) : null;
+    const freeMin = o.product.freeShippingMin
+      ? Number(o.product.freeShippingMin)
+      : null;
     if (
       (freeMin !== null && (orderTotals[o.orderNumber] || 0) >= freeMin) ||
       Number(o.product.shippingCost) === 0
@@ -140,29 +143,73 @@ export async function generateReportData(
     totalFee = 0,
     totalShipping = 0;
 
-  const dailyMap: Record<string, { date: string; sales: number; margin: number; orders: number }> = {};
-  const channelMap: Record<string, { name: string; sales: number; margin: number; cost: number; fee: number; shipping: number; orders: number }> = {};
-  const productMap: Record<string, { name: string; optionInfo: string; quantity: number; sales: number; cost: number; fee: number; shipping: number; margin: number }> = {};
+  const dailyMap: Record<
+    string,
+    { date: string; sales: number; margin: number; orders: number }
+  > = {};
+  const channelMap: Record<
+    string,
+    {
+      name: string;
+      sales: number;
+      margin: number;
+      cost: number;
+      fee: number;
+      shipping: number;
+      orders: number;
+    }
+  > = {};
+  const productMap: Record<
+    string,
+    {
+      name: string;
+      optionInfo: string;
+      quantity: number;
+      sales: number;
+      cost: number;
+      fee: number;
+      shipping: number;
+      margin: number;
+    }
+  > = {};
 
   for (const order of orders) {
     const m = calculateMargin({
-      sellingPrice: order.product.sellingPrice ? Number(order.product.sellingPrice) : null,
-      costPrice: order.product.costPrice ? Number(order.product.costPrice) : null,
+      sellingPrice: order.product.sellingPrice
+        ? Number(order.product.sellingPrice)
+        : null,
+      costPrice: order.product.costPrice
+        ? Number(order.product.costPrice)
+        : null,
       quantity: order.quantity,
       feeRate: Number(order.channel.feeRate),
-      productFeeRate: order.product.feeRate ? Number(order.product.feeRate) : null,
+      productFeeRate: order.product.feeRate
+        ? Number(order.product.feeRate)
+        : null,
       shippingCost: Number(order.product.shippingCost),
-      freeShippingMin: order.product.freeShippingMin ? Number(order.product.freeShippingMin) : null,
+      freeShippingMin: order.product.freeShippingMin
+        ? Number(order.product.freeShippingMin)
+        : null,
       orderTotal: orderTotals[order.orderNumber] || 0,
       isAnyFreeShipping: orderFreeShipping[order.orderNumber] || false,
     });
 
     const dateKey = toKSTDateString(order.orderDate);
-    if (!dailyMap[dateKey]) dailyMap[dateKey] = { date: dateKey, sales: 0, margin: 0, orders: 0 };
+    if (!dailyMap[dateKey])
+      dailyMap[dateKey] = { date: dateKey, sales: 0, margin: 0, orders: 0 };
     dailyMap[dateKey].orders++;
 
     const chId = order.channelId;
-    if (!channelMap[chId]) channelMap[chId] = { name: order.channel.name, sales: 0, margin: 0, cost: 0, fee: 0, shipping: 0, orders: 0 };
+    if (!channelMap[chId])
+      channelMap[chId] = {
+        name: order.channel.name,
+        sales: 0,
+        margin: 0,
+        cost: 0,
+        fee: 0,
+        shipping: 0,
+        orders: 0,
+      };
     channelMap[chId].orders += order.quantity;
 
     if (m.isCalculable) {
@@ -183,7 +230,16 @@ export async function generateReportData(
 
       const pid = order.productId;
       if (!productMap[pid]) {
-        productMap[pid] = { name: order.product.name, optionInfo: order.product.optionInfo, quantity: 0, sales: 0, cost: 0, fee: 0, shipping: 0, margin: 0 };
+        productMap[pid] = {
+          name: order.product.name,
+          optionInfo: order.product.optionInfo,
+          quantity: 0,
+          sales: 0,
+          cost: 0,
+          fee: 0,
+          shipping: 0,
+          margin: 0,
+        };
       }
       productMap[pid].quantity += order.quantity;
       productMap[pid].sales += m.salesAmount;
@@ -200,26 +256,49 @@ export async function generateReportData(
       salesQuantity: ds.salesQuantity,
       costPrice: ds.product.costPrice ? Number(ds.product.costPrice) : null,
       feeRate: ds.product.feeRate ? Number(ds.product.feeRate) : null,
-      fulfillmentFee: ds.product.fulfillmentFee ? Number(ds.product.fulfillmentFee) : null,
-      couponDiscount: ds.product.couponDiscount ? Number(ds.product.couponDiscount) : null,
+      fulfillmentFee: ds.product.fulfillmentFee
+        ? Number(ds.product.fulfillmentFee)
+        : null,
+      couponDiscount: ds.product.couponDiscount
+        ? Number(ds.product.couponDiscount)
+        : null,
     });
 
     const rgSalesAmt = Number(ds.salesAmount);
     totalSales += rgSalesAmt;
 
     const dateKey = toKSTDateString(ds.date);
-    if (!dailyMap[dateKey]) dailyMap[dateKey] = { date: dateKey, sales: 0, margin: 0, orders: 0 };
+    if (!dailyMap[dateKey])
+      dailyMap[dateKey] = { date: dateKey, sales: 0, margin: 0, orders: 0 };
     dailyMap[dateKey].orders += ds.salesQuantity;
     dailyMap[dateKey].sales += rgSalesAmt;
 
     const chId = ds.channelId;
-    if (!channelMap[chId]) channelMap[chId] = { name: ds.channel.name, sales: 0, margin: 0, cost: 0, fee: 0, shipping: 0, orders: 0 };
+    if (!channelMap[chId])
+      channelMap[chId] = {
+        name: ds.channel.name,
+        sales: 0,
+        margin: 0,
+        cost: 0,
+        fee: 0,
+        shipping: 0,
+        orders: 0,
+      };
     channelMap[chId].sales += rgSalesAmt;
     channelMap[chId].orders += ds.salesQuantity;
 
     const pid = ds.productId;
     if (!productMap[pid]) {
-      productMap[pid] = { name: ds.product.name, optionInfo: ds.product.optionInfo, quantity: 0, sales: 0, cost: 0, fee: 0, shipping: 0, margin: 0 };
+      productMap[pid] = {
+        name: ds.product.name,
+        optionInfo: ds.product.optionInfo,
+        quantity: 0,
+        sales: 0,
+        cost: 0,
+        fee: 0,
+        shipping: 0,
+        margin: 0,
+      };
     }
     productMap[pid].quantity += ds.salesQuantity;
     productMap[pid].sales += rgSalesAmt;
@@ -250,7 +329,8 @@ export async function generateReportData(
       totalFee: Math.round(totalFee),
       totalShipping: Math.round(totalShipping),
       totalMargin: Math.round(totalMargin),
-      avgMarginRate: totalSales > 0 ? Math.round((totalMargin / totalSales) * 1000) / 10 : 0,
+      avgMarginRate:
+        totalSales > 0 ? Math.round((totalMargin / totalSales) * 1000) / 10 : 0,
       totalOrders: orders.length + dailySalesRecords.length,
     },
     channelData: Object.values(channelMap)
@@ -261,7 +341,8 @@ export async function generateReportData(
         cost: Math.round(ch.cost),
         fee: Math.round(ch.fee),
         shipping: Math.round(ch.shipping),
-        marginRate: ch.sales > 0 ? Math.round((ch.margin / ch.sales) * 1000) / 10 : 0,
+        marginRate:
+          ch.sales > 0 ? Math.round((ch.margin / ch.sales) * 1000) / 10 : 0,
       }))
       .sort((a, b) => b.sales - a.sales),
     dailyData: Object.values(dailyMap)
@@ -279,7 +360,8 @@ export async function generateReportData(
         fee: Math.round(p.fee),
         shipping: Math.round(p.shipping),
         margin: Math.round(p.margin),
-        marginRate: p.sales > 0 ? Math.round((p.margin / p.sales) * 1000) / 10 : 0,
+        marginRate:
+          p.sales > 0 ? Math.round((p.margin / p.sales) * 1000) / 10 : 0,
       }))
       .sort((a, b) => b.sales - a.sales),
   };

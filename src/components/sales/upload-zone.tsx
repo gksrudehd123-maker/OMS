@@ -2,7 +2,13 @@
 
 import { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Upload, FileSpreadsheet, CheckCircle, XCircle, Package } from 'lucide-react';
+import {
+  Upload,
+  FileSpreadsheet,
+  CheckCircle,
+  XCircle,
+  Package,
+} from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -57,7 +63,14 @@ type RGPriceInput = {
 const BRANDS = [
   {
     name: '방짜',
-    categories: ['배터리 KF-9', '배터리 KF-11', '배터리 KF-3.5', '배터리 AN-10500B', '배터리 AN-9000B', '기포기 KF'],
+    categories: [
+      '배터리 KF-9',
+      '배터리 KF-11',
+      '배터리 KF-3.5',
+      '배터리 AN-10500B',
+      '배터리 AN-9000B',
+      '기포기 KF',
+    ],
   },
   {
     name: '웰스파',
@@ -95,8 +108,7 @@ export function UploadZone({
   const [isRGUpload, setIsRGUpload] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  const isRocketGrowth =
-    channelCode?.toLowerCase() === 'coupang_rocket_growth';
+  const isRocketGrowth = channelCode?.toLowerCase() === 'coupang_rocket_growth';
 
   const onDrop = useCallback(
     async (acceptedFiles: File[]) => {
@@ -215,9 +227,7 @@ export function UploadZone({
               method: 'PATCH',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
-                costPrice: input.costPrice
-                  ? parseFloat(input.costPrice)
-                  : null,
+                costPrice: input.costPrice ? parseFloat(input.costPrice) : null,
                 feeRate: input.feeRate ? parseFloat(input.feeRate) : null,
                 fulfillmentFee: input.fulfillmentFee
                   ? parseFloat(input.fulfillmentFee)
@@ -468,7 +478,9 @@ export function UploadZone({
                       />
                     </div>
                     <div className="space-y-1">
-                      <label className="text-xs text-muted-foreground">브랜드</label>
+                      <label className="text-xs text-muted-foreground">
+                        브랜드
+                      </label>
                       <select
                         value={rgPriceInputs[product.id]?.brand || ''}
                         onChange={(e) => {
@@ -479,21 +491,35 @@ export function UploadZone({
                       >
                         <option value="">선택 안함</option>
                         {BRANDS.map((b) => (
-                          <option key={b.name} value={b.name}>{b.name}</option>
+                          <option key={b.name} value={b.name}>
+                            {b.name}
+                          </option>
                         ))}
                       </select>
                     </div>
                     {rgPriceInputs[product.id]?.brand && (
                       <div className="space-y-1">
-                        <label className="text-xs text-muted-foreground">분류</label>
+                        <label className="text-xs text-muted-foreground">
+                          분류
+                        </label>
                         <select
                           value={rgPriceInputs[product.id]?.brandCategory || ''}
-                          onChange={(e) => updateRGPrice(product.id, 'brandCategory', e.target.value)}
+                          onChange={(e) =>
+                            updateRGPrice(
+                              product.id,
+                              'brandCategory',
+                              e.target.value,
+                            )
+                          }
                           className="w-full rounded-lg border border-input bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                         >
                           <option value="">분류 선택</option>
-                          {BRANDS.find((b) => b.name === rgPriceInputs[product.id]?.brand)?.categories.map((cat) => (
-                            <option key={cat} value={cat}>{cat}</option>
+                          {BRANDS.find(
+                            (b) => b.name === rgPriceInputs[product.id]?.brand,
+                          )?.categories.map((cat) => (
+                            <option key={cat} value={cat}>
+                              {cat}
+                            </option>
                           ))}
                         </select>
                       </div>
@@ -571,7 +597,9 @@ export function UploadZone({
                       />
                     </div>
                     <div className="space-y-1">
-                      <label className="text-xs text-muted-foreground">브랜드</label>
+                      <label className="text-xs text-muted-foreground">
+                        브랜드
+                      </label>
                       <select
                         value={priceInputs[product.id]?.brand || ''}
                         onChange={(e) => {
@@ -582,21 +610,35 @@ export function UploadZone({
                       >
                         <option value="">선택 안함</option>
                         {BRANDS.map((b) => (
-                          <option key={b.name} value={b.name}>{b.name}</option>
+                          <option key={b.name} value={b.name}>
+                            {b.name}
+                          </option>
                         ))}
                       </select>
                     </div>
                     {priceInputs[product.id]?.brand && (
                       <div className="space-y-1">
-                        <label className="text-xs text-muted-foreground">분류</label>
+                        <label className="text-xs text-muted-foreground">
+                          분류
+                        </label>
                         <select
                           value={priceInputs[product.id]?.brandCategory || ''}
-                          onChange={(e) => updatePrice(product.id, 'brandCategory', e.target.value)}
+                          onChange={(e) =>
+                            updatePrice(
+                              product.id,
+                              'brandCategory',
+                              e.target.value,
+                            )
+                          }
                           className="w-full rounded-lg border border-input bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                         >
                           <option value="">분류 선택</option>
-                          {BRANDS.find((b) => b.name === priceInputs[product.id]?.brand)?.categories.map((cat) => (
-                            <option key={cat} value={cat}>{cat}</option>
+                          {BRANDS.find(
+                            (b) => b.name === priceInputs[product.id]?.brand,
+                          )?.categories.map((cat) => (
+                            <option key={cat} value={cat}>
+                              {cat}
+                            </option>
                           ))}
                         </select>
                       </div>

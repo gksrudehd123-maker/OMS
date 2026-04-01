@@ -23,12 +23,18 @@ import dynamic from 'next/dynamic';
 import { Tag } from 'lucide-react';
 
 const KeywordRankTab = dynamic(
-  () => import('@/components/products/keyword-rank-tab').then((m) => m.KeywordRankTab),
+  () =>
+    import('@/components/products/keyword-rank-tab').then(
+      (m) => m.KeywordRankTab,
+    ),
   { loading: () => <Skeleton className="h-64 w-full rounded-lg" /> },
 );
 
 const BrandClassifyDialog = dynamic(
-  () => import('@/components/products/brand-classify-dialog').then((m) => m.BrandClassifyDialog),
+  () =>
+    import('@/components/products/brand-classify-dialog').then(
+      (m) => m.BrandClassifyDialog,
+    ),
   { loading: () => null },
 );
 
@@ -84,7 +90,10 @@ export default function ProductsPage() {
     },
   });
 
-  const { data: productsData, isLoading: loading } = useQuery<{ data: Product[]; meta: { total: number } }>({
+  const { data: productsData, isLoading: loading } = useQuery<{
+    data: Product[];
+    meta: { total: number };
+  }>({
     queryKey: ['products', page, search, channelId],
     queryFn: async () => {
       const params = new URLSearchParams({
@@ -103,7 +112,15 @@ export default function ProductsPage() {
   const totalPages = Math.ceil(total / limit);
 
   const productMutation = useMutation({
-    mutationFn: async ({ id, method, body }: { id: string; method: string; body?: Record<string, unknown> }) => {
+    mutationFn: async ({
+      id,
+      method,
+      body,
+    }: {
+      id: string;
+      method: string;
+      body?: Record<string, unknown>;
+    }) => {
       const res = await fetch(`/api/products/${id}`, {
         method,
         ...(body && {
@@ -126,13 +143,21 @@ export default function ProductsPage() {
 
   const openEdit = (product: Product) => {
     setEditProduct(product);
-    setEditSellingPrice(product.sellingPrice ? String(product.sellingPrice) : '');
+    setEditSellingPrice(
+      product.sellingPrice ? String(product.sellingPrice) : '',
+    );
     setEditCostPrice(product.costPrice ? String(product.costPrice) : '');
     setEditFeeRate(product.feeRate ? String(product.feeRate) : '');
     setEditShippingCost(String(product.shippingCost));
-    setEditFreeShippingMin(product.freeShippingMin ? String(product.freeShippingMin) : '');
-    setEditCouponDiscount(product.couponDiscount ? String(product.couponDiscount) : '');
-    setEditFulfillmentFee(product.fulfillmentFee ? String(product.fulfillmentFee) : '');
+    setEditFreeShippingMin(
+      product.freeShippingMin ? String(product.freeShippingMin) : '',
+    );
+    setEditCouponDiscount(
+      product.couponDiscount ? String(product.couponDiscount) : '',
+    );
+    setEditFulfillmentFee(
+      product.fulfillmentFee ? String(product.fulfillmentFee) : '',
+    );
     setEditMemo(product.memo || '');
   };
 
@@ -150,9 +175,15 @@ export default function ProductsPage() {
           costPrice: editCostPrice ? parseFloat(editCostPrice) : null,
           feeRate: editFeeRate ? parseFloat(editFeeRate) : null,
           shippingCost: parseFloat(editShippingCost) || 0,
-          freeShippingMin: editFreeShippingMin ? parseFloat(editFreeShippingMin) : null,
-          couponDiscount: editCouponDiscount ? parseFloat(editCouponDiscount) : null,
-          fulfillmentFee: editFulfillmentFee ? parseFloat(editFulfillmentFee) : null,
+          freeShippingMin: editFreeShippingMin
+            ? parseFloat(editFreeShippingMin)
+            : null,
+          couponDiscount: editCouponDiscount
+            ? parseFloat(editCouponDiscount)
+            : null,
+          fulfillmentFee: editFulfillmentFee
+            ? parseFloat(editFulfillmentFee)
+            : null,
           memo: editMemo || null,
         },
       },
@@ -231,147 +262,149 @@ export default function ProductsPage() {
           <KeywordRankTab />
         </div>
       ) : (
-
-      <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
-        <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-muted-foreground">
-              총 {total}개 상품
-            </span>
-            <button
-              onClick={() => setShowBrandClassify(true)}
-              className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-sm font-medium hover:bg-accent transition-colors"
-            >
-              <Tag className="h-3.5 w-3.5" />
-              브랜드 분류
-            </button>
-            <select
-              value={channelId}
+        <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
+          <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-muted-foreground">
+                총 {total}개 상품
+              </span>
+              <button
+                onClick={() => setShowBrandClassify(true)}
+                className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-sm font-medium hover:bg-accent transition-colors"
+              >
+                <Tag className="h-3.5 w-3.5" />
+                브랜드 분류
+              </button>
+              <select
+                value={channelId}
+                onChange={(e) => {
+                  setChannelId(e.target.value);
+                  setPage(1);
+                }}
+                className="rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              >
+                <option value="">전체 채널</option>
+                {channels.map((ch) => (
+                  <option key={ch.id} value={ch.id}>
+                    {ch.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <input
+              type="text"
+              placeholder="상품명, 옵션 검색..."
+              value={search}
               onChange={(e) => {
-                setChannelId(e.target.value);
+                setSearch(e.target.value);
                 setPage(1);
               }}
-              className="rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-            >
-              <option value="">전체 채널</option>
-              {channels.map((ch) => (
-                <option key={ch.id} value={ch.id}>
-                  {ch.name}
-                </option>
-              ))}
-            </select>
+              className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring sm:w-auto"
+            />
           </div>
-          <input
-            type="text"
-            placeholder="상품명, 옵션 검색..."
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(1);
-            }}
-            className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring sm:w-auto"
-          />
-        </div>
 
-        <div className="rounded-xl border border-border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>상품명</TableHead>
-                <TableHead>옵션정보</TableHead>
-                <TableHead className="text-right">판매가</TableHead>
-                <TableHead className="text-right">원가</TableHead>
-                <TableHead className="text-center">주문수</TableHead>
-                <TableHead className="text-center">상태</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
-                Array.from({ length: 5 }).map((_, i) => (
-                  <TableRow key={i}>
-                    {Array.from({ length: 6 }).map((_, j) => (
-                      <TableCell key={j}>
-                        <Skeleton className="h-4 w-full" />
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))
-              ) : products.length === 0 ? (
+          <div className="rounded-xl border border-border">
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell
-                    colSpan={6}
-                    className="h-32 text-center text-muted-foreground"
-                  >
-                    등록된 상품이 없습니다
-                  </TableCell>
+                  <TableHead>상품명</TableHead>
+                  <TableHead>옵션정보</TableHead>
+                  <TableHead className="text-right">판매가</TableHead>
+                  <TableHead className="text-right">원가</TableHead>
+                  <TableHead className="text-center">주문수</TableHead>
+                  <TableHead className="text-center">상태</TableHead>
                 </TableRow>
-              ) : (
-                products.map((product) => (
-                  <TableRow
-                    key={product.id}
-                    className="cursor-pointer hover:bg-muted/50"
-                    onClick={() => openEdit(product)}
-                  >
-                    <TableCell className="max-w-[250px] truncate font-medium">
-                      {product.name}
-                    </TableCell>
-                    <TableCell className="max-w-[200px] truncate text-muted-foreground">
-                      {product.optionInfo || '-'}
-                    </TableCell>
-                    <TableCell className="text-right font-mono">
-                      {product.sellingPrice
-                        ? `₩${Number(product.sellingPrice).toLocaleString()}`
-                        : <span className="text-orange-500">미설정</span>}
-                    </TableCell>
-                    <TableCell className="text-right font-mono">
-                      {product.costPrice
-                        ? `₩${Number(product.costPrice).toLocaleString()}`
-                        : <span className="text-orange-500">미설정</span>}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      {product._count.orders + product._count.dailySales}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <span
-                        className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
-                          product.isActive
-                            ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
-                            : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'
-                        }`}
-                      >
-                        {product.isActive ? '활성' : '비활성'}
-                      </span>
+              </TableHeader>
+              <TableBody>
+                {loading ? (
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <TableRow key={i}>
+                      {Array.from({ length: 6 }).map((_, j) => (
+                        <TableCell key={j}>
+                          <Skeleton className="h-4 w-full" />
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))
+                ) : products.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={6}
+                      className="h-32 text-center text-muted-foreground"
+                    >
+                      등록된 상품이 없습니다
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
-
-        {totalPages > 1 && (
-          <div className="mt-4 flex items-center justify-center gap-2">
-            <button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page === 1}
-              className="rounded-lg px-3 py-1 text-sm hover:bg-muted disabled:opacity-50"
-            >
-              이전
-            </button>
-            <span className="text-sm text-muted-foreground">
-              {page} / {totalPages}
-            </span>
-            <button
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={page === totalPages}
-              className="rounded-lg px-3 py-1 text-sm hover:bg-muted disabled:opacity-50"
-            >
-              다음
-            </button>
+                ) : (
+                  products.map((product) => (
+                    <TableRow
+                      key={product.id}
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => openEdit(product)}
+                    >
+                      <TableCell className="max-w-[250px] truncate font-medium">
+                        {product.name}
+                      </TableCell>
+                      <TableCell className="max-w-[200px] truncate text-muted-foreground">
+                        {product.optionInfo || '-'}
+                      </TableCell>
+                      <TableCell className="text-right font-mono">
+                        {product.sellingPrice ? (
+                          `₩${Number(product.sellingPrice).toLocaleString()}`
+                        ) : (
+                          <span className="text-orange-500">미설정</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right font-mono">
+                        {product.costPrice ? (
+                          `₩${Number(product.costPrice).toLocaleString()}`
+                        ) : (
+                          <span className="text-orange-500">미설정</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {product._count.orders + product._count.dailySales}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <span
+                          className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
+                            product.isActive
+                              ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
+                              : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'
+                          }`}
+                        >
+                          {product.isActive ? '활성' : '비활성'}
+                        </span>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
           </div>
-        )}
-      </div>
 
+          {totalPages > 1 && (
+            <div className="mt-4 flex items-center justify-center gap-2">
+              <button
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page === 1}
+                className="rounded-lg px-3 py-1 text-sm hover:bg-muted disabled:opacity-50"
+              >
+                이전
+              </button>
+              <span className="text-sm text-muted-foreground">
+                {page} / {totalPages}
+              </span>
+              <button
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page === totalPages}
+                className="rounded-lg px-3 py-1 text-sm hover:bg-muted disabled:opacity-50"
+              >
+                다음
+              </button>
+            </div>
+          )}
+        </div>
       )}
 
       {/* 상품 편집 다이얼로그 */}
@@ -394,7 +427,8 @@ export default function ProductsPage() {
                   </p>
                 )}
                 <p className="text-xs text-muted-foreground">
-                  주문수: {editProduct._count.orders + editProduct._count.dailySales}건
+                  주문수:{' '}
+                  {editProduct._count.orders + editProduct._count.dailySales}건
                 </p>
               </div>
 
@@ -424,9 +458,7 @@ export default function ProductsPage() {
 
               {/* 개별 수수료 */}
               <div className="space-y-1.5">
-                <label className="text-sm font-medium">
-                  개별 수수료율 (%)
-                </label>
+                <label className="text-sm font-medium">개별 수수료율 (%)</label>
                 <input
                   type="number"
                   step="0.1"
@@ -443,7 +475,9 @@ export default function ProductsPage() {
               {/* 배송비 */}
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div className="space-y-1.5">
-                  <label className="text-sm font-medium">기본 배송비 (원)</label>
+                  <label className="text-sm font-medium">
+                    기본 배송비 (원)
+                  </label>
                   <input
                     type="number"
                     value={editShippingCost}
@@ -453,7 +487,9 @@ export default function ProductsPage() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-sm font-medium">무료배송 기준 (원)</label>
+                  <label className="text-sm font-medium">
+                    무료배송 기준 (원)
+                  </label>
                   <input
                     type="number"
                     value={editFreeShippingMin}
@@ -472,7 +508,9 @@ export default function ProductsPage() {
                   </p>
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <div className="space-y-1.5">
-                      <label className="text-sm font-medium">입출고배송비 (원/개)</label>
+                      <label className="text-sm font-medium">
+                        입출고배송비 (원/개)
+                      </label>
                       <input
                         type="number"
                         value={editFulfillmentFee}
@@ -482,7 +520,9 @@ export default function ProductsPage() {
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-sm font-medium">판매자할인쿠폰 (원/개)</label>
+                      <label className="text-sm font-medium">
+                        판매자할인쿠폰 (원/개)
+                      </label>
                       <input
                         type="number"
                         value={editCouponDiscount}
@@ -505,8 +545,7 @@ export default function ProductsPage() {
                     <span className="font-mono text-sm font-medium">
                       ₩
                       {(
-                        parseFloat(editSellingPrice) -
-                        parseFloat(editCostPrice)
+                        parseFloat(editSellingPrice) - parseFloat(editCostPrice)
                       ).toLocaleString()}
                     </span>
                     <span className="text-xs text-muted-foreground">

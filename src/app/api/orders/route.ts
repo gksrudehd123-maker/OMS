@@ -1,7 +1,13 @@
 import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { calculateMargin } from '@/lib/helpers/margin-calc';
-import { requireAuth, isError, checkChannelAccess, getChannelFilter, isStaff } from '@/lib/auth-guard';
+import {
+  requireAuth,
+  isError,
+  checkChannelAccess,
+  getChannelFilter,
+  isStaff,
+} from '@/lib/auth-guard';
 import { apiPaginated } from '@/lib/api-response';
 
 export async function GET(request: NextRequest) {
@@ -105,14 +111,19 @@ export async function GET(request: NextRequest) {
 
   for (const o of orderGroups) {
     const sp = o.product.sellingPrice ? Number(o.product.sellingPrice) : 0;
-    orderTotals[o.orderNumber] = (orderTotals[o.orderNumber] || 0) + sp * o.quantity;
+    orderTotals[o.orderNumber] =
+      (orderTotals[o.orderNumber] || 0) + sp * o.quantity;
   }
 
   for (const o of orderGroups) {
     if (orderFreeShipping[o.orderNumber]) continue;
-    const freeMin = o.product.freeShippingMin ? Number(o.product.freeShippingMin) : null;
-    if ((freeMin !== null && (orderTotals[o.orderNumber] || 0) >= freeMin) ||
-        Number(o.product.shippingCost) === 0) {
+    const freeMin = o.product.freeShippingMin
+      ? Number(o.product.freeShippingMin)
+      : null;
+    if (
+      (freeMin !== null && (orderTotals[o.orderNumber] || 0) >= freeMin) ||
+      Number(o.product.shippingCost) === 0
+    ) {
       orderFreeShipping[o.orderNumber] = true;
     }
   }
@@ -121,13 +132,21 @@ export async function GET(request: NextRequest) {
 
   const ordersWithMargin = orders.map((order) => {
     const margin = calculateMargin({
-      sellingPrice: order.product.sellingPrice ? Number(order.product.sellingPrice) : null,
-      costPrice: order.product.costPrice ? Number(order.product.costPrice) : null,
+      sellingPrice: order.product.sellingPrice
+        ? Number(order.product.sellingPrice)
+        : null,
+      costPrice: order.product.costPrice
+        ? Number(order.product.costPrice)
+        : null,
       quantity: order.quantity,
       feeRate: Number(order.channel.feeRate),
-      productFeeRate: order.product.feeRate ? Number(order.product.feeRate) : null,
+      productFeeRate: order.product.feeRate
+        ? Number(order.product.feeRate)
+        : null,
       shippingCost: Number(order.product.shippingCost),
-      freeShippingMin: order.product.freeShippingMin ? Number(order.product.freeShippingMin) : null,
+      freeShippingMin: order.product.freeShippingMin
+        ? Number(order.product.freeShippingMin)
+        : null,
       orderTotal: orderTotals[order.orderNumber] || 0,
       isAnyFreeShipping: orderFreeShipping[order.orderNumber] || false,
     });

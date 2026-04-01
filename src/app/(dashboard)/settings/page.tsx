@@ -106,7 +106,10 @@ export default function SettingsPage() {
   });
 
   const passwordMutation = useMutation({
-    mutationFn: async (body: { currentPassword: string; newPassword: string }) => {
+    mutationFn: async (body: {
+      currentPassword: string;
+      newPassword: string;
+    }) => {
       const res = await fetch('/api/user/password', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -144,7 +147,9 @@ export default function SettingsPage() {
   };
 
   // 데이터 관리 state
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(
+    null,
+  );
   const [deleting, setDeleting] = useState(false);
 
   // 기본값 설정 state
@@ -162,16 +167,21 @@ export default function SettingsPage() {
       if (!res.ok) return null;
       const data = await res.json();
       if (!settingsInitialized) {
-        if (data.defaultShippingCost) setDefaultShippingCost(data.defaultShippingCost);
-        if (data.defaultFreeShippingMin) setDefaultFreeShippingMin(data.defaultFreeShippingMin);
-        if (data.autoReportSchedule) setAutoReportSchedule(data.autoReportSchedule);
+        if (data.defaultShippingCost)
+          setDefaultShippingCost(data.defaultShippingCost);
+        if (data.defaultFreeShippingMin)
+          setDefaultFreeShippingMin(data.defaultFreeShippingMin);
+        if (data.autoReportSchedule)
+          setAutoReportSchedule(data.autoReportSchedule);
         setSettingsInitialized(true);
       }
       return data;
     },
   });
 
-  const { data: channels = [], isLoading: loadingChannels } = useQuery<Channel[]>({
+  const { data: channels = [], isLoading: loadingChannels } = useQuery<
+    Channel[]
+  >({
     queryKey: ['channels'],
     queryFn: async () => {
       const res = await fetch('/api/channels');
@@ -179,7 +189,9 @@ export default function SettingsPage() {
     },
   });
 
-  const { data: uploadsData, isLoading: loadingUploads } = useQuery<{ data: UploadRecord[] }>({
+  const { data: uploadsData, isLoading: loadingUploads } = useQuery<{
+    data: UploadRecord[];
+  }>({
     queryKey: ['uploads'],
     queryFn: async () => {
       const res = await fetch('/api/upload?limit=50');
@@ -233,7 +245,9 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-6">
-      <ProgressBar loading={loadingChannels || loadingUploads || loadingDefaults} />
+      <ProgressBar
+        loading={loadingChannels || loadingUploads || loadingDefaults}
+      />
       <Toaster richColors position="top-right" />
       <div>
         <h1 className="text-2xl font-semibold">설정</h1>
@@ -283,7 +297,9 @@ export default function SettingsPage() {
             <h3 className="text-sm font-semibold">비밀번호 변경</h3>
             <div className="mt-3 grid gap-3 sm:max-w-sm">
               <div>
-                <label className="mb-1 block text-sm font-medium">현재 비밀번호</label>
+                <label className="mb-1 block text-sm font-medium">
+                  현재 비밀번호
+                </label>
                 <div className="relative">
                   <input
                     type={showCurrentPw ? 'text' : 'password'}
@@ -296,12 +312,18 @@ export default function SettingsPage() {
                     onClick={() => setShowCurrentPw(!showCurrentPw)}
                     className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground"
                   >
-                    {showCurrentPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    {showCurrentPw ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
                   </button>
                 </div>
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium">새 비밀번호</label>
+                <label className="mb-1 block text-sm font-medium">
+                  새 비밀번호
+                </label>
                 <div className="relative">
                   <input
                     type={showNewPw ? 'text' : 'password'}
@@ -315,12 +337,18 @@ export default function SettingsPage() {
                     onClick={() => setShowNewPw(!showNewPw)}
                     className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground"
                   >
-                    {showNewPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    {showNewPw ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
                   </button>
                 </div>
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium">새 비밀번호 확인</label>
+                <label className="mb-1 block text-sm font-medium">
+                  새 비밀번호 확인
+                </label>
                 <input
                   type="password"
                   value={confirmPassword}
@@ -328,7 +356,9 @@ export default function SettingsPage() {
                   className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                 />
                 {confirmPassword && newPassword !== confirmPassword && (
-                  <p className="mt-1 text-xs text-red-500">비밀번호가 일치하지 않습니다</p>
+                  <p className="mt-1 text-xs text-red-500">
+                    비밀번호가 일치하지 않습니다
+                  </p>
                 )}
               </div>
               <button
@@ -418,9 +448,7 @@ export default function SettingsPage() {
           <div className="mt-4 space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className="text-sm font-medium">
-                  기본 배송비 (원)
-                </label>
+                <label className="text-sm font-medium">기본 배송비 (원)</label>
                 <p className="mt-0.5 text-xs text-muted-foreground">
                   신규 상품의 기본 배송비
                 </p>
@@ -551,7 +579,8 @@ export default function SettingsPage() {
       <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
         <h2 className="text-lg font-semibold">자동 리포트</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          주간 또는 월간 리포트를 자동으로 생성합니다. 생성된 리포트는 리포트 페이지에서 확인할 수 있습니다.
+          주간 또는 월간 리포트를 자동으로 생성합니다. 생성된 리포트는 리포트
+          페이지에서 확인할 수 있습니다.
         </p>
 
         <div className="mt-4 sm:max-w-xs">
@@ -609,7 +638,9 @@ export default function SettingsPage() {
                   <th className="px-4 py-3 text-left font-medium">채널</th>
                   <th className="px-4 py-3 text-center font-medium">성공</th>
                   <th className="px-4 py-3 text-center font-medium">오류</th>
-                  <th className="px-4 py-3 text-left font-medium">업로드 일시</th>
+                  <th className="px-4 py-3 text-left font-medium">
+                    업로드 일시
+                  </th>
                   <th className="px-4 py-3 text-center font-medium">관리</th>
                 </tr>
               </thead>
@@ -641,7 +672,9 @@ export default function SettingsPage() {
                     <th className="px-4 py-3 text-left font-medium">채널</th>
                     <th className="px-4 py-3 text-center font-medium">성공</th>
                     <th className="px-4 py-3 text-center font-medium">오류</th>
-                    <th className="px-4 py-3 text-left font-medium">업로드 일시</th>
+                    <th className="px-4 py-3 text-left font-medium">
+                      업로드 일시
+                    </th>
                     <th className="px-4 py-3 text-center font-medium">관리</th>
                   </tr>
                 </thead>
@@ -654,7 +687,9 @@ export default function SettingsPage() {
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
                           <FileSpreadsheet className="h-4 w-4 text-green-600" />
-                          <span className="max-w-[200px] truncate">{u.fileName}</span>
+                          <span className="max-w-[200px] truncate">
+                            {u.fileName}
+                          </span>
                         </div>
                       </td>
                       <td className="px-4 py-3 text-muted-foreground">
@@ -662,7 +697,9 @@ export default function SettingsPage() {
                       </td>
                       <td className="px-4 py-3 text-center">
                         <span className="text-green-600">{u.successRows}</span>
-                        <span className="text-muted-foreground">/{u.totalRows}</span>
+                        <span className="text-muted-foreground">
+                          /{u.totalRows}
+                        </span>
                       </td>
                       <td className="px-4 py-3 text-center">
                         {u.errorRows > 0 ? (
@@ -708,7 +745,10 @@ export default function SettingsPage() {
             </div>
             <div className="mt-3 flex items-start gap-2 rounded-lg bg-amber-50 p-3 text-xs text-amber-700 dark:bg-amber-950/50 dark:text-amber-400">
               <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-              <span>업로드를 삭제하면 해당 업로드로 추가된 주문 데이터도 함께 삭제됩니다. 상품 정보는 유지됩니다.</span>
+              <span>
+                업로드를 삭제하면 해당 업로드로 추가된 주문 데이터도 함께
+                삭제됩니다. 상품 정보는 유지됩니다.
+              </span>
             </div>
           </div>
         )}

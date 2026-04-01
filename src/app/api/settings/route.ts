@@ -5,7 +5,11 @@ import { writeAuditLog } from '@/lib/audit-log';
 import { apiSuccess, apiError } from '@/lib/api-response';
 
 // 설정 키 목록
-const VALID_KEYS = ['defaultShippingCost', 'defaultFreeShippingMin', 'autoReportSchedule'];
+const VALID_KEYS = [
+  'defaultShippingCost',
+  'defaultFreeShippingMin',
+  'autoReportSchedule',
+];
 
 export async function GET() {
   const user = await requireAuth();

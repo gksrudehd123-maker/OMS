@@ -2,7 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { calculateMargin } from '@/lib/helpers/margin-calc';
 import { calculateRGMargin } from '@/lib/helpers/rg-margin-calc';
-import { requireAuth, isError, getChannelFilter, isStaff } from '@/lib/auth-guard';
+import {
+  requireAuth,
+  isError,
+  getChannelFilter,
+  isStaff,
+} from '@/lib/auth-guard';
 import { EXCLUDED_ORDER_STATUSES } from '@/lib/helpers/status-map';
 import { toKSTDateString } from '@/lib/helpers/date-utils';
 
@@ -102,15 +107,20 @@ export async function GET(request: NextRequest) {
   const orderTotals: Record<string, number> = {};
   for (const o of orders) {
     const sp = o.product.sellingPrice ? Number(o.product.sellingPrice) : 0;
-    orderTotals[o.orderNumber] = (orderTotals[o.orderNumber] || 0) + sp * o.quantity;
+    orderTotals[o.orderNumber] =
+      (orderTotals[o.orderNumber] || 0) + sp * o.quantity;
   }
 
   const orderFreeShipping: Record<string, boolean> = {};
   for (const o of orders) {
     if (orderFreeShipping[o.orderNumber]) continue;
-    const freeMin = o.product.freeShippingMin ? Number(o.product.freeShippingMin) : null;
-    if ((freeMin !== null && (orderTotals[o.orderNumber] || 0) >= freeMin) ||
-        Number(o.product.shippingCost) === 0) {
+    const freeMin = o.product.freeShippingMin
+      ? Number(o.product.freeShippingMin)
+      : null;
+    if (
+      (freeMin !== null && (orderTotals[o.orderNumber] || 0) >= freeMin) ||
+      Number(o.product.shippingCost) === 0
+    ) {
       orderFreeShipping[o.orderNumber] = true;
     }
   }
@@ -123,20 +133,31 @@ export async function GET(request: NextRequest) {
   // dailyChannelMap: { '2026-03-01': { '스마트스토어': 12345, '쿠팡 윙': 6789 } }
   const dailyChannelMap: Record<string, Record<string, number>> = {};
   const channelNamesSet = new Set<string>();
-  const channelSalesMap: Record<string, { name: string; sales: number; orders: number }> = {};
+  const channelSalesMap: Record<
+    string,
+    { name: string; sales: number; orders: number }
+  > = {};
 
   // 브랜드별 판매 갯수 집계
   const brandSalesMap: Record<string, Record<string, number>> = {};
 
   for (const order of orders) {
     const margin = calculateMargin({
-      sellingPrice: order.product.sellingPrice ? Number(order.product.sellingPrice) : null,
-      costPrice: order.product.costPrice ? Number(order.product.costPrice) : null,
+      sellingPrice: order.product.sellingPrice
+        ? Number(order.product.sellingPrice)
+        : null,
+      costPrice: order.product.costPrice
+        ? Number(order.product.costPrice)
+        : null,
       quantity: order.quantity,
       feeRate: Number(order.channel.feeRate),
-      productFeeRate: order.product.feeRate ? Number(order.product.feeRate) : null,
+      productFeeRate: order.product.feeRate
+        ? Number(order.product.feeRate)
+        : null,
       shippingCost: Number(order.product.shippingCost),
-      freeShippingMin: order.product.freeShippingMin ? Number(order.product.freeShippingMin) : null,
+      freeShippingMin: order.product.freeShippingMin
+        ? Number(order.product.freeShippingMin)
+        : null,
       orderTotal: orderTotals[order.orderNumber] || 0,
       isAnyFreeShipping: orderFreeShipping[order.orderNumber] || false,
     });
@@ -145,7 +166,8 @@ export async function GET(request: NextRequest) {
     totalOrders++;
 
     const chId = order.channelId;
-    if (!channelSalesMap[chId]) channelSalesMap[chId] = { name: order.channel.name, sales: 0, orders: 0 };
+    if (!channelSalesMap[chId])
+      channelSalesMap[chId] = { name: order.channel.name, sales: 0, orders: 0 };
     channelSalesMap[chId].orders++;
 
     // 브랜드별 판매 갯수
@@ -153,7 +175,8 @@ export async function GET(request: NextRequest) {
       const brand = order.product.brand;
       const cat = order.product.brandCategory;
       if (!brandSalesMap[brand]) brandSalesMap[brand] = {};
-      brandSalesMap[brand][cat] = (brandSalesMap[brand][cat] || 0) + order.quantity;
+      brandSalesMap[brand][cat] =
+        (brandSalesMap[brand][cat] || 0) + order.quantity;
     }
 
     if (margin.isCalculable) {
@@ -162,7 +185,8 @@ export async function GET(request: NextRequest) {
       const chName = order.channel.name;
       channelNamesSet.add(chName);
       if (!dailyChannelMap[dateKey]) dailyChannelMap[dateKey] = {};
-      dailyChannelMap[dateKey][chName] = (dailyChannelMap[dateKey][chName] || 0) + margin.salesAmount;
+      dailyChannelMap[dateKey][chName] =
+        (dailyChannelMap[dateKey][chName] || 0) + margin.salesAmount;
       channelSalesMap[chId].sales += margin.salesAmount;
     }
   }
@@ -174,8 +198,12 @@ export async function GET(request: NextRequest) {
       salesQuantity: ds.salesQuantity,
       costPrice: ds.product.costPrice ? Number(ds.product.costPrice) : null,
       feeRate: ds.product.feeRate ? Number(ds.product.feeRate) : null,
-      fulfillmentFee: ds.product.fulfillmentFee ? Number(ds.product.fulfillmentFee) : null,
-      couponDiscount: ds.product.couponDiscount ? Number(ds.product.couponDiscount) : null,
+      fulfillmentFee: ds.product.fulfillmentFee
+        ? Number(ds.product.fulfillmentFee)
+        : null,
+      couponDiscount: ds.product.couponDiscount
+        ? Number(ds.product.couponDiscount)
+        : null,
     });
 
     const rgSalesAmt = Number(ds.salesAmount);
@@ -186,10 +214,12 @@ export async function GET(request: NextRequest) {
     const chName = ds.channel.name;
     channelNamesSet.add(chName);
     if (!dailyChannelMap[dateKey]) dailyChannelMap[dateKey] = {};
-    dailyChannelMap[dateKey][chName] = (dailyChannelMap[dateKey][chName] || 0) + rgSalesAmt;
+    dailyChannelMap[dateKey][chName] =
+      (dailyChannelMap[dateKey][chName] || 0) + rgSalesAmt;
 
     const chId = ds.channelId;
-    if (!channelSalesMap[chId]) channelSalesMap[chId] = { name: ds.channel.name, sales: 0, orders: 0 };
+    if (!channelSalesMap[chId])
+      channelSalesMap[chId] = { name: ds.channel.name, sales: 0, orders: 0 };
     channelSalesMap[chId].sales += rgSalesAmt;
     channelSalesMap[chId].orders += ds.salesQuantity;
 
@@ -198,7 +228,8 @@ export async function GET(request: NextRequest) {
       const brand = ds.product.brand;
       const cat = ds.product.brandCategory;
       if (!brandSalesMap[brand]) brandSalesMap[brand] = {};
-      brandSalesMap[brand][cat] = (brandSalesMap[brand][cat] || 0) + ds.salesQuantity;
+      brandSalesMap[brand][cat] =
+        (brandSalesMap[brand][cat] || 0) + ds.salesQuantity;
     }
 
     if (rgMargin.isCalculable) {
@@ -213,7 +244,8 @@ export async function GET(request: NextRequest) {
     const cost = Number(ac.cost);
     totalAdCost += cost;
     const chId = ac.channelId;
-    if (!channelAdMap[chId]) channelAdMap[chId] = { name: ac.channel.name, cost: 0 };
+    if (!channelAdMap[chId])
+      channelAdMap[chId] = { name: ac.channel.name, cost: 0 };
     channelAdMap[chId].cost += cost;
   }
 
@@ -225,7 +257,9 @@ export async function GET(request: NextRequest) {
     const dayEntry: Record<string, unknown> = { date: dateKey, day: d };
     const channelData = dailyChannelMap[dateKey];
     for (const chName of channelNames) {
-      dayEntry[chName] = channelData?.[chName] ? Math.round(channelData[chName]) : null;
+      dayEntry[chName] = channelData?.[chName]
+        ? Math.round(channelData[chName])
+        : null;
     }
     dailyData.push(dayEntry);
   }
@@ -247,19 +281,23 @@ export async function GET(request: NextRequest) {
     },
     channelNames,
     dailyData,
-    channelSales: staff ? [] : Object.values(channelSalesMap)
-      .map((ch) => ({
-        name: ch.name,
-        sales: Math.round(ch.sales),
-        orders: ch.orders,
-      }))
-      .sort((a, b) => b.sales - a.sales),
-    channelAdCosts: staff ? [] : Object.values(channelAdMap)
-      .map((ch) => ({
-        name: ch.name,
-        cost: Math.round(ch.cost),
-      }))
-      .sort((a, b) => b.cost - a.cost),
+    channelSales: staff
+      ? []
+      : Object.values(channelSalesMap)
+          .map((ch) => ({
+            name: ch.name,
+            sales: Math.round(ch.sales),
+            orders: ch.orders,
+          }))
+          .sort((a, b) => b.sales - a.sales),
+    channelAdCosts: staff
+      ? []
+      : Object.values(channelAdMap)
+          .map((ch) => ({
+            name: ch.name,
+            cost: Math.round(ch.cost),
+          }))
+          .sort((a, b) => b.cost - a.cost),
     brandSales: Object.entries(brandSalesMap)
       .map(([brand, categories]) => ({
         brand,
@@ -271,8 +309,10 @@ export async function GET(request: NextRequest) {
       .sort((a, b) => {
         // 고정 순서: 방짜, 웰스파, 카모도
         const order = ['방짜', '웰스파', '카모도'];
-        return (order.indexOf(a.brand) === -1 ? 99 : order.indexOf(a.brand)) -
-               (order.indexOf(b.brand) === -1 ? 99 : order.indexOf(b.brand));
+        return (
+          (order.indexOf(a.brand) === -1 ? 99 : order.indexOf(a.brand)) -
+          (order.indexOf(b.brand) === -1 ? 99 : order.indexOf(b.brand))
+        );
       }),
   });
 }

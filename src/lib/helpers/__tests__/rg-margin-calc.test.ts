@@ -89,11 +89,7 @@ describe('calculateRGMargin', () => {
     // vat = 100000 - 100000/1.1 - (50000 - 50000/1.1) - 1080 - 500
     const netSales = 100000;
     const expectedVat =
-      netSales -
-      netSales / 1.1 -
-      (50000 - 50000 / 1.1) -
-      1080 -
-      500;
+      netSales - netSales / 1.1 - (50000 - 50000 / 1.1) - 1080 - 500;
 
     expect(result.vat).toBeCloseTo(expectedVat, 0);
   });

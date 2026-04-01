@@ -59,7 +59,12 @@ export const DELIVERY_ATTR_EN_TO_KO: Record<string, string> = {
 };
 
 /** 매출 합산에서 제외할 주문 상태 */
-export const EXCLUDED_ORDER_STATUSES = ['CANCELED', 'CANCEL_DONE', 'RETURNED', 'EXCHANGED'];
+export const EXCLUDED_ORDER_STATUSES = [
+  'CANCELED',
+  'CANCEL_DONE',
+  'RETURNED',
+  'EXCHANGED',
+];
 
 /**
  * 주문 상태를 영문 코드로 정규화

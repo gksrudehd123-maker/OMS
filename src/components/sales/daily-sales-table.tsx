@@ -80,7 +80,9 @@ export function DailySalesTable({
             }}
             className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring sm:w-auto"
           />
-          <span className="shrink-0 text-sm text-muted-foreground">총 {total}건</span>
+          <span className="shrink-0 text-sm text-muted-foreground">
+            총 {total}건
+          </span>
         </div>
       </div>
 

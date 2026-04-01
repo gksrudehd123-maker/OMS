@@ -2,7 +2,19 @@
 
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Search, Plus, Trash2, RefreshCw, TrendingUp, TrendingDown, Loader2, ExternalLink, Crown, Trophy, Star } from 'lucide-react';
+import {
+  Search,
+  Plus,
+  Trash2,
+  RefreshCw,
+  TrendingUp,
+  TrendingDown,
+  Loader2,
+  ExternalLink,
+  Crown,
+  Trophy,
+  Star,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import dynamic from 'next/dynamic';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -37,11 +49,35 @@ type KeywordsResponse = {
 
 // 순위에 따른 색상/스타일
 function getRankStyle(rank: number | null) {
-  if (rank === null) return { bg: 'bg-gray-100 dark:bg-gray-800', text: 'text-gray-400', label: '100위 밖' };
-  if (rank <= 10) return { bg: 'bg-gradient-to-br from-yellow-50 to-amber-100 dark:from-yellow-900/30 dark:to-amber-900/30', text: 'text-yellow-600 dark:text-yellow-400', label: 'TOP 10' };
-  if (rank <= 30) return { bg: 'bg-gradient-to-br from-blue-50 to-cyan-100 dark:from-blue-900/30 dark:to-cyan-900/30', text: 'text-blue-600 dark:text-blue-400', label: 'TOP 30' };
-  if (rank <= 50) return { bg: 'bg-gradient-to-br from-green-50 to-emerald-100 dark:from-green-900/30 dark:to-emerald-900/30', text: 'text-green-600 dark:text-green-400', label: 'TOP 50' };
-  return { bg: 'bg-gradient-to-br from-gray-50 to-slate-100 dark:from-gray-800/50 dark:to-slate-800/50', text: 'text-gray-500 dark:text-gray-400', label: '' };
+  if (rank === null)
+    return {
+      bg: 'bg-gray-100 dark:bg-gray-800',
+      text: 'text-gray-400',
+      label: '100위 밖',
+    };
+  if (rank <= 10)
+    return {
+      bg: 'bg-gradient-to-br from-yellow-50 to-amber-100 dark:from-yellow-900/30 dark:to-amber-900/30',
+      text: 'text-yellow-600 dark:text-yellow-400',
+      label: 'TOP 10',
+    };
+  if (rank <= 30)
+    return {
+      bg: 'bg-gradient-to-br from-blue-50 to-cyan-100 dark:from-blue-900/30 dark:to-cyan-900/30',
+      text: 'text-blue-600 dark:text-blue-400',
+      label: 'TOP 30',
+    };
+  if (rank <= 50)
+    return {
+      bg: 'bg-gradient-to-br from-green-50 to-emerald-100 dark:from-green-900/30 dark:to-emerald-900/30',
+      text: 'text-green-600 dark:text-green-400',
+      label: 'TOP 50',
+    };
+  return {
+    bg: 'bg-gradient-to-br from-gray-50 to-slate-100 dark:from-gray-800/50 dark:to-slate-800/50',
+    text: 'text-gray-500 dark:text-gray-400',
+    label: '',
+  };
 }
 
 function RankCard({
@@ -78,7 +114,10 @@ function RankCard({
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
             <button
-              onClick={(e) => { e.stopPropagation(); onSetMain(); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                onSetMain();
+              }}
               className={`rounded p-0.5 transition-colors ${
                 kw.isMain
                   ? 'text-yellow-500'
@@ -86,7 +125,9 @@ function RankCard({
               }`}
               title={kw.isMain ? '메인 키워드 해제' : '메인 키워드로 설정'}
             >
-              <Star className={`h-4 w-4 ${kw.isMain ? 'fill-yellow-500' : ''}`} />
+              <Star
+                className={`h-4 w-4 ${kw.isMain ? 'fill-yellow-500' : ''}`}
+              />
             </button>
             <p className="text-sm font-semibold truncate">{kw.keyword}</p>
           </div>
@@ -98,15 +139,25 @@ function RankCard({
         </div>
         <div className="flex items-center gap-1 ml-2">
           <button
-            onClick={(e) => { e.stopPropagation(); onCheck(); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              onCheck();
+            }}
             disabled={checking}
             className="rounded-lg p-1.5 bg-white/70 dark:bg-white/10 text-foreground hover:bg-white dark:hover:bg-white/20 disabled:opacity-50 border border-border/50"
             title="순위 조회"
           >
-            {checking ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+            {checking ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <RefreshCw className="h-3.5 w-3.5" />
+            )}
           </button>
           <button
-            onClick={(e) => { e.stopPropagation(); onDelete(); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete();
+            }}
             className="rounded-lg p-1.5 bg-white/70 dark:bg-white/10 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/40 hover:text-red-600 border border-border/50"
             title="삭제"
           >
@@ -119,24 +170,40 @@ function RankCard({
       <div className="mt-3 flex items-end gap-2">
         {kw.latestRank !== null ? (
           <>
-            {kw.latestRank <= 10 && <Crown className={`h-5 w-5 ${style.text}`} />}
-            <span className={`font-mono text-3xl font-bold leading-none ${style.text}`}>
+            {kw.latestRank <= 10 && (
+              <Crown className={`h-5 w-5 ${style.text}`} />
+            )}
+            <span
+              className={`font-mono text-3xl font-bold leading-none ${style.text}`}
+            >
               {kw.latestRank}
             </span>
             <span className="text-sm text-muted-foreground mb-0.5">위</span>
           </>
         ) : kw.latestDate ? (
-          <span className="text-lg font-medium text-muted-foreground">100위 밖</span>
+          <span className="text-lg font-medium text-muted-foreground">
+            100위 밖
+          </span>
         ) : (
-          <span className="text-lg font-medium text-muted-foreground">미조회</span>
+          <span className="text-lg font-medium text-muted-foreground">
+            미조회
+          </span>
         )}
 
         {/* 변동 */}
         {kw.change !== null && kw.change !== 0 && (
-          <span className={`flex items-center gap-0.5 text-sm font-bold ml-auto mb-0.5 ${
-            kw.change > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
-          }`}>
-            {kw.change > 0 ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
+          <span
+            className={`flex items-center gap-0.5 text-sm font-bold ml-auto mb-0.5 ${
+              kw.change > 0
+                ? 'text-green-600 dark:text-green-400'
+                : 'text-red-600 dark:text-red-400'
+            }`}
+          >
+            {kw.change > 0 ? (
+              <TrendingUp className="h-4 w-4" />
+            ) : (
+              <TrendingDown className="h-4 w-4" />
+            )}
             {kw.change > 0 ? `+${kw.change}` : kw.change}
           </span>
         )}
@@ -173,11 +240,14 @@ export function KeywordRankTab() {
     queryFn: async () => {
       const chRes = await fetch('/api/channels');
       const channels = await chRes.json();
-      const ssChannel = channels.find((ch: { code: string }) =>
-        ch.code === 'SMARTSTORE' || ch.code === 'smartstore'
+      const ssChannel = channels.find(
+        (ch: { code: string }) =>
+          ch.code === 'SMARTSTORE' || ch.code === 'smartstore',
       );
       if (!ssChannel) return [];
-      const res = await fetch(`/api/products?channelId=${ssChannel.id}&limit=500`);
+      const res = await fetch(
+        `/api/products?channelId=${ssChannel.id}&limit=500`,
+      );
       const data = await res.json();
       const raw = (data.data || []) as { id: string; name: string }[];
       const seen = new Map<string, Product>();
@@ -190,7 +260,9 @@ export function KeywordRankTab() {
 
   const [selectedProductId, setSelectedProductId] = useState('');
   const [newKeyword, setNewKeyword] = useState('');
-  const [selectedKeywordId, setSelectedKeywordId] = useState<string | null>(null);
+  const [selectedKeywordId, setSelectedKeywordId] = useState<string | null>(
+    null,
+  );
   const [checkingId, setCheckingId] = useState<string | null>(null);
   const [checkingAll, setCheckingAll] = useState(false);
 
@@ -208,27 +280,42 @@ export function KeywordRankTab() {
 
   // 요약 통계
   const rankedKeywords = keywords.filter((k) => k.latestRank !== null);
-  const avgRank = rankedKeywords.length > 0
-    ? Math.round(rankedKeywords.reduce((sum, k) => sum + (k.latestRank ?? 0), 0) / rankedKeywords.length)
-    : null;
-  const bestKeyword = rankedKeywords.length > 0
-    ? rankedKeywords.reduce((best, k) => (k.latestRank ?? 999) < (best.latestRank ?? 999) ? k : best)
-    : null;
+  const avgRank =
+    rankedKeywords.length > 0
+      ? Math.round(
+          rankedKeywords.reduce((sum, k) => sum + (k.latestRank ?? 0), 0) /
+            rankedKeywords.length,
+        )
+      : null;
+  const bestKeyword =
+    rankedKeywords.length > 0
+      ? rankedKeywords.reduce((best, k) =>
+          (k.latestRank ?? 999) < (best.latestRank ?? 999) ? k : best,
+        )
+      : null;
 
   const addMutation = useMutation({
     mutationFn: async () => {
       const res = await fetch('/api/keywords', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ productId: selectedProductId, keyword: newKeyword.trim() }),
+        body: JSON.stringify({
+          productId: selectedProductId,
+          keyword: newKeyword.trim(),
+        }),
       });
-      if (!res.ok) { const err = await res.json(); throw new Error(err.error || '등록 실패'); }
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || '등록 실패');
+      }
       return res.json();
     },
     onSuccess: () => {
       toast.success('키워드가 등록되었습니다');
       setNewKeyword('');
-      queryClient.invalidateQueries({ queryKey: ['keywords', selectedProductId] });
+      queryClient.invalidateQueries({
+        queryKey: ['keywords', selectedProductId],
+      });
       queryClient.invalidateQueries({ queryKey: ['keyword-history'] });
       queryClient.invalidateQueries({ queryKey: ['all-keyword-history'] });
     },
@@ -242,23 +329,36 @@ export function KeywordRankTab() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ isMain }),
       });
-      if (!res.ok) { const err = await res.json(); throw new Error(err.error || '설정 실패'); }
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || '설정 실패');
+      }
       return res.json();
     },
     onSuccess: (_data, variables) => {
-      toast.success(variables.isMain ? '메인 키워드로 설정되었습니다' : '메인 키워드가 해제되었습니다');
-      queryClient.invalidateQueries({ queryKey: ['keywords', selectedProductId] });
+      toast.success(
+        variables.isMain
+          ? '메인 키워드로 설정되었습니다'
+          : '메인 키워드가 해제되었습니다',
+      );
+      queryClient.invalidateQueries({
+        queryKey: ['keywords', selectedProductId],
+      });
       queryClient.invalidateQueries({ queryKey: ['ad-budgets'] });
     },
     onError: (err: Error) => toast.error(err.message),
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async (id: string) => { await fetch(`/api/keywords/${id}`, { method: 'DELETE' }); },
+    mutationFn: async (id: string) => {
+      await fetch(`/api/keywords/${id}`, { method: 'DELETE' });
+    },
     onSuccess: () => {
       toast.success('키워드가 삭제되었습니다');
       setSelectedKeywordId(null);
-      queryClient.invalidateQueries({ queryKey: ['keywords', selectedProductId] });
+      queryClient.invalidateQueries({
+        queryKey: ['keywords', selectedProductId],
+      });
       queryClient.invalidateQueries({ queryKey: ['keyword-history'] });
       queryClient.invalidateQueries({ queryKey: ['all-keyword-history'] });
     },
@@ -274,8 +374,14 @@ export function KeywordRankTab() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-      toast.success(data.rank ? `${data.rank}위 (${data.page}페이지)` : '100위 안에 없습니다');
-      queryClient.invalidateQueries({ queryKey: ['keywords', selectedProductId] });
+      toast.success(
+        data.rank
+          ? `${data.rank}위 (${data.page}페이지)`
+          : '100위 안에 없습니다',
+      );
+      queryClient.invalidateQueries({
+        queryKey: ['keywords', selectedProductId],
+      });
       queryClient.invalidateQueries({ queryKey: ['keyword-history'] });
       queryClient.invalidateQueries({ queryKey: ['all-keyword-history'] });
     } catch (err) {
@@ -297,12 +403,18 @@ export function KeywordRankTab() {
         });
         const data = await res.json();
         if (res.ok) {
-          toast.success(`"${kw.keyword}" ${data.rank ? `${data.rank}위` : '100위 밖'}`);
+          toast.success(
+            `"${kw.keyword}" ${data.rank ? `${data.rank}위` : '100위 밖'}`,
+          );
         }
-      } catch { /* skip */ }
+      } catch {
+        /* skip */
+      }
       setCheckingId(null);
     }
-    queryClient.invalidateQueries({ queryKey: ['keywords', selectedProductId] });
+    queryClient.invalidateQueries({
+      queryKey: ['keywords', selectedProductId],
+    });
     setCheckingAll(false);
   };
 
@@ -311,12 +423,17 @@ export function KeywordRankTab() {
       {/* 상품 선택 */}
       <select
         value={selectedProductId}
-        onChange={(e) => { setSelectedProductId(e.target.value); setSelectedKeywordId(null); }}
+        onChange={(e) => {
+          setSelectedProductId(e.target.value);
+          setSelectedKeywordId(null);
+        }}
         className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
       >
         <option value="">상품을 선택하세요</option>
         {products.map((p) => (
-          <option key={p.id} value={p.id}>{p.name}</option>
+          <option key={p.id} value={p.id}>
+            {p.name}
+          </option>
         ))}
       </select>
 
@@ -337,21 +454,36 @@ export function KeywordRankTab() {
                 </div>
               )}
               <div className="flex-1 min-w-0">
-                <p className="font-semibold text-base truncate">{productInfo.name}</p>
+                <p className="font-semibold text-base truncate">
+                  {productInfo.name}
+                </p>
                 <div className="mt-2 flex flex-wrap gap-3 text-xs">
                   <span className="flex items-center gap-1 text-muted-foreground">
-                    키워드 <span className="font-mono font-bold text-foreground">{keywords.length}</span>개
+                    키워드{' '}
+                    <span className="font-mono font-bold text-foreground">
+                      {keywords.length}
+                    </span>
+                    개
                   </span>
                   {avgRank !== null && (
                     <span className="flex items-center gap-1 text-muted-foreground">
-                      평균 순위 <span className="font-mono font-bold text-foreground">{avgRank}</span>위
+                      평균 순위{' '}
+                      <span className="font-mono font-bold text-foreground">
+                        {avgRank}
+                      </span>
+                      위
                     </span>
                   )}
                   {bestKeyword && (
                     <span className="flex items-center gap-1 text-muted-foreground">
                       <Trophy className="h-3 w-3 text-yellow-500" />
-                      최고 <span className="font-medium text-foreground">"{bestKeyword.keyword}"</span>
-                      <span className="font-mono font-bold text-yellow-600 dark:text-yellow-400">{bestKeyword.latestRank}위</span>
+                      최고{' '}
+                      <span className="font-medium text-foreground">
+                        &quot;{bestKeyword.keyword}&quot;
+                      </span>
+                      <span className="font-mono font-bold text-yellow-600 dark:text-yellow-400">
+                        {bestKeyword.latestRank}위
+                      </span>
                     </span>
                   )}
                 </div>
@@ -362,7 +494,11 @@ export function KeywordRankTab() {
                   disabled={checkingAll || checkingId !== null}
                   className="flex items-center gap-1.5 self-start rounded-lg bg-primary px-3 py-2 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 shrink-0"
                 >
-                  {checkingAll ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+                  {checkingAll ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <RefreshCw className="h-3.5 w-3.5" />
+                  )}
                   전체 조회
                 </button>
               )}
@@ -375,7 +511,9 @@ export function KeywordRankTab() {
               type="text"
               value={newKeyword}
               onChange={(e) => setNewKeyword(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && newKeyword.trim() && addMutation.mutate()}
+              onKeyDown={(e) =>
+                e.key === 'Enter' && newKeyword.trim() && addMutation.mutate()
+              }
               placeholder="추적할 키워드 입력 (예: 온열복대, 허리찜질기)"
               className="flex-1 rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
             />
@@ -414,11 +552,18 @@ export function KeywordRankTab() {
                   kw={kw}
                   selected={selectedKeywordId === kw.id}
                   checking={checkingId === kw.id}
-                  onClick={() => setSelectedKeywordId(kw.id === selectedKeywordId ? null : kw.id)}
+                  onClick={() =>
+                    setSelectedKeywordId(
+                      kw.id === selectedKeywordId ? null : kw.id,
+                    )
+                  }
                   onCheck={() => checkRank(kw.id)}
-                  onSetMain={() => setMainMutation.mutate({ id: kw.id, isMain: !kw.isMain })}
+                  onSetMain={() =>
+                    setMainMutation.mutate({ id: kw.id, isMain: !kw.isMain })
+                  }
                   onDelete={() => {
-                    if (confirm(`"${kw.keyword}" 키워드를 삭제하시겠습니까?`)) deleteMutation.mutate(kw.id);
+                    if (confirm(`"${kw.keyword}" 키워드를 삭제하시겠습니까?`))
+                      deleteMutation.mutate(kw.id);
                   }}
                 />
               ))}
@@ -432,7 +577,12 @@ export function KeywordRankTab() {
                 <h3 className="text-sm font-semibold">전체 키워드 순위 추이</h3>
                 <span className="text-xs text-muted-foreground">최근 30일</span>
               </div>
-              <AllKeywordsChart keywords={keywords.map((k) => ({ id: k.id, keyword: k.keyword }))} />
+              <AllKeywordsChart
+                keywords={keywords.map((k) => ({
+                  id: k.id,
+                  keyword: k.keyword,
+                }))}
+              />
             </div>
           )}
 
@@ -441,7 +591,9 @@ export function KeywordRankTab() {
             <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-sm font-semibold">
-                  "{keywords.find((k) => k.id === selectedKeywordId)?.keyword}" 순위 추이
+                  &quot;
+                  {keywords.find((k) => k.id === selectedKeywordId)?.keyword}
+                  &quot; 순위 추이
                 </h3>
                 <a
                   href={`https://search.shopping.naver.com/search/all?query=${encodeURIComponent(keywords.find((k) => k.id === selectedKeywordId)?.keyword || '')}`}

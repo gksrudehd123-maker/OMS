@@ -2,7 +2,15 @@
 
 import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ChevronDown, ChevronUp, Search, Trophy, Trash2, TrendingUp, Star } from 'lucide-react';
+import {
+  ChevronDown,
+  ChevronUp,
+  Search,
+  Trophy,
+  Trash2,
+  TrendingUp,
+  Star,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/skeleton';
 import dynamic from 'next/dynamic';
@@ -13,7 +21,8 @@ const RankChart = dynamic(
 );
 
 const AllKeywordsChart = dynamic(
-  () => import('@/components/products/rank-chart').then((m) => m.AllKeywordsChart),
+  () =>
+    import('@/components/products/rank-chart').then((m) => m.AllKeywordsChart),
   { loading: () => <Skeleton className="h-64 w-full rounded-lg" /> },
 );
 
@@ -62,7 +71,10 @@ type AdBudget = {
   actualQuantity: number;
 };
 
-function calculateUnitMargin(product: BudgetProduct, channel: BudgetChannel): number {
+function calculateUnitMargin(
+  product: BudgetProduct,
+  channel: BudgetChannel,
+): number {
   const sellingPrice = Number(product.sellingPrice) || 0;
   const costPrice = Number(product.costPrice) || 0;
   const feeRate = Number(product.feeRate) || Number(channel.feeRate) || 0;
@@ -98,7 +110,9 @@ function ProductCard({
   onDelete: (id: string) => void;
 }) {
   const [keywordOpen, setKeywordOpen] = useState(false);
-  const [selectedKeywordId, setSelectedKeywordId] = useState<string | null>(null);
+  const [selectedKeywordId, setSelectedKeywordId] = useState<string | null>(
+    null,
+  );
 
   const latest = budgets[0];
   const product = latest.product;
@@ -113,24 +127,28 @@ function ProductCard({
     const latestRank = k.ranks[0];
     return latestRank?.rank !== null && latestRank?.rank !== undefined;
   });
-  const avgRank = rankedKeywords.length > 0
-    ? Math.round(
-        rankedKeywords.reduce((sum, k) => sum + (k.ranks[0]?.rank ?? 0), 0) / rankedKeywords.length,
-      )
-    : null;
-  const bestKeyword = rankedKeywords.length > 0
-    ? rankedKeywords.reduce((best, k) =>
-        (k.ranks[0]?.rank ?? 999) < (best.ranks[0]?.rank ?? 999) ? k : best,
-      )
-    : null;
+  const avgRank =
+    rankedKeywords.length > 0
+      ? Math.round(
+          rankedKeywords.reduce((sum, k) => sum + (k.ranks[0]?.rank ?? 0), 0) /
+            rankedKeywords.length,
+        )
+      : null;
+  const bestKeyword =
+    rankedKeywords.length > 0
+      ? rankedKeywords.reduce((best, k) =>
+          (k.ranks[0]?.rank ?? 999) < (best.ranks[0]?.rank ?? 999) ? k : best,
+        )
+      : null;
 
   // 광고비 / 달성률 계산
   const adCost = Number(latest.adCost);
   const unitMargin = calculateUnitMargin(product, channel);
   const breakEvenQty = unitMargin > 0 ? Math.ceil(adCost / unitMargin) : 0;
-  const achievementRate = breakEvenQty > 0
-    ? Math.round((latest.actualQuantity / breakEvenQty) * 1000) / 10
-    : 0;
+  const achievementRate =
+    breakEvenQty > 0
+      ? Math.round((latest.actualQuantity / breakEvenQty) * 1000) / 10
+      : 0;
   const progressPct = Math.min(achievementRate, 100);
 
   return (
@@ -153,17 +171,28 @@ function ProductCard({
           <p className="text-sm text-muted-foreground mt-0.5">{channel.name}</p>
           <div className="mt-3 flex flex-wrap gap-4 text-sm">
             <span className="flex items-center gap-1 text-muted-foreground">
-              키워드 <span className="font-mono font-bold text-foreground">{keywords.length}</span>개
+              키워드{' '}
+              <span className="font-mono font-bold text-foreground">
+                {keywords.length}
+              </span>
+              개
             </span>
             {avgRank !== null && (
               <span className="flex items-center gap-1 text-muted-foreground">
-                평균 순위 <span className="font-mono font-bold text-foreground">{avgRank}</span>위
+                평균 순위{' '}
+                <span className="font-mono font-bold text-foreground">
+                  {avgRank}
+                </span>
+                위
               </span>
             )}
             {bestKeyword && (
               <span className="flex items-center gap-1.5 text-muted-foreground">
                 <Trophy className="h-4 w-4 text-yellow-500" />
-                최고 <span className="font-medium text-foreground">"{bestKeyword.keyword}"</span>
+                최고{' '}
+                <span className="font-medium text-foreground">
+                  &quot;{bestKeyword.keyword}&quot;
+                </span>
                 <span className="font-mono font-bold text-yellow-600 dark:text-yellow-400">
                   {bestKeyword.ranks[0]?.rank}위
                 </span>
@@ -182,12 +211,16 @@ function ProductCard({
             <Trash2 className="h-3.5 w-3.5" />
           </button>
           <p className="text-xs text-muted-foreground">광고비</p>
-          <p className="text-2xl font-bold font-mono">₩{adCost.toLocaleString()}</p>
+          <p className="text-2xl font-bold font-mono">
+            ₩{adCost.toLocaleString()}
+          </p>
           {breakEvenQty > 0 && (
             <div className="mt-2">
               <div className="flex items-center justify-between text-xs mb-1">
                 <span className="text-muted-foreground">달성률</span>
-                <span className={`font-bold ${getAchievementColor(achievementRate)}`}>
+                <span
+                  className={`font-bold ${getAchievementColor(achievementRate)}`}
+                >
                   {achievementRate}%
                 </span>
               </div>
@@ -215,20 +248,28 @@ function ProductCard({
       {unitMargin > 0 && (
         <div className="grid grid-cols-3 gap-px border-t border-border bg-border">
           <div className="bg-card px-4 py-3 text-center">
-            <p className="text-[10px] font-medium text-muted-foreground">개당 순이익</p>
+            <p className="text-[10px] font-medium text-muted-foreground">
+              개당 순이익
+            </p>
             <p className="mt-0.5 text-lg font-bold font-mono text-primary">
               ₩{unitMargin.toLocaleString()}
             </p>
           </div>
           <div className="bg-card px-4 py-3 text-center">
-            <p className="text-[10px] font-medium text-muted-foreground">손익분기</p>
+            <p className="text-[10px] font-medium text-muted-foreground">
+              손익분기
+            </p>
             <p className="mt-0.5 text-lg font-bold font-mono text-orange-600 dark:text-orange-400">
               {breakEvenQty.toLocaleString()}개
             </p>
           </div>
           <div className="bg-card px-4 py-3 text-center">
-            <p className="text-[10px] font-medium text-muted-foreground">실제 판매</p>
-            <p className={`mt-0.5 text-lg font-bold font-mono ${getAchievementColor(achievementRate)}`}>
+            <p className="text-[10px] font-medium text-muted-foreground">
+              실제 판매
+            </p>
+            <p
+              className={`mt-0.5 text-lg font-bold font-mono ${getAchievementColor(achievementRate)}`}
+            >
               {latest.actualQuantity.toLocaleString()}개
             </p>
           </div>
@@ -240,7 +281,9 @@ function ProductCard({
         <div className="border-t border-border px-5 py-4">
           <div className="flex items-center gap-2 mb-3">
             <Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
-            <h4 className="text-sm font-semibold">"{mainKeyword.keyword}" {month} 순위 추이</h4>
+            <h4 className="text-sm font-semibold">
+              &quot;{mainKeyword.keyword}&quot; {month} 순위 추이
+            </h4>
           </div>
           <RankChart keywordId={mainKeyword.id} month={month} />
         </div>
@@ -253,7 +296,11 @@ function ProductCard({
           className="flex w-full items-center justify-between px-5 py-3 text-sm font-medium hover:bg-muted/50 transition-colors"
         >
           <span>키워드 순위 추적</span>
-          {keywordOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          {keywordOpen ? (
+            <ChevronUp className="h-4 w-4" />
+          ) : (
+            <ChevronDown className="h-4 w-4" />
+          )}
         </button>
         {keywordOpen && (
           <div className="px-5 pb-4 space-y-4">
@@ -273,11 +320,18 @@ function ProductCard({
                 {rankedKeywords.length > 0 && (
                   <div className="rounded-lg border border-border bg-muted/30 p-4">
                     <div className="flex items-center justify-between mb-3">
-                      <h4 className="text-sm font-semibold">전체 키워드 순위 추이</h4>
-                      <span className="text-xs text-muted-foreground">최근 30일</span>
+                      <h4 className="text-sm font-semibold">
+                        전체 키워드 순위 추이
+                      </h4>
+                      <span className="text-xs text-muted-foreground">
+                        최근 30일
+                      </span>
                     </div>
                     <AllKeywordsChart
-                      keywords={keywords.map((k) => ({ id: k.id, keyword: k.keyword }))}
+                      keywords={keywords.map((k) => ({
+                        id: k.id,
+                        keyword: k.keyword,
+                      }))}
                     />
                   </div>
                 )}
@@ -291,7 +345,9 @@ function ProductCard({
                     return (
                       <div key={kw.id}>
                         <button
-                          onClick={() => setSelectedKeywordId(isSelected ? null : kw.id)}
+                          onClick={() =>
+                            setSelectedKeywordId(isSelected ? null : kw.id)
+                          }
                           className={`flex w-full items-center justify-between rounded-lg border p-3 text-sm transition-colors ${
                             isSelected
                               ? 'border-primary bg-primary/5'
@@ -389,7 +445,9 @@ export function AdBudgetTab() {
           <div className="rounded-full bg-muted p-5">
             <TrendingUp className="h-10 w-10 text-muted-foreground" />
           </div>
-          <p className="mt-4 font-medium">{selectedMonth}월 등록된 광고 예산이 없습니다</p>
+          <p className="mt-4 font-medium">
+            {selectedMonth}월 등록된 광고 예산이 없습니다
+          </p>
           <p className="mt-1 text-sm text-muted-foreground">
             광고비 관리 &gt; 손익분기 계산기에서 상품을 추가해주세요
           </p>

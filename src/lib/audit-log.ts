@@ -22,7 +22,9 @@ export async function writeAuditLog(params: AuditParams) {
         target: params.target,
         targetId: params.targetId,
         summary: params.summary,
-        changes: params.changes ? JSON.parse(JSON.stringify(params.changes)) : undefined,
+        changes: params.changes
+          ? JSON.parse(JSON.stringify(params.changes))
+          : undefined,
       },
     });
   } catch {

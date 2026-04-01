@@ -5,22 +5,31 @@ import dynamic from 'next/dynamic';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const MonthlySalesTab = dynamic(
-  () => import('@/components/dashboard/monthly-sales-tab').then((m) => m.MonthlySalesTab),
+  () =>
+    import('@/components/dashboard/monthly-sales-tab').then(
+      (m) => m.MonthlySalesTab,
+    ),
   { loading: () => <Skeleton className="h-64 w-full rounded-lg" /> },
 );
 
 const SalesDashboardTab = dynamic(
-  () => import('@/components/dashboard/sales-dashboard-tab').then((m) => m.SalesDashboardTab),
+  () =>
+    import('@/components/dashboard/sales-dashboard-tab').then(
+      (m) => m.SalesDashboardTab,
+    ),
   { loading: () => <Skeleton className="h-64 w-full rounded-lg" /> },
 );
 
 const AdBudgetTab = dynamic(
-  () => import('@/components/dashboard/ad-budget-tab').then((m) => m.AdBudgetTab),
+  () =>
+    import('@/components/dashboard/ad-budget-tab').then((m) => m.AdBudgetTab),
   { loading: () => <Skeleton className="h-64 w-full rounded-lg" /> },
 );
 
 export default function DashboardPage() {
-  const [activeTab, setActiveTab] = useState<'monthly' | 'dashboard' | 'ad-budget'>('monthly');
+  const [activeTab, setActiveTab] = useState<
+    'monthly' | 'dashboard' | 'ad-budget'
+  >('monthly');
 
   return (
     <div className="space-y-6">

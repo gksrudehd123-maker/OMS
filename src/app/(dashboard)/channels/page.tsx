@@ -43,7 +43,11 @@ export default function ChannelsPage() {
   });
 
   const createMutation = useMutation({
-    mutationFn: async (body: { name: string; code: string; feeRate: number }) => {
+    mutationFn: async (body: {
+      name: string;
+      code: string;
+      feeRate: number;
+    }) => {
       const res = await fetch('/api/channels', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -69,7 +73,13 @@ export default function ChannelsPage() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, body }: { id: string; body: Record<string, unknown> }) => {
+    mutationFn: async ({
+      id,
+      body,
+    }: {
+      id: string;
+      body: Record<string, unknown>;
+    }) => {
       const res = await fetch(`/api/channels/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -109,7 +119,10 @@ export default function ChannelsPage() {
   const handleSave = () => {
     if (!editChannel) return;
     updateMutation.mutate(
-      { id: editChannel.id, body: { name: editName, feeRate: parseFloat(editFeeRate) || 0 } },
+      {
+        id: editChannel.id,
+        body: { name: editName, feeRate: parseFloat(editFeeRate) || 0 },
+      },
       {
         onSuccess: () => {
           toast.success('채널 정보가 수정되었습니다');
@@ -125,7 +138,11 @@ export default function ChannelsPage() {
       { id: editChannel.id, body: { isActive: !editChannel.isActive } },
       {
         onSuccess: () => {
-          toast.success(editChannel.isActive ? '채널이 비활성화되었습니다' : '채널이 활성화되었습니다');
+          toast.success(
+            editChannel.isActive
+              ? '채널이 비활성화되었습니다'
+              : '채널이 활성화되었습니다',
+          );
           setEditChannel(null);
         },
       },

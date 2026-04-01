@@ -23,7 +23,10 @@ const OrderTable = dynamic(
 );
 
 const DailySalesTable = dynamic(
-  () => import('@/components/sales/daily-sales-table').then((m) => m.DailySalesTable),
+  () =>
+    import('@/components/sales/daily-sales-table').then(
+      (m) => m.DailySalesTable,
+    ),
   { loading: () => <Skeleton className="h-96 w-full rounded-xl" /> },
 );
 
@@ -56,7 +59,14 @@ type PriceInput = {
 const BRANDS = [
   {
     name: '방짜',
-    categories: ['배터리 KF-9', '배터리 KF-11', '배터리 KF-3.5', '배터리 AN-10500B', '배터리 AN-9000B', '기포기 KF'],
+    categories: [
+      '배터리 KF-9',
+      '배터리 KF-11',
+      '배터리 KF-3.5',
+      '배터리 AN-10500B',
+      '배터리 AN-9000B',
+      '기포기 KF',
+    ],
   },
   {
     name: '웰스파',
@@ -86,7 +96,9 @@ export default function SalesPage() {
   // 신규 상품 가격 설정 팝업 (API 동기화용)
   const [showPriceDialog, setShowPriceDialog] = useState(false);
   const [newProducts, setNewProducts] = useState<NewProduct[]>([]);
-  const [priceInputs, setPriceInputs] = useState<Record<string, PriceInput>>({});
+  const [priceInputs, setPriceInputs] = useState<Record<string, PriceInput>>(
+    {},
+  );
   const [savingPrices, setSavingPrices] = useState(false);
 
   useEffect(() => {
@@ -96,7 +108,9 @@ export default function SalesPage() {
         setChannels(data);
         if (data.length > 0) setSelectedChannel(data[0].id);
         // API 동기화용 기본 채널 (첫 번째 스마트스토어)
-        const firstSmartstore = data.find((ch: Channel) => ch.code.startsWith('SMARTSTORE'));
+        const firstSmartstore = data.find((ch: Channel) =>
+          ch.code.startsWith('SMARTSTORE'),
+        );
         if (firstSmartstore) setSyncChannelId(firstSmartstore.id);
       });
 
@@ -124,7 +138,9 @@ export default function SalesPage() {
 
     const today = new Date().toISOString().split('T')[0];
     if (syncTo >= today) {
-      toast.error('당일 데이터는 조회할 수 없습니다. 종료일을 어제 이전으로 설정해주세요.');
+      toast.error(
+        '당일 데이터는 조회할 수 없습니다. 종료일을 어제 이전으로 설정해주세요.',
+      );
       return;
     }
 
@@ -137,7 +153,11 @@ export default function SalesPage() {
       const res = await fetch('/api/sync/smartstore', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ from, to, channelId: syncChannelId || undefined }),
+        body: JSON.stringify({
+          from,
+          to,
+          channelId: syncChannelId || undefined,
+        }),
       });
 
       const data = await res.json();
@@ -180,7 +200,11 @@ export default function SalesPage() {
     }
   };
 
-  const updatePrice = (productId: string, field: keyof PriceInput, value: string) => {
+  const updatePrice = (
+    productId: string,
+    field: keyof PriceInput,
+    value: string,
+  ) => {
     setPriceInputs((prev) => ({
       ...prev,
       [productId]: { ...prev[productId], [field]: value },
@@ -201,10 +225,14 @@ export default function SalesPage() {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              sellingPrice: input.sellingPrice ? parseFloat(input.sellingPrice) : null,
+              sellingPrice: input.sellingPrice
+                ? parseFloat(input.sellingPrice)
+                : null,
               costPrice: input.costPrice ? parseFloat(input.costPrice) : null,
               shippingCost: parseFloat(input.shippingCost) || 0,
-              freeShippingMin: input.freeShippingMin ? parseFloat(input.freeShippingMin) : null,
+              freeShippingMin: input.freeShippingMin
+                ? parseFloat(input.freeShippingMin)
+                : null,
             }),
           });
           if (res.ok) savedCount++;
@@ -280,7 +308,8 @@ export default function SalesPage() {
             네이버 커머스 API로 주문 데이터를 자동으로 가져옵니다
           </p>
           <div className="mt-4 flex flex-wrap items-end gap-3">
-            {channels.filter((ch) => ch.code.startsWith('SMARTSTORE')).length > 1 && (
+            {channels.filter((ch) => ch.code.startsWith('SMARTSTORE')).length >
+              1 && (
               <div>
                 <label className="mb-1 block text-xs font-medium text-muted-foreground">
                   스토어
@@ -290,9 +319,13 @@ export default function SalesPage() {
                   onChange={(e) => setSyncChannelId(e.target.value)}
                   className="rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                 >
-                  {channels.filter((ch) => ch.code.startsWith('SMARTSTORE')).map((ch) => (
-                    <option key={ch.id} value={ch.id}>{ch.name}</option>
-                  ))}
+                  {channels
+                    .filter((ch) => ch.code.startsWith('SMARTSTORE'))
+                    .map((ch) => (
+                      <option key={ch.id} value={ch.id}>
+                        {ch.name}
+                      </option>
+                    ))}
                 </select>
               </div>
             )}
@@ -379,7 +412,10 @@ export default function SalesPage() {
       {/* 주문/판매 목록 */}
       <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
         {isRocketGrowth ? (
-          <DailySalesTable channelId={selectedChannel} refreshKey={refreshKey} />
+          <DailySalesTable
+            channelId={selectedChannel}
+            refreshKey={refreshKey}
+          />
         ) : (
           <OrderTable channelId={selectedChannel} refreshKey={refreshKey} />
         )}
@@ -391,8 +427,8 @@ export default function SalesPage() {
           <DialogHeader>
             <DialogTitle>신규 상품 가격 설정</DialogTitle>
             <p className="text-sm text-muted-foreground">
-              새로 등록된 상품 {newProducts.length}개의 판매가/원가를 설정해주세요.
-              나중에 상품 관리에서도 수정할 수 있습니다.
+              새로 등록된 상품 {newProducts.length}개의 판매가/원가를
+              설정해주세요. 나중에 상품 관리에서도 수정할 수 있습니다.
             </p>
           </DialogHeader>
           <div className="space-y-4">
@@ -411,47 +447,69 @@ export default function SalesPage() {
                 </div>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <div className="space-y-1">
-                    <label className="text-xs text-muted-foreground">판매가 (원)</label>
+                    <label className="text-xs text-muted-foreground">
+                      판매가 (원)
+                    </label>
                     <input
                       type="number"
                       value={priceInputs[product.id]?.sellingPrice || ''}
-                      onChange={(e) => updatePrice(product.id, 'sellingPrice', e.target.value)}
+                      onChange={(e) =>
+                        updatePrice(product.id, 'sellingPrice', e.target.value)
+                      }
                       placeholder="0"
                       className="w-full rounded-lg border border-input bg-background px-3 py-1.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-ring"
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs text-muted-foreground">원가 (원)</label>
+                    <label className="text-xs text-muted-foreground">
+                      원가 (원)
+                    </label>
                     <input
                       type="number"
                       value={priceInputs[product.id]?.costPrice || ''}
-                      onChange={(e) => updatePrice(product.id, 'costPrice', e.target.value)}
+                      onChange={(e) =>
+                        updatePrice(product.id, 'costPrice', e.target.value)
+                      }
                       placeholder="0"
                       className="w-full rounded-lg border border-input bg-background px-3 py-1.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-ring"
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs text-muted-foreground">기본 배송비 (원)</label>
+                    <label className="text-xs text-muted-foreground">
+                      기본 배송비 (원)
+                    </label>
                     <input
                       type="number"
                       value={priceInputs[product.id]?.shippingCost || ''}
-                      onChange={(e) => updatePrice(product.id, 'shippingCost', e.target.value)}
+                      onChange={(e) =>
+                        updatePrice(product.id, 'shippingCost', e.target.value)
+                      }
                       placeholder="3000"
                       className="w-full rounded-lg border border-input bg-background px-3 py-1.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-ring"
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs text-muted-foreground">무료배송 기준 (원)</label>
+                    <label className="text-xs text-muted-foreground">
+                      무료배송 기준 (원)
+                    </label>
                     <input
                       type="number"
                       value={priceInputs[product.id]?.freeShippingMin || ''}
-                      onChange={(e) => updatePrice(product.id, 'freeShippingMin', e.target.value)}
+                      onChange={(e) =>
+                        updatePrice(
+                          product.id,
+                          'freeShippingMin',
+                          e.target.value,
+                        )
+                      }
                       placeholder="비워두면 조건 없음"
                       className="w-full rounded-lg border border-input bg-background px-3 py-1.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-ring"
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs text-muted-foreground">브랜드</label>
+                    <label className="text-xs text-muted-foreground">
+                      브랜드
+                    </label>
                     <select
                       value={priceInputs[product.id]?.brand || ''}
                       onChange={(e) => {
@@ -462,21 +520,35 @@ export default function SalesPage() {
                     >
                       <option value="">선택 안함</option>
                       {BRANDS.map((b) => (
-                        <option key={b.name} value={b.name}>{b.name}</option>
+                        <option key={b.name} value={b.name}>
+                          {b.name}
+                        </option>
                       ))}
                     </select>
                   </div>
                   {priceInputs[product.id]?.brand && (
                     <div className="space-y-1">
-                      <label className="text-xs text-muted-foreground">분류</label>
+                      <label className="text-xs text-muted-foreground">
+                        분류
+                      </label>
                       <select
                         value={priceInputs[product.id]?.brandCategory || ''}
-                        onChange={(e) => updatePrice(product.id, 'brandCategory', e.target.value)}
+                        onChange={(e) =>
+                          updatePrice(
+                            product.id,
+                            'brandCategory',
+                            e.target.value,
+                          )
+                        }
                         className="w-full rounded-lg border border-input bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                       >
                         <option value="">분류 선택</option>
-                        {BRANDS.find((b) => b.name === priceInputs[product.id]?.brand)?.categories.map((cat) => (
-                          <option key={cat} value={cat}>{cat}</option>
+                        {BRANDS.find(
+                          (b) => b.name === priceInputs[product.id]?.brand,
+                        )?.categories.map((cat) => (
+                          <option key={cat} value={cat}>
+                            {cat}
+                          </option>
                         ))}
                       </select>
                     </div>

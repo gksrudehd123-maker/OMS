@@ -75,34 +75,66 @@ export function SalesTrendChart({ data }: { data: DailyData[] }) {
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-            <XAxis dataKey="date" tickFormatter={formatDate} className="text-xs" tick={{ fill: '#9CA3AF' }} />
-            <YAxis tickFormatter={formatCurrency} className="text-xs" tick={{ fill: '#9CA3AF' }} />
+            <XAxis
+              dataKey="date"
+              tickFormatter={formatDate}
+              className="text-xs"
+              tick={{ fill: '#9CA3AF' }}
+            />
+            <YAxis
+              tickFormatter={formatCurrency}
+              className="text-xs"
+              tick={{ fill: '#9CA3AF' }}
+            />
             <Tooltip
               content={({ active, payload, label }) => {
                 if (!active || !payload?.length) return null;
                 return (
                   <div className="rounded-lg border border-border bg-card p-3 shadow-md">
-                    <p className="text-xs text-muted-foreground mb-2">{label}</p>
+                    <p className="text-xs text-muted-foreground mb-2">
+                      {label}
+                    </p>
                     {payload.map((entry) => (
-                      <p key={entry.name} className="text-sm font-mono" style={{ color: entry.color }}>
-                        {entry.name === 'sales' ? '매출' : '마진'}: ₩{Number(entry.value).toLocaleString()}
+                      <p
+                        key={entry.name}
+                        className="text-sm font-mono"
+                        style={{ color: entry.color }}
+                      >
+                        {entry.name === 'sales' ? '매출' : '마진'}: ₩
+                        {Number(entry.value).toLocaleString()}
                       </p>
                     ))}
                   </div>
                 );
               }}
             />
-            <Area type="monotone" dataKey="sales" stroke="#3B82F6" fill="url(#salesGrad)" strokeWidth={2} name="sales" />
-            <Area type="monotone" dataKey="margin" stroke="#22C55E" fill="url(#marginGrad)" strokeWidth={2} name="margin" />
+            <Area
+              type="monotone"
+              dataKey="sales"
+              stroke="#3B82F6"
+              fill="url(#salesGrad)"
+              strokeWidth={2}
+              name="sales"
+            />
+            <Area
+              type="monotone"
+              dataKey="margin"
+              stroke="#22C55E"
+              fill="url(#marginGrad)"
+              strokeWidth={2}
+              name="margin"
+            />
           </AreaChart>
         </ResponsiveContainer>
       </div>
       <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
         <div className="flex items-center gap-1.5">
-          <div className="h-2.5 w-2.5 rounded-full bg-blue-500" />매출
+          <div className="h-2.5 w-2.5 rounded-full bg-blue-500" />
+          매출
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="h-2.5 w-2.5 rounded-full bg-green-500" />마진
+          <div className="h-2.5 w-2.5 rounded-full bg-green-500" />
+          마진
         </div>
       </div>
     </>
@@ -124,7 +156,10 @@ export function ChannelBarChart({ data }: { data: ChannelData[] }) {
         <BarChart data={data}>
           <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
           <XAxis dataKey="name" tick={{ fill: '#9CA3AF', fontSize: 11 }} />
-          <YAxis tickFormatter={formatCurrency} tick={{ fill: '#9CA3AF', fontSize: 11 }} />
+          <YAxis
+            tickFormatter={formatCurrency}
+            tick={{ fill: '#9CA3AF', fontSize: 11 }}
+          />
           <Tooltip
             content={({ active, payload }) => {
               if (!active || !payload?.length) return null;
@@ -133,14 +168,29 @@ export function ChannelBarChart({ data }: { data: ChannelData[] }) {
                 <div className="rounded-lg border border-border bg-card p-3 shadow-md">
                   <p className="text-sm font-medium">{d.name}</p>
                   <div className="mt-2 space-y-1 font-mono text-sm">
-                    <p className="text-blue-500">매출: ₩{d.sales.toLocaleString()}</p>
-                    <p className="text-green-500">마진: ₩{d.margin.toLocaleString()}</p>
-                    <p className="text-muted-foreground">마진율: {d.marginRate.toFixed(1)}%</p>
-                    <p className="text-muted-foreground">주문수: {d.orders}건</p>
+                    <p className="text-blue-500">
+                      매출: ₩{d.sales.toLocaleString()}
+                    </p>
+                    <p className="text-green-500">
+                      마진: ₩{d.margin.toLocaleString()}
+                    </p>
+                    <p className="text-muted-foreground">
+                      마진율: {d.marginRate.toFixed(1)}%
+                    </p>
+                    <p className="text-muted-foreground">
+                      주문수: {d.orders}건
+                    </p>
                     {d.adCost !== undefined && d.adCost > 0 && (
                       <>
-                        <p className="text-orange-500">광고비: ₩{d.adCost.toLocaleString()}</p>
-                        <p className="text-orange-500">ROAS: {d.roas !== null && d.roas !== undefined ? `${d.roas.toFixed(2)}x` : '-'}</p>
+                        <p className="text-orange-500">
+                          광고비: ₩{d.adCost.toLocaleString()}
+                        </p>
+                        <p className="text-orange-500">
+                          ROAS:{' '}
+                          {d.roas !== null && d.roas !== undefined
+                            ? `${d.roas.toFixed(2)}x`
+                            : '-'}
+                        </p>
                       </>
                     )}
                   </div>
@@ -148,9 +198,21 @@ export function ChannelBarChart({ data }: { data: ChannelData[] }) {
               );
             }}
           />
-          <Legend formatter={(value: string) => (value === 'sales' ? '매출' : '마진')} />
-          <Bar dataKey="sales" fill="#3B82F6" radius={[4, 4, 0, 0]} name="sales" />
-          <Bar dataKey="margin" fill="#22C55E" radius={[4, 4, 0, 0]} name="margin" />
+          <Legend
+            formatter={(value: string) => (value === 'sales' ? '매출' : '마진')}
+          />
+          <Bar
+            dataKey="sales"
+            fill="#3B82F6"
+            radius={[4, 4, 0, 0]}
+            name="sales"
+          />
+          <Bar
+            dataKey="margin"
+            fill="#22C55E"
+            radius={[4, 4, 0, 0]}
+            name="margin"
+          />
         </BarChart>
       </ResponsiveContainer>
     </div>
@@ -159,17 +221,24 @@ export function ChannelBarChart({ data }: { data: ChannelData[] }) {
 
 export function ProductRankChart({ data }: { data: ProductMargin[] }) {
   const chartData = (() => {
-    const grouped: Record<string, { name: string; orders: number; sales: number }> = {};
+    const grouped: Record<
+      string,
+      { name: string; orders: number; sales: number }
+    > = {};
     for (const p of data) {
       if (p.orders <= 0) continue;
-      if (!grouped[p.name]) grouped[p.name] = { name: p.name, orders: 0, sales: 0 };
+      if (!grouped[p.name])
+        grouped[p.name] = { name: p.name, orders: 0, sales: 0 };
       grouped[p.name].orders += p.orders;
       grouped[p.name].sales += p.sales;
     }
     return Object.values(grouped)
       .sort((a, b) => b.orders - a.orders)
       .slice(0, 10)
-      .map((p) => ({ ...p, label: p.name.length > 18 ? p.name.slice(0, 18) + '...' : p.name }));
+      .map((p) => ({
+        ...p,
+        label: p.name.length > 18 ? p.name.slice(0, 18) + '...' : p.name,
+      }));
   })();
 
   if (chartData.length === 0) {
@@ -183,14 +252,31 @@ export function ProductRankChart({ data }: { data: ProductMargin[] }) {
   return (
     <div className="mt-4 h-64 sm:h-[300px]">
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={chartData} layout="vertical" margin={{ left: 10, right: 20 }}>
-          <CartesianGrid strokeDasharray="3 3" className="stroke-border" horizontal={false} />
+        <BarChart
+          data={chartData}
+          layout="vertical"
+          margin={{ left: 10, right: 20 }}
+        >
+          <CartesianGrid
+            strokeDasharray="3 3"
+            className="stroke-border"
+            horizontal={false}
+          />
           <XAxis type="number" tick={{ fill: '#9CA3AF', fontSize: 11 }} />
-          <YAxis type="category" dataKey="label" width={140} tick={{ fill: '#9CA3AF', fontSize: 11 }} />
+          <YAxis
+            type="category"
+            dataKey="label"
+            width={140}
+            tick={{ fill: '#9CA3AF', fontSize: 11 }}
+          />
           <Tooltip
             content={({ active, payload }) => {
               if (!active || !payload?.length) return null;
-              const d = payload[0].payload as { name: string; orders: number; sales: number };
+              const d = payload[0].payload as {
+                name: string;
+                orders: number;
+                sales: number;
+              };
               return (
                 <div className="rounded-lg border border-border bg-card p-3 shadow-md max-w-[250px]">
                   <p className="text-xs font-medium truncate">{d.name}</p>

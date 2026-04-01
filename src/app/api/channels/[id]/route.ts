@@ -19,7 +19,9 @@ export async function PATCH(
     data: body,
   });
 
-  const changes = before ? diffChanges(before as unknown as Record<string, unknown>, body) : undefined;
+  const changes = before
+    ? diffChanges(before as unknown as Record<string, unknown>, body)
+    : undefined;
   writeAuditLog({
     userId: user.id,
     userName: user.name,

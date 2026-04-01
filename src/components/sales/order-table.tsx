@@ -36,12 +36,21 @@ type Order = {
   margin: MarginData;
 };
 
-export function OrderTable({ channelId, refreshKey }: { channelId?: string; refreshKey: number }) {
+export function OrderTable({
+  channelId,
+  refreshKey,
+}: {
+  channelId?: string;
+  refreshKey: number;
+}) {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const limit = 20;
 
-  const { data, isLoading: loading } = useQuery<{ data: Order[]; meta: { total: number } }>({
+  const { data, isLoading: loading } = useQuery<{
+    data: Order[];
+    meta: { total: number };
+  }>({
     queryKey: ['orders', channelId, page, search, refreshKey],
     queryFn: async () => {
       const params = new URLSearchParams({
@@ -74,7 +83,9 @@ export function OrderTable({ channelId, refreshKey }: { channelId?: string; refr
             }}
             className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring sm:w-auto"
           />
-          <span className="shrink-0 text-sm text-muted-foreground">총 {total}건</span>
+          <span className="shrink-0 text-sm text-muted-foreground">
+            총 {total}건
+          </span>
         </div>
       </div>
 

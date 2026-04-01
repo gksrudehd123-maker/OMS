@@ -68,7 +68,8 @@ export function calculateMargin(input: MarginInput): MarginResult {
   }
 
   const margin = salesAmount - costAmount - fee - shipping;
-  const marginRate = salesAmount > 0 ? Math.round((margin / salesAmount) * 1000) / 10 : 0;
+  const marginRate =
+    salesAmount > 0 ? Math.round((margin / salesAmount) * 1000) / 10 : 0;
 
   return {
     salesAmount,
