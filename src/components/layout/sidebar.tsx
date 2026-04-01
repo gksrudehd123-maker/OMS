@@ -15,6 +15,8 @@ import {
   ScrollText,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
   Menu,
   X,
 } from 'lucide-react';
@@ -22,14 +24,18 @@ import { useSession } from 'next-auth/react';
 import { cn } from '@/lib/utils';
 import { useState, useEffect } from 'react';
 
-const navItems = [
+const mainNavItems = [
   { href: '/', label: '대시보드', icon: LayoutDashboard },
   { href: '/sales', label: '매출 관리', icon: ShoppingCart },
   { href: '/products', label: '상품 관리', icon: Package },
   { href: '/margins', label: '마진 분석', icon: TrendingUp },
-  { href: '/channels', label: '채널 분석', icon: Store },
   { href: '/ad-costs', label: '광고비 관리', icon: Megaphone },
   { href: '/reports', label: '리포트', icon: FileBarChart },
+];
+
+const settingsSubItems = [
+  { href: '/settings', label: '설정', icon: Settings },
+  { href: '/channels', label: '채널 분석', icon: Store },
   { href: '/users', label: '사용자 관리', icon: Users, ownerOnly: true },
   {
     href: '/audit-logs',
@@ -37,7 +43,6 @@ const navItems = [
     icon: ScrollText,
     ownerOnly: true,
   },
-  { href: '/settings', label: '설정', icon: Settings },
 ];
 
 export function Sidebar() {
@@ -45,9 +50,23 @@ export function Sidebar() {
   const { data: session } = useSession();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const isOwner = session?.user?.role === 'OWNER';
-  const visibleItems = navItems.filter((item) => !item.ownerOnly || isOwner);
+  const visibleSubItems = settingsSubItems.filter(
+    (item) => !item.ownerOnly || isOwner,
+  );
+
+  // 설정 하위 메뉴가 활성화되어 있으면 자동으로 열기
+  const isSettingsActive = visibleSubItems.some((item) =>
+    item.href === '/'
+      ? pathname === '/'
+      : pathname.startsWith(item.href),
+  );
+
+  useEffect(() => {
+    if (isSettingsActive) setSettingsOpen(true);
+  }, [isSettingsActive]);
 
   // 모바일 메뉴 열릴 때 스크롤 방지
   useEffect(() => {
@@ -65,6 +84,103 @@ export function Sidebar() {
   useEffect(() => {
     setMobileOpen(false);
   }, [pathname]);
+
+  const renderMainNav = (item: (typeof mainNavItems)[number], isMobile?: boolean) => {
+    const isActive =
+      item.href === '/' ? pathname === '/' : pathname.startsWith(item.href);
+    return (
+      <Link
+        key={item.href}
+        href={item.href}
+        className={cn(
+          'flex items-center gap-3 rounded-lg px-3 text-sm transition-colors',
+          isMobile ? 'py-2.5' : 'py-2',
+          isActive
+            ? 'bg-primary text-primary-foreground'
+            : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+          !isMobile && collapsed && 'justify-center px-2',
+        )}
+        title={!isMobile && collapsed ? item.label : undefined}
+      >
+        <item.icon className="h-5 w-5 shrink-0" />
+        {(isMobile || !collapsed) && <span>{item.label}</span>}
+      </Link>
+    );
+  };
+
+  const renderSettingsGroup = (isMobile?: boolean) => {
+    // 사이드바 접힌 상태에서는 설정 아이콘만 표시
+    if (!isMobile && collapsed) {
+      return (
+        <div className="space-y-1">
+          {visibleSubItems.map((item) => {
+            const isActive = pathname.startsWith(item.href);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  'flex items-center justify-center rounded-lg px-2 py-2 text-sm transition-colors',
+                  isActive
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+                )}
+                title={item.label}
+              >
+                <item.icon className="h-5 w-5 shrink-0" />
+              </Link>
+            );
+          })}
+        </div>
+      );
+    }
+
+    return (
+      <div>
+        <button
+          onClick={() => setSettingsOpen(!settingsOpen)}
+          className={cn(
+            'flex w-full items-center gap-3 rounded-lg px-3 text-sm transition-colors',
+            isMobile ? 'py-2.5' : 'py-2',
+            isSettingsActive
+              ? 'text-primary font-medium'
+              : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+          )}
+        >
+          <Settings className="h-5 w-5 shrink-0" />
+          <span className="flex-1 text-left">설정 / 관리</span>
+          {settingsOpen ? (
+            <ChevronUp className="h-4 w-4" />
+          ) : (
+            <ChevronDown className="h-4 w-4" />
+          )}
+        </button>
+        {settingsOpen && (
+          <div className="ml-4 mt-1 space-y-1 border-l border-border pl-3">
+            {visibleSubItems.map((item) => {
+              const isActive = pathname.startsWith(item.href);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    'flex items-center gap-3 rounded-lg px-3 text-sm transition-colors',
+                    isMobile ? 'py-2' : 'py-1.5',
+                    isActive
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+                  )}
+                >
+                  <item.icon className="h-4 w-4 shrink-0" />
+                  <span>{item.label}</span>
+                </Link>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <>
@@ -85,11 +201,10 @@ export function Sidebar() {
         />
       )}
 
-      {/* 사이드바 */}
+      {/* 데스크톱 사이드바 */}
       <aside
         className={cn(
           'fixed left-0 top-0 z-50 flex h-screen flex-col border-r border-border bg-background transition-all duration-300',
-          // 데스크톱
           'max-lg:hidden',
           collapsed ? 'w-16' : 'w-60',
         )}
@@ -118,30 +233,12 @@ export function Sidebar() {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 space-y-1 p-2">
-          {visibleItems.map((item) => {
-            const isActive =
-              item.href === '/'
-                ? pathname === '/'
-                : pathname.startsWith(item.href);
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  'flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors',
-                  isActive
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-muted-foreground hover:bg-muted hover:text-foreground',
-                  collapsed && 'justify-center px-2',
-                )}
-                title={collapsed ? item.label : undefined}
-              >
-                <item.icon className="h-5 w-5 shrink-0" />
-                {!collapsed && <span>{item.label}</span>}
-              </Link>
-            );
-          })}
+        <nav className="flex-1 flex flex-col p-2">
+          <div className="space-y-1">
+            {mainNavItems.map((item) => renderMainNav(item))}
+          </div>
+          <div className="my-2 border-t border-border" />
+          {renderSettingsGroup()}
         </nav>
       </aside>
 
@@ -167,28 +264,12 @@ export function Sidebar() {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 space-y-1 p-2">
-          {visibleItems.map((item) => {
-            const isActive =
-              item.href === '/'
-                ? pathname === '/'
-                : pathname.startsWith(item.href);
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors',
-                  isActive
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-muted-foreground hover:bg-muted hover:text-foreground',
-                )}
-              >
-                <item.icon className="h-5 w-5 shrink-0" />
-                <span>{item.label}</span>
-              </Link>
-            );
-          })}
+        <nav className="flex-1 flex flex-col p-2">
+          <div className="space-y-1">
+            {mainNavItems.map((item) => renderMainNav(item, true))}
+          </div>
+          <div className="my-2 border-t border-border" />
+          {renderSettingsGroup(true)}
         </nav>
       </aside>
     </>
