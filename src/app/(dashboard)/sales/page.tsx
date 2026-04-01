@@ -89,6 +89,7 @@ export default function SalesPage() {
   const [syncFrom, setSyncFrom] = useState('');
   const [syncTo, setSyncTo] = useState('');
   const [syncChannelId, setSyncChannelId] = useState('');
+  const [syncProgress, setSyncProgress] = useState({ current: 0, total: 0 });
 
   // RG 판매 날짜
   const [salesDate, setSalesDate] = useState('');
@@ -130,9 +131,24 @@ export default function SalesPage() {
   const isRocketGrowth =
     selectedChannelCode.toLowerCase() === 'coupang_rocket_growth';
 
+  // 조회 기간 일수 계산
+  const syncDays =
+    syncFrom && syncTo
+      ? Math.ceil(
+          (new Date(syncTo).getTime() - new Date(syncFrom).getTime()) /
+            (1000 * 60 * 60 * 24),
+        ) + 1
+      : 0;
+  const isSyncRangeOver = syncDays > 7;
+
   const handleSync = async () => {
     if (!syncFrom || !syncTo) {
       toast.error('동기화 기간을 선택해주세요');
+      return;
+    }
+
+    if (syncFrom > syncTo) {
+      toast.error('시작일이 종료일보다 클 수 없습니다');
       return;
     }
 
@@ -144,42 +160,71 @@ export default function SalesPage() {
       return;
     }
 
+    if (isSyncRangeOver) {
+      toast.error('조회 기간은 최대 7일까지 가능합니다');
+      return;
+    }
+
     setSyncing(true);
+    setSyncProgress({ current: 0, total: syncDays });
+
     try {
-      // 한국 시간대(+09:00) ISO 8601 형식 (네이버 API 요구사항)
-      const from = `${syncFrom}T00:00:00.000+09:00`;
-      const to = `${syncTo}T23:59:59.999+09:00`;
+      let totalSuccess = 0;
+      let totalDuplicates = 0;
+      let totalTotal = 0;
+      let allNewProducts: NewProduct[] = [];
 
-      const res = await fetch('/api/sync/smartstore', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          from,
-          to,
-          channelId: syncChannelId || undefined,
-        }),
-      });
+      // 하루씩 분할하여 순차 호출 + 진행률 표시
+      const startDate = new Date(syncFrom);
+      for (let i = 0; i < syncDays; i++) {
+        const currentDate = new Date(startDate);
+        currentDate.setDate(startDate.getDate() + i);
+        const dateStr = currentDate.toISOString().split('T')[0];
 
-      const data = await res.json();
+        setSyncProgress({ current: i + 1, total: syncDays });
 
-      if (!res.ok) {
-        toast.error(data.error || '동기화 실패');
-        return;
+        const from = `${dateStr}T00:00:00.000+09:00`;
+        const to = `${dateStr}T23:59:59.999+09:00`;
+
+        const res = await fetch('/api/sync/smartstore', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            from,
+            to,
+            channelId: syncChannelId || undefined,
+          }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          toast.error(`${dateStr} 동기화 실패: ${data.error || '오류 발생'}`);
+          continue;
+        }
+
+        totalTotal += data.summary?.total || 0;
+        totalSuccess += data.summary?.success || 0;
+        totalDuplicates += data.summary?.duplicates || 0;
+
+        if (data.newProducts && data.newProducts.length > 0) {
+          allNewProducts = [...allNewProducts, ...data.newProducts];
+        }
       }
 
-      if (data.summary.total === 0) {
-        toast.info(data.message);
+      if (totalTotal === 0) {
+        toast.info('해당 기간에 주문이 없습니다');
       } else {
         toast.success(
-          `${data.summary.success}건 동기화 완료 (중복: ${data.summary.duplicates}건, 신규상품: ${data.summary.newProducts || 0}건)`,
+          `${totalSuccess}건 동기화 완료 (중복: ${totalDuplicates}건, 신규상품: ${allNewProducts.length}건)`,
         );
         setRefreshKey((k) => k + 1);
 
         // 신규 상품이 있으면 가격 설정 팝업
-        if (data.newProducts && data.newProducts.length > 0) {
-          setNewProducts(data.newProducts);
+        if (allNewProducts.length > 0) {
+          setNewProducts(allNewProducts);
           const inputs: Record<string, PriceInput> = {};
-          for (const p of data.newProducts) {
+          for (const p of allNewProducts) {
             inputs[p.id] = {
               sellingPrice: '',
               costPrice: '',
@@ -197,6 +242,7 @@ export default function SalesPage() {
       toast.error('동기화 중 오류가 발생했습니다');
     } finally {
       setSyncing(false);
+      setSyncProgress({ current: 0, total: 0 });
     }
   };
 
@@ -353,7 +399,7 @@ export default function SalesPage() {
             </div>
             <button
               onClick={handleSync}
-              disabled={syncing}
+              disabled={syncing || isSyncRangeOver}
               className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:opacity-50"
             >
               {syncing ? (
@@ -361,9 +407,16 @@ export default function SalesPage() {
               ) : (
                 <RefreshCw className="h-4 w-4" />
               )}
-              {syncing ? '동기화 중...' : 'API 동기화'}
+              {syncing
+                ? `동기화 중... (${syncProgress.current}/${syncProgress.total}일)`
+                : 'API 동기화'}
             </button>
           </div>
+          {isSyncRangeOver && (
+            <p className="mt-2 text-sm text-red-500">
+              조회 기간은 최대 7일까지 가능합니다. (현재 {syncDays}일 선택됨)
+            </p>
+          )}
         </div>
       ) : (
         <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">

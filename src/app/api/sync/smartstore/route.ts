@@ -55,6 +55,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // 7일 초과 조회 차단
+    const fromMs = new Date(from).getTime();
+    const toMs = new Date(to).getTime();
+    const diffDays = (toMs - fromMs) / (1000 * 60 * 60 * 24);
+    if (diffDays > 7) {
+      return NextResponse.json(
+        { error: '조회 기간은 최대 7일까지 가능합니다' },
+        { status: 400 },
+      );
+    }
+
     // 채널 조회 (channelId 지정 시 해당 채널, 아니면 기본 스마트스토어)
     const channel = channelId
       ? await prisma.channel.findUnique({ where: { id: channelId } })
