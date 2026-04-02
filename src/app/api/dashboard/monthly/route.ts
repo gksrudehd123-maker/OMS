@@ -139,8 +139,9 @@ export async function GET(request: NextRequest) {
     { name: string; sales: number; orders: number }
   > = {};
 
-  // 브랜드별 판매 갯수 집계
-  const brandSalesMap: Record<string, Record<string, number>> = {};
+  // 브랜드별 판매 갯수 집계 (채널별 분리)
+  // brandChannelMap: { '방짜': { '스마트스토어': { '배터리 KF-9': 5 }, '쿠팡 로켓그로스': { '배터리 KF-9': 3 } } }
+  const brandChannelMap: Record<string, Record<string, Record<string, number>>> = {};
 
   for (const order of orders) {
     const margin = calculateMargin({
@@ -171,13 +172,15 @@ export async function GET(request: NextRequest) {
       channelSalesMap[chId] = { name: order.channel.name, sales: 0, orders: 0 };
     channelSalesMap[chId].orders++;
 
-    // 브랜드별 판매 갯수
+    // 브랜드별 판매 갯수 (채널별)
     if (order.product.brand && order.product.brandCategory) {
       const brand = order.product.brand;
+      const chName = order.channel.name;
       const cat = order.product.brandCategory;
-      if (!brandSalesMap[brand]) brandSalesMap[brand] = {};
-      brandSalesMap[brand][cat] =
-        (brandSalesMap[brand][cat] || 0) + order.quantity;
+      if (!brandChannelMap[brand]) brandChannelMap[brand] = {};
+      if (!brandChannelMap[brand][chName]) brandChannelMap[brand][chName] = {};
+      brandChannelMap[brand][chName][cat] =
+        (brandChannelMap[brand][chName][cat] || 0) + order.quantity;
     }
 
     if (margin.isCalculable) {
@@ -224,13 +227,15 @@ export async function GET(request: NextRequest) {
     channelSalesMap[chId].sales += rgSalesAmt;
     channelSalesMap[chId].orders += ds.salesQuantity;
 
-    // 브랜드별 판매 갯수
+    // 브랜드별 판매 갯수 (채널별)
     if (ds.product.brand && ds.product.brandCategory) {
       const brand = ds.product.brand;
+      const chName = ds.channel.name;
       const cat = ds.product.brandCategory;
-      if (!brandSalesMap[brand]) brandSalesMap[brand] = {};
-      brandSalesMap[brand][cat] =
-        (brandSalesMap[brand][cat] || 0) + ds.salesQuantity;
+      if (!brandChannelMap[brand]) brandChannelMap[brand] = {};
+      if (!brandChannelMap[brand][chName]) brandChannelMap[brand][chName] = {};
+      brandChannelMap[brand][chName][cat] =
+        (brandChannelMap[brand][chName][cat] || 0) + ds.salesQuantity;
     }
 
     if (rgMargin.isCalculable) {
@@ -299,16 +304,24 @@ export async function GET(request: NextRequest) {
             cost: Math.round(ch.cost),
           }))
           .sort((a, b) => b.cost - a.cost),
-    brandSales: Object.entries(brandSalesMap)
-      .map(([brand, categories]) => ({
-        brand,
-        total: Object.values(categories).reduce((s, v) => s + v, 0),
-        categories: Object.entries(categories)
-          .map(([category, quantity]) => ({ category, quantity }))
-          .sort((a, b) => b.quantity - a.quantity),
-      }))
+    brandSales: Object.entries(brandChannelMap)
+      .map(([brand, channels]) => {
+        const channelList = Object.entries(channels)
+          .map(([channelName, categories]) => ({
+            channelName,
+            total: Object.values(categories).reduce((s, v) => s + v, 0),
+            categories: Object.entries(categories)
+              .map(([category, quantity]) => ({ category, quantity }))
+              .sort((a, b) => b.quantity - a.quantity),
+          }))
+          .sort((a, b) => b.total - a.total);
+        return {
+          brand,
+          total: channelList.reduce((s, ch) => s + ch.total, 0),
+          channels: channelList,
+        };
+      })
       .sort((a, b) => {
-        // 고정 순서: 방짜, 웰스파, 카모도
         const order = ['방짜', '웰스파', '카모도'];
         return (
           (order.indexOf(a.brand) === -1 ? 99 : order.indexOf(a.brand)) -

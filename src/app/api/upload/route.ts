@@ -138,6 +138,7 @@ export async function POST(request: NextRequest) {
                 id: true,
                 name: true,
                 optionInfo: true,
+                sellingPrice: true,
                 costPrice: true,
                 feeRate: true,
                 fulfillmentFee: true,

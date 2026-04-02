@@ -25,6 +25,12 @@ export async function processDailySales(
   for (const sale of parsedSales) {
     try {
       // 상품 조회 후 없으면 생성
+      // 판매가 자동 계산 (salesAmount / salesQuantity)
+      const autoSellingPrice =
+        sale.salesQuantity > 0
+          ? Math.round(sale.salesAmount / sale.salesQuantity)
+          : null;
+
       let product = await prisma.product.findUnique({
         where: { productKey: sale.productKey },
       });
@@ -36,7 +42,16 @@ export async function processDailySales(
             optionInfo: '',
             productKey: sale.productKey,
             shippingCost: 0,
+            sellingPrice: autoSellingPrice,
+            fulfillmentFee: 0,
+            couponDiscount: 0,
           },
+        });
+      } else if (autoSellingPrice && !product.sellingPrice) {
+        // 기존 상품이지만 판매가가 없으면 자동 설정
+        product = await prisma.product.update({
+          where: { id: product.id },
+          data: { sellingPrice: autoSellingPrice },
         });
       }
       if (isNew) {

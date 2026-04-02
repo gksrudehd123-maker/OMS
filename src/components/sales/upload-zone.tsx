@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import {
   Upload,
@@ -8,6 +8,7 @@ import {
   CheckCircle,
   XCircle,
   Package,
+  CalendarCheck,
 } from 'lucide-react';
 import {
   Dialog,
@@ -52,6 +53,7 @@ type PriceInput = {
 };
 
 type RGPriceInput = {
+  sellingPrice: string;
   costPrice: string;
   feeRate: string;
   fulfillmentFee: string;
@@ -82,15 +84,22 @@ const BRANDS = [
   },
 ];
 
+// 파일명에서 날짜 추출: Statistics-YYYYMMDD~YYYYMMDD_(n).xlsx
+function extractDateFromFilename(filename: string): { from: string; to: string } | null {
+  const match = filename.match(/(\d{4})(\d{2})(\d{2})~(\d{4})(\d{2})(\d{2})/);
+  if (!match) return null;
+  const from = `${match[1]}-${match[2]}-${match[3]}`;
+  const to = `${match[4]}-${match[5]}-${match[6]}`;
+  return { from, to };
+}
+
 export function UploadZone({
   channelId,
   channelCode,
-  salesDate,
   onUploadComplete,
 }: {
   channelId: string;
   channelCode?: string;
-  salesDate?: string;
   onUploadComplete: () => void;
 }) {
   const [uploading, setUploading] = useState(false);
@@ -108,18 +117,15 @@ export function UploadZone({
   const [isRGUpload, setIsRGUpload] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  // 로켓그로스 날짜 확인 팝업
+  const [showDateConfirm, setShowDateConfirm] = useState(false);
+  const [extractedDate, setExtractedDate] = useState<{ from: string; to: string } | null>(null);
+  const pendingFileRef = useRef<File | null>(null);
+
   const isRocketGrowth = channelCode?.toLowerCase() === 'coupang_rocket_growth';
 
-  const onDrop = useCallback(
-    async (acceptedFiles: File[]) => {
-      const file = acceptedFiles[0];
-      if (!file) return;
-
-      if (!file.name.endsWith('.xlsx')) {
-        toast.error('xlsx 파일만 업로드 가능합니다');
-        return;
-      }
-
+  const doUpload = useCallback(
+    async (file: File, salesDate?: string) => {
       setUploading(true);
       setResult(null);
 
@@ -156,6 +162,7 @@ export function UploadZone({
             const inputs: Record<string, RGPriceInput> = {};
             for (const p of data.newProducts) {
               inputs[p.id] = {
+                sellingPrice: p.sellingPrice ? String(p.sellingPrice) : '',
                 costPrice: '',
                 feeRate: '',
                 fulfillmentFee: '',
@@ -187,8 +194,48 @@ export function UploadZone({
         setUploading(false);
       }
     },
-    [channelId, salesDate, onUploadComplete],
+    [channelId, onUploadComplete],
   );
+
+  const onDrop = useCallback(
+    async (acceptedFiles: File[]) => {
+      const file = acceptedFiles[0];
+      if (!file) return;
+
+      if (!file.name.endsWith('.xlsx')) {
+        toast.error('xlsx 파일만 업로드 가능합니다');
+        return;
+      }
+
+      if (isRocketGrowth) {
+        const dates = extractDateFromFilename(file.name);
+        if (!dates) {
+          toast.error('파일명에서 날짜를 추출할 수 없습니다. (예: Statistics-20260301~20260301.xlsx)');
+          return;
+        }
+        pendingFileRef.current = file;
+        setExtractedDate(dates);
+        setShowDateConfirm(true);
+        return;
+      }
+
+      doUpload(file);
+    },
+    [isRocketGrowth, doUpload],
+  );
+
+  const handleDateConfirm = () => {
+    if (!pendingFileRef.current || !extractedDate) return;
+    setShowDateConfirm(false);
+    doUpload(pendingFileRef.current, extractedDate.from);
+    pendingFileRef.current = null;
+  };
+
+  const handleDateCancel = () => {
+    setShowDateConfirm(false);
+    pendingFileRef.current = null;
+    setExtractedDate(null);
+  };
 
   const updatePrice = (
     productId: string,
@@ -222,11 +269,12 @@ export function UploadZone({
           const input = rgPriceInputs[product.id];
           if (!input) continue;
 
-          if (input.costPrice || input.feeRate || input.fulfillmentFee) {
+          if (input.sellingPrice || input.costPrice || input.feeRate || input.fulfillmentFee) {
             const res = await fetch(`/api/products/${product.id}`, {
               method: 'PATCH',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
+                sellingPrice: input.sellingPrice ? parseFloat(input.sellingPrice) : null,
                 costPrice: input.costPrice ? parseFloat(input.costPrice) : null,
                 feeRate: input.feeRate ? parseFloat(input.feeRate) : null,
                 fulfillmentFee: input.fulfillmentFee
@@ -383,9 +431,52 @@ export function UploadZone({
         </div>
       )}
 
+      {/* 로켓그로스 날짜 확인 팝업 */}
+      <Dialog open={showDateConfirm} onOpenChange={(open) => { if (!open) handleDateCancel(); }}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CalendarCheck className="h-5 w-5 text-primary" />
+              판매 날짜 확인
+            </DialogTitle>
+          </DialogHeader>
+          {extractedDate && (
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                파일명에서 추출한 판매 날짜가 맞는지 확인해주세요.
+              </p>
+              <div className="rounded-lg border border-border bg-muted/50 p-4 text-center">
+                <p className="text-lg font-bold font-mono">
+                  {extractedDate.from === extractedDate.to
+                    ? extractedDate.from
+                    : `${extractedDate.from} ~ ${extractedDate.to}`}
+                </p>
+              </div>
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={handleDateCancel}
+                  className="rounded-lg border border-input px-4 py-2 text-sm hover:bg-muted"
+                >
+                  취소
+                </button>
+                <button
+                  onClick={handleDateConfirm}
+                  className="rounded-lg bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90"
+                >
+                  확인, 업로드
+                </button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
       {/* 신규 상품 가격 설정 팝업 */}
       <Dialog open={showPriceDialog} onOpenChange={setShowPriceDialog}>
-        <DialogContent className="sm:max-w-[640px] max-h-[80vh] overflow-y-auto">
+        <DialogContent
+          className="sm:max-w-[720px] flex flex-col max-h-[80vh]"
+          onPointerDownOutside={(e) => e.preventDefault()}
+        >
           <DialogHeader>
             <DialogTitle>신규 상품 가격 설정</DialogTitle>
             <p className="text-sm text-muted-foreground">
@@ -394,7 +485,7 @@ export function UploadZone({
               나중에 상품 관리에서도 수정할 수 있습니다.
             </p>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-4 overflow-y-auto flex-1 min-h-0">
             {newProducts.map((product) => (
               <div
                 key={product.id}
@@ -412,6 +503,23 @@ export function UploadZone({
                 {isRGUpload ? (
                   /* RG 전용 필드 */
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <div className="space-y-1">
+                      <label className="text-xs text-muted-foreground">
+                        판매가 (원)
+                        {rgPriceInputs[product.id]?.sellingPrice && (
+                          <span className="ml-1 text-emerald-500">자동</span>
+                        )}
+                      </label>
+                      <input
+                        type="number"
+                        value={rgPriceInputs[product.id]?.sellingPrice || ''}
+                        onChange={(e) =>
+                          updateRGPrice(product.id, 'sellingPrice', e.target.value)
+                        }
+                        placeholder="판매수량 0이면 직접 입력"
+                        className="w-full rounded-lg border border-input bg-background px-3 py-1.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-ring"
+                      />
+                    </div>
                     <div className="space-y-1">
                       <label className="text-xs text-muted-foreground">
                         원가 (원)
@@ -648,21 +756,21 @@ export function UploadZone({
               </div>
             ))}
 
-            <div className="flex justify-end gap-2 pt-2">
-              <button
-                onClick={() => setShowPriceDialog(false)}
-                className="rounded-lg border border-input px-4 py-2 text-sm hover:bg-muted"
-              >
-                나중에 설정
-              </button>
-              <button
-                onClick={handleSavePrices}
-                disabled={saving}
-                className="rounded-lg bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-              >
-                {saving ? '저장 중...' : '저장'}
-              </button>
-            </div>
+          </div>
+          <div className="flex justify-end gap-2 border-t border-border pt-4 shrink-0">
+            <button
+              onClick={() => setShowPriceDialog(false)}
+              className="rounded-lg border border-input px-4 py-2 text-sm hover:bg-muted"
+            >
+              나중에 설정
+            </button>
+            <button
+              onClick={handleSavePrices}
+              disabled={saving}
+              className="rounded-lg bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+            >
+              {saving ? '저장 중...' : '저장'}
+            </button>
           </div>
         </DialogContent>
       </Dialog>

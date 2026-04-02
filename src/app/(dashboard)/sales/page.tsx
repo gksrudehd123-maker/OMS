@@ -91,8 +91,6 @@ export default function SalesPage() {
   const [syncChannelId, setSyncChannelId] = useState('');
   const [syncProgress, setSyncProgress] = useState({ current: 0, total: 0 });
 
-  // RG 판매 날짜
-  const [salesDate, setSalesDate] = useState('');
 
   // 신규 상품 가격 설정 팝업 (API 동기화용)
   const [showPriceDialog, setShowPriceDialog] = useState(false);
@@ -121,7 +119,6 @@ export default function SalesPage() {
     yesterday.setDate(yesterday.getDate() - 1);
     setSyncTo(formatDate(yesterday));
     setSyncFrom(formatDate(yesterday));
-    setSalesDate(formatDate(yesterday));
   }, []);
 
   const formatDate = (d: Date) => d.toISOString().split('T')[0];
@@ -430,30 +427,18 @@ export default function SalesPage() {
               {channels.length === 0 && (
                 <option value="">채널을 먼저 등록해주세요</option>
               )}
-              {channels.map((ch) => (
+              {channels
+                .filter((ch) => ch.code.toLowerCase() !== 'coupang_rocket_delivery')
+                .map((ch) => (
                 <option key={ch.id} value={ch.id}>
                   {ch.name}
                 </option>
               ))}
             </select>
-            {isRocketGrowth && (
-              <div>
-                <label className="mb-1 block text-xs font-medium text-muted-foreground">
-                  판매 날짜
-                </label>
-                <input
-                  type="date"
-                  value={salesDate}
-                  onChange={(e) => setSalesDate(e.target.value)}
-                  className="rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                />
-              </div>
-            )}
           </div>
           <UploadZone
             channelId={selectedChannel}
             channelCode={selectedChannelCode}
-            salesDate={isRocketGrowth ? salesDate : undefined}
             onUploadComplete={() => setRefreshKey((k) => k + 1)}
           />
         </div>

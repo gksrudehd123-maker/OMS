@@ -38,10 +38,16 @@ const ChannelAdCostChart = dynamic(
   { loading: () => <Skeleton className="h-[260px] w-full rounded-lg" /> },
 );
 
+type BrandChannel = {
+  channelName: string;
+  total: number;
+  categories: { category: string; quantity: number }[];
+};
+
 type BrandSales = {
   brand: string;
   total: number;
-  categories: { category: string; quantity: number }[];
+  channels: BrandChannel[];
 };
 
 type MonthlyData = {
@@ -290,18 +296,28 @@ export function MonthlySalesTab() {
                     {bs.total.toLocaleString()}개
                   </span>
                 </div>
-                <div className="mt-3 space-y-1.5">
-                  {bs.categories.map((cat) => (
-                    <div
-                      key={cat.category}
-                      className="flex items-center justify-between text-sm"
-                    >
-                      <span className="text-muted-foreground">
-                        {cat.category}
-                      </span>
-                      <span className="font-mono">
-                        {cat.quantity.toLocaleString()}개
-                      </span>
+                <div className="mt-3 space-y-3">
+                  {bs.channels.map((ch) => (
+                    <div key={ch.channelName}>
+                      <div className="flex items-center justify-between text-sm font-medium border-b border-border pb-1 mb-1.5">
+                        <span className="text-muted-foreground">{ch.channelName}</span>
+                        <span className="font-mono">{ch.total.toLocaleString()}개</span>
+                      </div>
+                      <div className="space-y-1 pl-3">
+                        {ch.categories.map((cat) => (
+                          <div
+                            key={cat.category}
+                            className="flex items-center justify-between text-sm"
+                          >
+                            <span className="text-muted-foreground">
+                              {cat.category}
+                            </span>
+                            <span className="font-mono">
+                              {cat.quantity.toLocaleString()}개
+                            </span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   ))}
                 </div>
