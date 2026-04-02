@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   ChevronDown,
@@ -10,6 +10,7 @@ import {
   Trash2,
   TrendingUp,
   Star,
+  Loader2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -385,12 +386,41 @@ function ProductCard({
   );
 }
 
+function getKSTToday(): string {
+  const now = new Date();
+  const kst = new Date(now.getTime() + 9 * 60 * 60 * 1000);
+  return kst.toISOString().split('T')[0];
+}
+
+function getUncheckedKeywords(budgets: AdBudget[]): { id: string; keyword: string }[] {
+  const today = getKSTToday();
+  const seen = new Set<string>();
+  const unchecked: { id: string; keyword: string }[] = [];
+
+  for (const budget of budgets) {
+    for (const kw of budget.product.keywords) {
+      if (seen.has(kw.id)) continue;
+      seen.add(kw.id);
+      const hasToday = kw.ranks.some(
+        (r) => r.date.slice(0, 10) === today,
+      );
+      if (!hasToday) unchecked.push({ id: kw.id, keyword: kw.keyword });
+    }
+  }
+  return unchecked;
+}
+
 export function AdBudgetTab() {
   const queryClient = useQueryClient();
   const now = new Date();
   const [selectedMonth, setSelectedMonth] = useState(
     `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`,
   );
+
+  // 키워드 자동 조회 state
+  const [checking, setChecking] = useState(false);
+  const [checkProgress, setCheckProgress] = useState({ current: 0, total: 0 });
+  const checkedRef = useRef(false);
 
   const { data, isLoading } = useQuery<{ success: boolean; data: AdBudget[] }>({
     queryKey: ['ad-budgets', selectedMonth],
@@ -403,6 +433,37 @@ export function AdBudgetTab() {
 
   const budgets = data?.data ?? [];
   const grouped = useMemo(() => groupByProduct(budgets), [budgets]);
+
+  // 키워드 자동 조회
+  const runKeywordCheck = useCallback(async (unchecked: { id: string; keyword: string }[]) => {
+    setChecking(true);
+    setCheckProgress({ current: 0, total: unchecked.length });
+
+    for (let i = 0; i < unchecked.length; i++) {
+      try {
+        await fetch('/api/keywords/check', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ keywordId: unchecked[i].id }),
+        });
+      } catch {
+        // 개별 실패는 무시하고 계속 진행
+      }
+      setCheckProgress({ current: i + 1, total: unchecked.length });
+    }
+
+    setChecking(false);
+    queryClient.invalidateQueries({ queryKey: ['ad-budgets'] });
+  }, [queryClient]);
+
+  useEffect(() => {
+    if (!data || isLoading || checking || checkedRef.current) return;
+    const unchecked = getUncheckedKeywords(budgets);
+    if (unchecked.length > 0) {
+      checkedRef.current = true;
+      runKeywordCheck(unchecked);
+    }
+  }, [data, isLoading, checking, budgets, runKeywordCheck]);
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -470,6 +531,16 @@ export function AdBudgetTab() {
           className="rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
         />
       </div>
+
+      {/* 키워드 순위 자동 조회 진행률 */}
+      {checking && (
+        <div className="flex items-center gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 dark:border-blue-800 dark:bg-blue-950">
+          <Loader2 className="h-4 w-4 animate-spin text-blue-600 dark:text-blue-400" />
+          <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
+            키워드 순위 조회 중... ({checkProgress.current}/{checkProgress.total}개)
+          </span>
+        </div>
+      )}
 
       {Array.from(grouped.entries()).map(([key, productBudgets]) => (
         <ProductCard
