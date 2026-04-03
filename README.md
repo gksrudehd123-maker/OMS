@@ -259,6 +259,7 @@ OMS/
 │       ├── helpers/                # 비즈니스 로직
 │       │   ├── margin-calc.ts      # 마진 계산 (스마트스토어/쿠팡 윙)
 │       │   ├── rg-margin-calc.ts   # 마진 계산 (로켓그로스, VAT 포함)
+│       │   ├── channel-colors.ts   # 채널별 고정 색상 매핑
 │       │   ├── date-utils.ts       # 날짜 유틸리티 (UTC→KST 변환)
 │       │   ├── product-key.ts
 │       │   └── __tests__/          # 단위 테스트 (Vitest)
@@ -469,6 +470,8 @@ GitHub Push → Vercel Auto Deploy (main branch → Production)
 - **신규 상품 팝업 UX 개선**: 팝업 너비 확대 (640→720px), 버튼 하단 고정 (스크롤 영역 분리), 바깥 클릭 닫힘 방지
 - **상품관리 예상 마진 실제 반영**: 로켓그로스는 수수료+VAT+입출고비 포함 rg-margin-calc 적용, 스마트스토어/쿠팡윙은 수수료+배송비 반영, 항목별 내역 표시
 - **브랜드별 판매 갯수 채널 분리**: 대시보드 월별 매출 탭에서 브랜드별 판매 갯수를 채널별로 분리 표시
+- **orderDate 타입 변경**: DateTime→Date 마이그레이션 (KST 기준 날짜만 저장), 관련 API/파서/UI 날짜 처리 통일
+- **채널별 차트 색상 통일**: 모든 차트에서 동일 채널은 동일 색상 표시 (스마트스토어=Blue, 쿠팡_윙=Green, 쿠팡_로켓그로스=Amber) — 일별 매출, 채널별 매출/광고비, 리포트 파이차트 적용
 
 ---
 

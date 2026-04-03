@@ -85,7 +85,9 @@ const BRANDS = [
 ];
 
 // 파일명에서 날짜 추출: Statistics-YYYYMMDD~YYYYMMDD_(n).xlsx
-function extractDateFromFilename(filename: string): { from: string; to: string } | null {
+function extractDateFromFilename(
+  filename: string,
+): { from: string; to: string } | null {
   const match = filename.match(/(\d{4})(\d{2})(\d{2})~(\d{4})(\d{2})(\d{2})/);
   if (!match) return null;
   const from = `${match[1]}-${match[2]}-${match[3]}`;
@@ -119,7 +121,10 @@ export function UploadZone({
 
   // 로켓그로스 날짜 확인 팝업
   const [showDateConfirm, setShowDateConfirm] = useState(false);
-  const [extractedDate, setExtractedDate] = useState<{ from: string; to: string } | null>(null);
+  const [extractedDate, setExtractedDate] = useState<{
+    from: string;
+    to: string;
+  } | null>(null);
   const pendingFileRef = useRef<File | null>(null);
 
   const isRocketGrowth = channelCode?.toLowerCase() === 'coupang_rocket_growth';
@@ -210,7 +215,9 @@ export function UploadZone({
       if (isRocketGrowth) {
         const dates = extractDateFromFilename(file.name);
         if (!dates) {
-          toast.error('파일명에서 날짜를 추출할 수 없습니다. (예: Statistics-20260301~20260301.xlsx)');
+          toast.error(
+            '파일명에서 날짜를 추출할 수 없습니다. (예: Statistics-20260301~20260301.xlsx)',
+          );
           return;
         }
         pendingFileRef.current = file;
@@ -269,12 +276,19 @@ export function UploadZone({
           const input = rgPriceInputs[product.id];
           if (!input) continue;
 
-          if (input.sellingPrice || input.costPrice || input.feeRate || input.fulfillmentFee) {
+          if (
+            input.sellingPrice ||
+            input.costPrice ||
+            input.feeRate ||
+            input.fulfillmentFee
+          ) {
             const res = await fetch(`/api/products/${product.id}`, {
               method: 'PATCH',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
-                sellingPrice: input.sellingPrice ? parseFloat(input.sellingPrice) : null,
+                sellingPrice: input.sellingPrice
+                  ? parseFloat(input.sellingPrice)
+                  : null,
                 costPrice: input.costPrice ? parseFloat(input.costPrice) : null,
                 feeRate: input.feeRate ? parseFloat(input.feeRate) : null,
                 fulfillmentFee: input.fulfillmentFee
@@ -432,7 +446,12 @@ export function UploadZone({
       )}
 
       {/* 로켓그로스 날짜 확인 팝업 */}
-      <Dialog open={showDateConfirm} onOpenChange={(open) => { if (!open) handleDateCancel(); }}>
+      <Dialog
+        open={showDateConfirm}
+        onOpenChange={(open) => {
+          if (!open) handleDateCancel();
+        }}
+      >
         <DialogContent className="sm:max-w-[400px]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -473,10 +492,7 @@ export function UploadZone({
 
       {/* 신규 상품 가격 설정 팝업 */}
       <Dialog open={showPriceDialog} onOpenChange={setShowPriceDialog}>
-        <DialogContent
-          className="sm:max-w-[720px] flex flex-col max-h-[80vh]"
-          onPointerDownOutside={(e) => e.preventDefault()}
-        >
+        <DialogContent className="sm:max-w-[720px] flex flex-col max-h-[80vh]">
           <DialogHeader>
             <DialogTitle>신규 상품 가격 설정</DialogTitle>
             <p className="text-sm text-muted-foreground">
@@ -514,7 +530,11 @@ export function UploadZone({
                         type="number"
                         value={rgPriceInputs[product.id]?.sellingPrice || ''}
                         onChange={(e) =>
-                          updateRGPrice(product.id, 'sellingPrice', e.target.value)
+                          updateRGPrice(
+                            product.id,
+                            'sellingPrice',
+                            e.target.value,
+                          )
                         }
                         placeholder="판매수량 0이면 직접 입력"
                         className="w-full rounded-lg border border-input bg-background px-3 py-1.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-ring"
@@ -755,7 +775,6 @@ export function UploadZone({
                 )}
               </div>
             ))}
-
           </div>
           <div className="flex justify-end gap-2 border-t border-border pt-4 shrink-0">
             <button

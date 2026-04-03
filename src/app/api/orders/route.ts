@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { calculateMargin } from '@/lib/helpers/margin-calc';
+import { parseDate } from '@/lib/helpers/date-utils';
 import {
   requireAuth,
   isError,
@@ -46,8 +47,8 @@ export async function GET(request: NextRequest) {
 
   if (from || to) {
     where.orderDate = {
-      ...(from ? { gte: new Date(from) } : {}),
-      ...(to ? { lte: new Date(to + 'T23:59:59') } : {}),
+      ...(from ? { gte: parseDate(from) } : {}),
+      ...(to ? { lte: parseDate(to) } : {}),
     };
   }
 

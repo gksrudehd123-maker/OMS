@@ -59,9 +59,7 @@ export function Sidebar() {
 
   // 설정 하위 메뉴가 활성화되어 있으면 자동으로 열기
   const isSettingsActive = visibleSubItems.some((item) =>
-    item.href === '/'
-      ? pathname === '/'
-      : pathname.startsWith(item.href),
+    item.href === '/' ? pathname === '/' : pathname.startsWith(item.href),
   );
 
   useEffect(() => {
@@ -85,7 +83,10 @@ export function Sidebar() {
     setMobileOpen(false);
   }, [pathname]);
 
-  const renderMainNav = (item: (typeof mainNavItems)[number], isMobile?: boolean) => {
+  const renderMainNav = (
+    item: (typeof mainNavItems)[number],
+    isMobile?: boolean,
+  ) => {
     const isActive =
       item.href === '/' ? pathname === '/' : pathname.startsWith(item.href);
     return (

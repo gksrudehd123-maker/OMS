@@ -537,69 +537,95 @@ export default function ProductsPage() {
               )}
 
               {/* 마진 미리보기 */}
-              {editSellingPrice && editCostPrice && (() => {
-                const sp = parseFloat(editSellingPrice);
-                const cp = parseFloat(editCostPrice);
-                const fr = parseFloat(editFeeRate) || 0;
+              {editSellingPrice &&
+                editCostPrice &&
+                (() => {
+                  const sp = parseFloat(editSellingPrice);
+                  const cp = parseFloat(editCostPrice);
+                  const fr = parseFloat(editFeeRate) || 0;
 
-                if (isRGProduct) {
-                  const ff = parseFloat(editFulfillmentFee) || 0;
-                  const cd = parseFloat(editCouponDiscount) || 0;
-                  const rgResult = calculateRGMargin({
-                    salesAmount: sp,
-                    salesQuantity: 1,
-                    costPrice: cp,
-                    feeRate: fr || null,
-                    fulfillmentFee: ff,
-                    couponDiscount: cd,
-                  });
-                  if (!rgResult.isCalculable) return null;
+                  if (isRGProduct) {
+                    const ff = parseFloat(editFulfillmentFee) || 0;
+                    const cd = parseFloat(editCouponDiscount) || 0;
+                    const rgResult = calculateRGMargin({
+                      salesAmount: sp,
+                      salesQuantity: 1,
+                      costPrice: cp,
+                      feeRate: fr || null,
+                      fulfillmentFee: ff,
+                      couponDiscount: cd,
+                    });
+                    if (!rgResult.isCalculable) return null;
+                    return (
+                      <div className="rounded-lg border border-border p-3 space-y-2">
+                        <p className="text-xs text-muted-foreground">
+                          예상 마진 (1개 판매 기준, VAT 포함)
+                        </p>
+                        <div className="flex items-center gap-3">
+                          <span
+                            className={`font-mono text-sm font-bold ${rgResult.margin >= 0 ? 'text-emerald-600' : 'text-red-600'}`}
+                          >
+                            ₩{rgResult.margin.toLocaleString()}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            ({rgResult.marginRate}%)
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-1 text-xs text-muted-foreground">
+                          <span>
+                            판매수수료: ₩{rgResult.fee.toLocaleString()}
+                          </span>
+                          <span>
+                            수수료VAT: ₩{rgResult.feeVat.toLocaleString()}
+                          </span>
+                          <span>
+                            입출고비: ₩{rgResult.shippingFee.toLocaleString()}
+                          </span>
+                          <span>
+                            입출고VAT: ₩{rgResult.shippingVat.toLocaleString()}
+                          </span>
+                          <span>
+                            부가세: ₩{Math.round(rgResult.vat).toLocaleString()}
+                          </span>
+                          <span>
+                            할인쿠폰: ₩
+                            {rgResult.discountCoupon.toLocaleString()}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  // 스마트스토어/쿠팡윙
+                  const fee = Math.round(sp * (fr / 100));
+                  const sc = parseFloat(editShippingCost) || 0;
+                  const margin = sp - cp - fee - sc;
+                  const marginRate =
+                    sp > 0 ? ((margin / sp) * 100).toFixed(1) : '0';
                   return (
                     <div className="rounded-lg border border-border p-3 space-y-2">
-                      <p className="text-xs text-muted-foreground">예상 마진 (1개 판매 기준, VAT 포함)</p>
+                      <p className="text-xs text-muted-foreground">
+                        예상 마진 (1개 판매 기준)
+                      </p>
                       <div className="flex items-center gap-3">
-                        <span className={`font-mono text-sm font-bold ${rgResult.margin >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                          ₩{rgResult.margin.toLocaleString()}
+                        <span
+                          className={`font-mono text-sm font-bold ${margin >= 0 ? 'text-emerald-600' : 'text-red-600'}`}
+                        >
+                          ₩{margin.toLocaleString()}
                         </span>
                         <span className="text-xs text-muted-foreground">
-                          ({rgResult.marginRate}%)
+                          ({marginRate}%)
                         </span>
                       </div>
                       <div className="grid grid-cols-2 gap-1 text-xs text-muted-foreground">
-                        <span>판매수수료: ₩{rgResult.fee.toLocaleString()}</span>
-                        <span>수수료VAT: ₩{rgResult.feeVat.toLocaleString()}</span>
-                        <span>입출고비: ₩{rgResult.shippingFee.toLocaleString()}</span>
-                        <span>입출고VAT: ₩{rgResult.shippingVat.toLocaleString()}</span>
-                        <span>부가세: ₩{Math.round(rgResult.vat).toLocaleString()}</span>
-                        <span>할인쿠폰: ₩{rgResult.discountCoupon.toLocaleString()}</span>
+                        <span>
+                          수수료({fr}%): ₩{fee.toLocaleString()}
+                        </span>
+                        <span>배송비: ₩{sc.toLocaleString()}</span>
                       </div>
                     </div>
                   );
-                }
-
-                // 스마트스토어/쿠팡윙
-                const fee = Math.round(sp * (fr / 100));
-                const sc = parseFloat(editShippingCost) || 0;
-                const margin = sp - cp - fee - sc;
-                const marginRate = sp > 0 ? ((margin / sp) * 100).toFixed(1) : '0';
-                return (
-                  <div className="rounded-lg border border-border p-3 space-y-2">
-                    <p className="text-xs text-muted-foreground">예상 마진 (1개 판매 기준)</p>
-                    <div className="flex items-center gap-3">
-                      <span className={`font-mono text-sm font-bold ${margin >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                        ₩{margin.toLocaleString()}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        ({marginRate}%)
-                      </span>
-                    </div>
-                    <div className="grid grid-cols-2 gap-1 text-xs text-muted-foreground">
-                      <span>수수료({fr}%): ₩{fee.toLocaleString()}</span>
-                      <span>배송비: ₩{sc.toLocaleString()}</span>
-                    </div>
-                  </div>
-                );
-              })()}
+                })()}
 
               {/* 메모 */}
               <div className="space-y-1.5">

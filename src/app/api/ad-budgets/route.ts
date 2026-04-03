@@ -10,6 +10,7 @@ import {
 import { writeAuditLog } from '@/lib/audit-log';
 import { apiSuccess, apiError } from '@/lib/api-response';
 import { EXCLUDED_ORDER_STATUSES } from '@/lib/helpers/status-map';
+import { parseDate } from '@/lib/helpers/date-utils';
 
 // 상품별 광고 예산 목록 조회
 export async function GET(request: NextRequest) {
@@ -65,13 +66,9 @@ export async function GET(request: NextRequest) {
   // 같은 상품명의 모든 옵션(productId)을 합산
   const budgetsWithSales = await Promise.all(
     budgets.map(async (budget) => {
-      const monthStart = new Date(`${budget.month}-01`);
-      const monthEnd = new Date(
-        monthStart.getFullYear(),
-        monthStart.getMonth() + 1,
-        0,
-      );
-      monthEnd.setHours(23, 59, 59, 999);
+      const monthStart = parseDate(`${budget.month}-01`);
+      const [y, m] = budget.month.split('-').map(Number);
+      const monthEnd = new Date(Date.UTC(y, m, 0));
 
       // 같은 상품명의 모든 productId 조회
       const sameNameProducts = await prisma.product.findMany({

@@ -109,7 +109,7 @@ model Order {
   id                 String   @id @default(cuid())
   productOrderNumber String
   orderNumber        String
-  orderDate          DateTime
+  orderDate          DateTime @db.Date
   orderStatus        String
   deliveryAttribute  String?
   fulfillmentCompany String?

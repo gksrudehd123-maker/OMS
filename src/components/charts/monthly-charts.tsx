@@ -10,6 +10,7 @@ import {
   ResponsiveContainer,
   Cell,
 } from 'recharts';
+import { getChannelColor } from '@/lib/helpers/channel-colors';
 
 type DailyData = Record<string, unknown> & {
   date: string;
@@ -26,15 +27,6 @@ type ChannelAdCost = {
   name: string;
   cost: number;
 };
-
-const COLORS = [
-  '#3B82F6',
-  '#22C55E',
-  '#F59E0B',
-  '#EF4444',
-  '#8B5CF6',
-  '#EC4899',
-];
 
 const formatCurrency = (value: number) => {
   if (value >= 100000000) return `${(value / 100000000).toFixed(1)}억원`;
@@ -103,7 +95,7 @@ export function MonthlyDailyChart({
                         <p
                           key={ch}
                           className="text-sm font-mono"
-                          style={{ color: COLORS[i % COLORS.length] }}
+                          style={{ color: getChannelColor(ch) }}
                         >
                           {ch}: ₩{Number(val).toLocaleString()}
                         </p>
@@ -123,7 +115,7 @@ export function MonthlyDailyChart({
                 key={ch}
                 dataKey={ch}
                 stackId="sales"
-                fill={COLORS[i % COLORS.length]}
+                fill={getChannelColor(ch)}
                 radius={
                   i === channelNames.length - 1 ? [2, 2, 0, 0] : [0, 0, 0, 0]
                 }
@@ -137,7 +129,7 @@ export function MonthlyDailyChart({
           <div key={ch} className="flex items-center gap-1.5">
             <div
               className="h-2.5 w-2.5 rounded-full"
-              style={{ backgroundColor: COLORS[i % COLORS.length] }}
+              style={{ backgroundColor: getChannelColor(ch) }}
             />
             {ch}
           </div>
@@ -190,8 +182,8 @@ export function ChannelSalesChart({ data }: { data: ChannelSales[] }) {
             }}
           />
           <Bar dataKey="sales" radius={[4, 4, 0, 0]}>
-            {data.map((_, i) => (
-              <Cell key={i} fill={COLORS[i % COLORS.length]} />
+            {data.map((d, i) => (
+              <Cell key={i} fill={getChannelColor(d.name)} />
             ))}
           </Bar>
         </BarChart>
@@ -238,8 +230,8 @@ export function ChannelAdCostChart({ data }: { data: ChannelAdCost[] }) {
             }}
           />
           <Bar dataKey="cost" radius={[4, 4, 0, 0]}>
-            {data.map((_, i) => (
-              <Cell key={i} fill={COLORS[i % COLORS.length]} />
+            {data.map((d, i) => (
+              <Cell key={i} fill={getChannelColor(d.name)} />
             ))}
           </Bar>
         </BarChart>

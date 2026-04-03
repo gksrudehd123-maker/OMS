@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { ParsedOrder } from '@/lib/excel/smartstore-parser';
-import { toKSTDateString } from '@/lib/helpers/date-utils';
+import { toDateString, todayKST } from '@/lib/helpers/date-utils';
 
 export type ProcessResult = {
   successCount: number;
@@ -34,11 +34,11 @@ export async function processOrders(
   const newProductIds = new Set<string>();
 
   // 당일 날짜 (KST 기준)
-  const todayStr = toKSTDateString(new Date());
+  const todayStr = todayKST();
 
   for (const order of parsedOrders) {
     // 당일 주문 skip
-    const orderDateStr = toKSTDateString(order.orderDate);
+    const orderDateStr = toDateString(order.orderDate);
     if (orderDateStr >= todayStr) {
       skippedToday++;
       continue;

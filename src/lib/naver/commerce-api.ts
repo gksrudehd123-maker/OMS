@@ -1,5 +1,6 @@
 import bcrypt from 'bcryptjs';
 import { generateProductKey } from '@/lib/helpers/product-key';
+import { toKSTDate } from '@/lib/helpers/date-utils';
 import { ParsedOrder } from '@/lib/excel/smartstore-parser';
 
 const TOKEN_URL = 'https://api.commerce.naver.com/external/v1/oauth2/token';
@@ -181,7 +182,7 @@ export function convertToParseOrders(
     return {
       productOrderNumber: order.productOrderId,
       orderNumber: order.orderId,
-      orderDate: new Date(order.orderDate),
+      orderDate: toKSTDate(new Date(order.orderDate)),
       orderStatus: order.productOrderStatus,
       deliveryAttribute: order.deliveryAttributeType,
       fulfillmentCompany: order.deliveryCompany,

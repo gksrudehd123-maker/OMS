@@ -9,7 +9,7 @@ import {
   isStaff,
 } from '@/lib/auth-guard';
 import { EXCLUDED_ORDER_STATUSES } from '@/lib/helpers/status-map';
-import { toKSTDateString } from '@/lib/helpers/date-utils';
+import { toDateString } from '@/lib/helpers/date-utils';
 
 export async function GET(request: NextRequest) {
   const user = await requireAuth();
@@ -24,9 +24,9 @@ export async function GET(request: NextRequest) {
   const year = yearParam ? parseInt(yearParam, 10) : now.getUTCFullYear();
   const month = monthParam ? parseInt(monthParam, 10) : now.getUTCMonth() + 1;
 
-  const from = new Date(year, month - 1, 1);
-  const to = new Date(year, month, 0, 23, 59, 59); // 해당 월 말일
-  const daysInMonth = new Date(year, month, 0).getDate();
+  const from = new Date(Date.UTC(year, month - 1, 1));
+  const to = new Date(Date.UTC(year, month, 0)); // 해당 월 말일
+  const daysInMonth = new Date(Date.UTC(year, month, 0)).getUTCDate();
 
   const dateFilter = { gte: from, lte: to };
 
@@ -141,7 +141,10 @@ export async function GET(request: NextRequest) {
 
   // 브랜드별 판매 갯수 집계 (채널별 분리)
   // brandChannelMap: { '방짜': { '스마트스토어': { '배터리 KF-9': 5 }, '쿠팡 로켓그로스': { '배터리 KF-9': 3 } } }
-  const brandChannelMap: Record<string, Record<string, Record<string, number>>> = {};
+  const brandChannelMap: Record<
+    string,
+    Record<string, Record<string, number>>
+  > = {};
 
   for (const order of orders) {
     const margin = calculateMargin({
@@ -164,7 +167,7 @@ export async function GET(request: NextRequest) {
       isAnyFreeShipping: orderFreeShipping[order.orderNumber] || false,
     });
 
-    const dateKey = toKSTDateString(order.orderDate);
+    const dateKey = toDateString(order.orderDate);
     totalOrders++;
 
     const chId = order.channelId;
@@ -214,7 +217,7 @@ export async function GET(request: NextRequest) {
     totalSales += rgSalesAmt;
     totalOrders += ds.salesQuantity;
 
-    const dateKey = toKSTDateString(ds.date);
+    const dateKey = toDateString(ds.date);
     const chName = ds.channel.name;
     channelNamesSet.add(chName);
     if (!dailyChannelMap[dateKey]) dailyChannelMap[dateKey] = {};

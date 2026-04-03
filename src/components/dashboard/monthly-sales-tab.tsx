@@ -300,8 +300,12 @@ export function MonthlySalesTab() {
                   {bs.channels.map((ch) => (
                     <div key={ch.channelName}>
                       <div className="flex items-center justify-between text-sm font-medium border-b border-border pb-1 mb-1.5">
-                        <span className="text-muted-foreground">{ch.channelName}</span>
-                        <span className="font-mono">{ch.total.toLocaleString()}개</span>
+                        <span className="text-muted-foreground">
+                          {ch.channelName}
+                        </span>
+                        <span className="font-mono">
+                          {ch.total.toLocaleString()}개
+                        </span>
                       </div>
                       <div className="space-y-1 pl-3">
                         {ch.categories.map((cat) => (

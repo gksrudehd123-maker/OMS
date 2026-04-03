@@ -29,6 +29,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
+import { getChannelColor } from '@/lib/helpers/channel-colors';
 
 type ReportKPI = {
   totalSales: number;
@@ -311,15 +312,6 @@ export default function ReportsPage() {
     const d = new Date(dateStr);
     return `${d.getMonth() + 1}/${d.getDate()}`;
   };
-
-  const PIE_COLORS = [
-    '#3B82F6',
-    '#F59E0B',
-    '#EF4444',
-    '#8B5CF6',
-    '#10B981',
-    '#EC4899',
-  ];
 
   const channelBreakdown = data
     ? data.channelData
@@ -605,7 +597,9 @@ export default function ReportsPage() {
                           {channelBreakdown.map((_, index) => (
                             <Cell
                               key={index}
-                              fill={PIE_COLORS[index % PIE_COLORS.length]}
+                              fill={getChannelColor(
+                                channelBreakdown[index]?.name ?? '',
+                              )}
                             />
                           ))}
                         </Pie>
@@ -630,8 +624,9 @@ export default function ReportsPage() {
                           <div
                             className="h-2.5 w-2.5 rounded-full"
                             style={{
-                              backgroundColor:
-                                PIE_COLORS[index % PIE_COLORS.length],
+                              backgroundColor: getChannelColor(
+                                channelBreakdown[index]?.name ?? '',
+                              ),
                             }}
                           />
                           <span className="text-muted-foreground">

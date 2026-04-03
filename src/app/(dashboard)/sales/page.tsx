@@ -91,7 +91,6 @@ export default function SalesPage() {
   const [syncChannelId, setSyncChannelId] = useState('');
   const [syncProgress, setSyncProgress] = useState({ current: 0, total: 0 });
 
-
   // 신규 상품 가격 설정 팝업 (API 동기화용)
   const [showPriceDialog, setShowPriceDialog] = useState(false);
   const [newProducts, setNewProducts] = useState<NewProduct[]>([]);
@@ -428,12 +427,14 @@ export default function SalesPage() {
                 <option value="">채널을 먼저 등록해주세요</option>
               )}
               {channels
-                .filter((ch) => ch.code.toLowerCase() !== 'coupang_rocket_delivery')
+                .filter(
+                  (ch) => ch.code.toLowerCase() !== 'coupang_rocket_delivery',
+                )
                 .map((ch) => (
-                <option key={ch.id} value={ch.id}>
-                  {ch.name}
-                </option>
-              ))}
+                  <option key={ch.id} value={ch.id}>
+                    {ch.name}
+                  </option>
+                ))}
             </select>
           </div>
           <UploadZone

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { generateReportData } from '@/lib/services/report-generator';
+import { parseDate } from '@/lib/helpers/date-utils';
 
 /**
  * GET /api/report/auto
@@ -55,8 +56,8 @@ export async function GET() {
     const existing = await prisma.generatedReport.findFirst({
       where: {
         type,
-        periodFrom: new Date(from),
-        periodTo: new Date(to),
+        periodFrom: parseDate(from),
+        periodTo: parseDate(to),
       },
     });
 
@@ -74,8 +75,8 @@ export async function GET() {
     const report = await prisma.generatedReport.create({
       data: {
         type,
-        periodFrom: new Date(from),
-        periodTo: new Date(to),
+        periodFrom: parseDate(from),
+        periodTo: parseDate(to),
         reportData: JSON.parse(JSON.stringify(reportData)),
       },
     });

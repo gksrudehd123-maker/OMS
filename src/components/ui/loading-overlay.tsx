@@ -24,7 +24,10 @@ export function LoadingProvider({ children }: { children: React.ReactNode }) {
   const isLoading = isFetching > 0 || isMutating > 0 || manualCount > 0;
 
   const startLoading = useCallback(() => setManualCount((c) => c + 1), []);
-  const stopLoading = useCallback(() => setManualCount((c) => Math.max(0, c - 1)), []);
+  const stopLoading = useCallback(
+    () => setManualCount((c) => Math.max(0, c - 1)),
+    [],
+  );
 
   return (
     <LoadingContext.Provider value={{ startLoading, stopLoading }}>

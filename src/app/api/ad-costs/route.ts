@@ -9,6 +9,7 @@ import {
 } from '@/lib/auth-guard';
 import { writeAuditLog } from '@/lib/audit-log';
 import { apiSuccess, apiError } from '@/lib/api-response';
+import { parseDate } from '@/lib/helpers/date-utils';
 
 // 광고비 목록 조회
 export async function GET(request: NextRequest) {
@@ -26,8 +27,8 @@ export async function GET(request: NextRequest) {
   const where: Record<string, unknown> = {};
   if (from || to) {
     where.date = {
-      ...(from ? { gte: new Date(from) } : {}),
-      ...(to ? { lte: new Date(to + 'T23:59:59') } : {}),
+      ...(from ? { gte: parseDate(from) } : {}),
+      ...(to ? { lte: parseDate(to) } : {}),
     };
   }
   if (channelId) {

@@ -10,7 +10,7 @@ import {
   isStaff,
 } from '@/lib/auth-guard';
 import { EXCLUDED_ORDER_STATUSES } from '@/lib/helpers/status-map';
-import { toKSTDateString } from '@/lib/helpers/date-utils';
+import { toDateString, parseDate } from '@/lib/helpers/date-utils';
 
 export async function GET(request: NextRequest) {
   const user = await requireAuth();
@@ -28,8 +28,8 @@ export async function GET(request: NextRequest) {
   const dateFilter =
     from || to
       ? {
-          ...(from ? { gte: new Date(from) } : {}),
-          ...(to ? { lte: new Date(to + 'T23:59:59') } : {}),
+          ...(from ? { gte: parseDate(from) } : {}),
+          ...(to ? { lte: parseDate(to) } : {}),
         }
       : undefined;
 
@@ -122,8 +122,8 @@ export async function GET(request: NextRequest) {
   } | null = null;
 
   if (from && to) {
-    const fromDate = new Date(from);
-    const toDate = new Date(to + 'T23:59:59');
+    const fromDate = parseDate(from);
+    const toDate = parseDate(to);
     const periodMs = toDate.getTime() - fromDate.getTime();
     const prevFrom = new Date(fromDate.getTime() - periodMs - 86400000); // 이전 기간 시작
     const prevTo = new Date(fromDate.getTime() - 86400000); // 이전 기간 끝 (from 하루 전)
@@ -334,7 +334,7 @@ export async function GET(request: NextRequest) {
       isAnyFreeShipping: orderFreeShipping[order.orderNumber] || false,
     });
 
-    const dateKey = toKSTDateString(order.orderDate);
+    const dateKey = toDateString(order.orderDate);
     if (!dailyMap[dateKey])
       dailyMap[dateKey] = { date: dateKey, sales: 0, margin: 0, orders: 0 };
     dailyMap[dateKey].orders++;
@@ -396,7 +396,7 @@ export async function GET(request: NextRequest) {
     const rgSalesAmt = Number(ds.salesAmount);
     totalSales += rgSalesAmt;
 
-    const dateKey = toKSTDateString(ds.date);
+    const dateKey = toDateString(ds.date);
     if (!dailyMap[dateKey])
       dailyMap[dateKey] = { date: dateKey, sales: 0, margin: 0, orders: 0 };
     dailyMap[dateKey].orders += ds.salesQuantity;

@@ -5,6 +5,7 @@ import {
   normalizeOrderStatus,
   normalizeDeliveryAttribute,
 } from '../helpers/status-map';
+import { toKSTDate } from '../helpers/date-utils';
 
 export type ParsedOrder = {
   productOrderNumber: string;
@@ -116,7 +117,7 @@ export async function parseSmartstoreExcel(
         continue;
       }
 
-      let orderDate: Date;
+      let rawDate: Date;
       const num = Number(orderDateRaw);
       if (!isNaN(num) && num > 10000) {
         // 엑셀 시리얼 넘버 → Date 변환
@@ -124,14 +125,15 @@ export async function parseSmartstoreExcel(
         const utcMs = utcDays * 86400000;
         const timeFraction = num - Math.floor(num);
         const timeMs = Math.round(timeFraction * 86400000);
-        orderDate = new Date(utcMs + timeMs);
+        rawDate = new Date(utcMs + timeMs);
       } else {
-        orderDate = new Date(orderDateRaw);
+        rawDate = new Date(orderDateRaw);
       }
-      if (isNaN(orderDate.getTime())) {
+      if (isNaN(rawDate.getTime())) {
         errors.push({ row: i + 1, message: `날짜 파싱 오류: ${orderDateRaw}` });
         continue;
       }
+      const orderDate = toKSTDate(rawDate);
 
       const quantity = parseInt(quantityRaw, 10);
       if (isNaN(quantity) || quantity <= 0) {

@@ -2,7 +2,7 @@ import { prisma } from '@/lib/prisma';
 import { calculateMargin } from '@/lib/helpers/margin-calc';
 import { calculateRGMargin } from '@/lib/helpers/rg-margin-calc';
 import { EXCLUDED_ORDER_STATUSES } from '@/lib/helpers/status-map';
-import { toKSTDateString } from '@/lib/helpers/date-utils';
+import { toDateString, parseDate } from '@/lib/helpers/date-utils';
 
 export type ReportData = {
   period: { from: string; to: string };
@@ -54,8 +54,8 @@ export async function generateReportData(
   channelId?: string | null,
 ): Promise<ReportData> {
   const dateFilter = {
-    gte: new Date(from),
-    lte: new Date(to + 'T23:59:59'),
+    gte: parseDate(from),
+    lte: parseDate(to),
   };
 
   const orderWhere: Record<string, unknown> = {
@@ -194,7 +194,7 @@ export async function generateReportData(
       isAnyFreeShipping: orderFreeShipping[order.orderNumber] || false,
     });
 
-    const dateKey = toKSTDateString(order.orderDate);
+    const dateKey = toDateString(order.orderDate);
     if (!dailyMap[dateKey])
       dailyMap[dateKey] = { date: dateKey, sales: 0, margin: 0, orders: 0 };
     dailyMap[dateKey].orders++;
@@ -267,7 +267,7 @@ export async function generateReportData(
     const rgSalesAmt = Number(ds.salesAmount);
     totalSales += rgSalesAmt;
 
-    const dateKey = toKSTDateString(ds.date);
+    const dateKey = toDateString(ds.date);
     if (!dailyMap[dateKey])
       dailyMap[dateKey] = { date: dateKey, sales: 0, margin: 0, orders: 0 };
     dailyMap[dateKey].orders += ds.salesQuantity;

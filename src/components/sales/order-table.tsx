@@ -128,7 +128,7 @@ export function OrderTable({
               orders.map((order) => (
                 <TableRow key={order.id}>
                   <TableCell className="whitespace-nowrap font-mono text-xs">
-                    {new Date(order.orderDate).toLocaleString('ko-KR')}
+                    {new Date(order.orderDate).toLocaleDateString('ko-KR')}
                   </TableCell>
                   <TableCell className="font-mono text-xs">
                     {order.orderNumber}

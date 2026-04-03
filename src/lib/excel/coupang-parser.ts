@@ -2,6 +2,7 @@ import XlsxPopulate from 'xlsx-populate';
 import { COUPANG_COLUMNS, COUPANG_REQUIRED_COLUMNS } from './column-map';
 import { generateProductKey } from '../helpers/product-key';
 import { normalizeDeliveryAttribute } from '../helpers/status-map';
+import { toKSTDate } from '../helpers/date-utils';
 import type { ParsedOrder, ParseResult } from './smartstore-parser';
 
 /**
@@ -99,24 +100,25 @@ export async function parseCoupangExcel(buffer: Buffer): Promise<ParseResult> {
       }
 
       // 날짜 파싱
-      let orderDate: Date;
+      let rawDate: Date;
       const num = Number(orderDateRaw);
       if (!isNaN(num) && num > 10000) {
         const utcDays = Math.floor(num - 25569);
         const utcMs = utcDays * 86400000;
         const timeFraction = num - Math.floor(num);
         const timeMs = Math.round(timeFraction * 86400000);
-        orderDate = new Date(utcMs + timeMs);
+        rawDate = new Date(utcMs + timeMs);
       } else {
-        orderDate = new Date(orderDateRaw);
+        rawDate = new Date(orderDateRaw);
       }
-      if (isNaN(orderDate.getTime())) {
+      if (isNaN(rawDate.getTime())) {
         errors.push({
           row: i + 1,
           message: `날짜 파싱 오류: ${orderDateRaw}`,
         });
         continue;
       }
+      const orderDate = toKSTDate(rawDate);
 
       const quantity = parseInt(quantityRaw, 10);
       if (isNaN(quantity) || quantity <= 0) {

@@ -392,7 +392,9 @@ function getKSTToday(): string {
   return kst.toISOString().split('T')[0];
 }
 
-function getUncheckedKeywords(budgets: AdBudget[]): { id: string; keyword: string }[] {
+function getUncheckedKeywords(
+  budgets: AdBudget[],
+): { id: string; keyword: string }[] {
   const today = getKSTToday();
   const seen = new Set<string>();
   const unchecked: { id: string; keyword: string }[] = [];
@@ -401,9 +403,7 @@ function getUncheckedKeywords(budgets: AdBudget[]): { id: string; keyword: strin
     for (const kw of budget.product.keywords) {
       if (seen.has(kw.id)) continue;
       seen.add(kw.id);
-      const hasToday = kw.ranks.some(
-        (r) => r.date.slice(0, 10) === today,
-      );
+      const hasToday = kw.ranks.some((r) => r.date.slice(0, 10) === today);
       if (!hasToday) unchecked.push({ id: kw.id, keyword: kw.keyword });
     }
   }
@@ -435,26 +435,29 @@ export function AdBudgetTab() {
   const grouped = useMemo(() => groupByProduct(budgets), [budgets]);
 
   // 키워드 자동 조회
-  const runKeywordCheck = useCallback(async (unchecked: { id: string; keyword: string }[]) => {
-    setChecking(true);
-    setCheckProgress({ current: 0, total: unchecked.length });
+  const runKeywordCheck = useCallback(
+    async (unchecked: { id: string; keyword: string }[]) => {
+      setChecking(true);
+      setCheckProgress({ current: 0, total: unchecked.length });
 
-    for (let i = 0; i < unchecked.length; i++) {
-      try {
-        await fetch('/api/keywords/check', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ keywordId: unchecked[i].id }),
-        });
-      } catch {
-        // 개별 실패는 무시하고 계속 진행
+      for (let i = 0; i < unchecked.length; i++) {
+        try {
+          await fetch('/api/keywords/check', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ keywordId: unchecked[i].id }),
+          });
+        } catch {
+          // 개별 실패는 무시하고 계속 진행
+        }
+        setCheckProgress({ current: i + 1, total: unchecked.length });
       }
-      setCheckProgress({ current: i + 1, total: unchecked.length });
-    }
 
-    setChecking(false);
-    queryClient.invalidateQueries({ queryKey: ['ad-budgets'] });
-  }, [queryClient]);
+      setChecking(false);
+      queryClient.invalidateQueries({ queryKey: ['ad-budgets'] });
+    },
+    [queryClient],
+  );
 
   useEffect(() => {
     if (!data || isLoading || checking || checkedRef.current) return;
@@ -537,7 +540,8 @@ export function AdBudgetTab() {
         <div className="flex items-center gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 dark:border-blue-800 dark:bg-blue-950">
           <Loader2 className="h-4 w-4 animate-spin text-blue-600 dark:text-blue-400" />
           <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
-            키워드 순위 조회 중... ({checkProgress.current}/{checkProgress.total}개)
+            키워드 순위 조회 중... ({checkProgress.current}/
+            {checkProgress.total}개)
           </span>
         </div>
       )}
