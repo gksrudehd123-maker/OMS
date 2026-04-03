@@ -454,9 +454,11 @@ export function AdBudgetTab() {
       }
 
       setChecking(false);
-      queryClient.invalidateQueries({ queryKey: ['ad-budgets'] });
+      await queryClient.refetchQueries({
+        queryKey: ['ad-budgets', selectedMonth],
+      });
     },
-    [queryClient],
+    [queryClient, selectedMonth],
   );
 
   useEffect(() => {

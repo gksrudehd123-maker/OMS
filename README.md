@@ -472,6 +472,8 @@ GitHub Push → Vercel Auto Deploy (main branch → Production)
 - **브랜드별 판매 갯수 채널 분리**: 대시보드 월별 매출 탭에서 브랜드별 판매 갯수를 채널별로 분리 표시
 - **orderDate 타입 변경**: DateTime→Date 마이그레이션 (KST 기준 날짜만 저장), 관련 API/파서/UI 날짜 처리 통일
 - **채널별 차트 색상 통일**: 모든 차트에서 동일 채널은 동일 색상 표시 (스마트스토어=Blue, 쿠팡_윙=Green, 쿠팡_로켓그로스=Amber) — 일별 매출, 채널별 매출/광고비, 리포트 파이차트 적용
+- **광고 손익분기 판매 수량 매칭 개선**: 상품명 기준 → channelProductId(노출상품ID) 기준 합산으로 변경 — 네이버에서 상품명 변경해도 판매 수량 정상 집계
+- **키워드 자동 조회 후 데이터 갱신 수정**: invalidateQueries → refetchQueries로 변경하여 조회 완료 즉시 UI 반영
 
 ---
 

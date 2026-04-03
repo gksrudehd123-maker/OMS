@@ -63,35 +63,57 @@ export async function GET(request: NextRequest) {
   });
 
   // 상품별로 해당 월의 실제 판매 수량 집계
-  // 같은 상품명의 모든 옵션(productId)을 합산
+  // channelProductId 기준으로 같은 상품의 모든 옵션을 합산 (상품명 변경에도 대응)
+  // channelProductId가 없으면 같은 상품명으로 fallback
   const budgetsWithSales = await Promise.all(
     budgets.map(async (budget) => {
       const monthStart = parseDate(`${budget.month}-01`);
       const [y, m] = budget.month.split('-').map(Number);
       const monthEnd = new Date(Date.UTC(y, m, 0));
 
-      // 같은 상품명의 모든 productId 조회
-      const sameNameProducts = await prisma.product.findMany({
-        where: { name: budget.product.name },
-        select: { id: true },
+      // 광고예산 상품의 channelProductId 조회
+      const budgetOrder = await prisma.order.findFirst({
+        where: { productId: budget.productId },
+        select: { channelProductId: true },
       });
-      const productIds = sameNameProducts.map((p) => p.id);
+      const channelProductId = budgetOrder?.channelProductId;
 
       // Order 테이블에서 판매 수량 (취소/반품/교환 제외)
-      const orderAgg = await prisma.order.aggregate({
-        where: {
-          productId: { in: productIds },
+      // channelProductId가 있으면 같은 channelProductId 주문을 합산
+      let orderWhere;
+      if (channelProductId) {
+        orderWhere = {
+          channelProductId,
           channelId: budget.channelId,
           orderDate: { gte: monthStart, lte: monthEnd },
           orderStatus: { notIn: EXCLUDED_ORDER_STATUSES },
-        },
+        };
+      } else {
+        const sameNameProducts = await prisma.product.findMany({
+          where: { name: budget.product.name },
+          select: { id: true },
+        });
+        orderWhere = {
+          productId: { in: sameNameProducts.map((p) => p.id) },
+          channelId: budget.channelId,
+          orderDate: { gte: monthStart, lte: monthEnd },
+          orderStatus: { notIn: EXCLUDED_ORDER_STATUSES },
+        };
+      }
+
+      const orderAgg = await prisma.order.aggregate({
+        where: orderWhere,
         _sum: { quantity: true },
       });
 
-      // DailySales 테이블에서 판매 수량
+      // DailySales는 channelProductId가 없으므로 상품명 기준 유지
+      const sameNameForDaily = await prisma.product.findMany({
+        where: { name: budget.product.name },
+        select: { id: true },
+      });
       const dailySalesAgg = await prisma.dailySales.aggregate({
         where: {
-          productId: { in: productIds },
+          productId: { in: sameNameForDaily.map((p) => p.id) },
           channelId: budget.channelId,
           date: { gte: monthStart, lte: monthEnd },
         },
