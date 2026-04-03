@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
     adWhere.channelId = { in: allowedChannels };
   }
 
-  const [orders, dailySalesRecords, adCosts] = await Promise.all([
+  const [orders, dailySalesRecords, cwRecords, adCosts] = await Promise.all([
     prisma.order.findMany({
       where: orderWhere,
       select: {
@@ -71,6 +71,29 @@ export async function GET(request: NextRequest) {
       orderBy: { orderDate: 'asc' },
     }),
     prisma.dailySales.findMany({
+      where: dsWhere,
+      select: {
+        date: true,
+        salesAmount: true,
+        salesQuantity: true,
+        productId: true,
+        channelId: true,
+        product: {
+          select: {
+            name: true,
+            optionInfo: true,
+            costPrice: true,
+            feeRate: true,
+            fulfillmentFee: true,
+            couponDiscount: true,
+            brand: true,
+            brandCategory: true,
+          },
+        },
+        channel: { select: { name: true } },
+      },
+    }),
+    prisma.coupangDailyMetrics.findMany({
       where: dsWhere,
       select: {
         date: true,
@@ -246,6 +269,54 @@ export async function GET(request: NextRequest) {
     }
   }
 
+  // CW (CoupangDailyMetrics) 합산
+  for (const cw of cwRecords) {
+    const cwMargin = calculateRGMargin({
+      salesAmount: Number(cw.salesAmount),
+      salesQuantity: cw.salesQuantity,
+      costPrice: cw.product.costPrice ? Number(cw.product.costPrice) : null,
+      feeRate: cw.product.feeRate ? Number(cw.product.feeRate) : null,
+      fulfillmentFee: cw.product.fulfillmentFee
+        ? Number(cw.product.fulfillmentFee)
+        : null,
+      couponDiscount: cw.product.couponDiscount
+        ? Number(cw.product.couponDiscount)
+        : null,
+    });
+
+    const cwSalesAmt = Number(cw.salesAmount);
+    totalSales += cwSalesAmt;
+    totalOrders += cw.salesQuantity;
+
+    const dateKey = toDateString(cw.date);
+    const chName = cw.channel.name;
+    channelNamesSet.add(chName);
+    if (!dailyChannelMap[dateKey]) dailyChannelMap[dateKey] = {};
+    dailyChannelMap[dateKey][chName] =
+      (dailyChannelMap[dateKey][chName] || 0) + cwSalesAmt;
+
+    const chId = cw.channelId;
+    if (!channelSalesMap[chId])
+      channelSalesMap[chId] = { name: cw.channel.name, sales: 0, orders: 0 };
+    channelSalesMap[chId].sales += cwSalesAmt;
+    channelSalesMap[chId].orders += cw.salesQuantity;
+
+    // 브랜드별 판매 갯수 (채널별)
+    if (cw.product.brand && cw.product.brandCategory) {
+      const brand = cw.product.brand;
+      const chName = cw.channel.name;
+      const cat = cw.product.brandCategory;
+      if (!brandChannelMap[brand]) brandChannelMap[brand] = {};
+      if (!brandChannelMap[brand][chName]) brandChannelMap[brand][chName] = {};
+      brandChannelMap[brand][chName][cat] =
+        (brandChannelMap[brand][chName][cat] || 0) + cw.salesQuantity;
+    }
+
+    if (cwMargin.isCalculable) {
+      totalMargin += cwMargin.margin;
+    }
+  }
+
   // 광고비 채널별 집계
   let totalAdCost = 0;
   const channelAdMap: Record<string, { name: string; cost: number }> = {};
@@ -274,7 +345,8 @@ export async function GET(request: NextRequest) {
   }
 
   // 데이터 존재 여부 (당월 데이터 없으면 프론트에서 전월로 전환)
-  const hasData = orders.length > 0 || dailySalesRecords.length > 0;
+  const hasData =
+    orders.length > 0 || dailySalesRecords.length > 0 || cwRecords.length > 0;
 
   const staff = isStaff(user);
 

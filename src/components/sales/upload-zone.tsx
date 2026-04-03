@@ -41,6 +41,7 @@ type UploadResult = {
   };
   newProducts: NewProduct[];
   isRocketGrowth?: boolean;
+  isCoupangWing?: boolean;
 };
 
 type PriceInput = {
@@ -128,6 +129,15 @@ export function UploadZone({
   const pendingFileRef = useRef<File | null>(null);
 
   const isRocketGrowth = channelCode?.toLowerCase() === 'coupang_rocket_growth';
+  const isCoupangWing = channelCode?.toLowerCase() === 'coupang_wing';
+
+  // 쿠팡 윙 수동 날짜 선택
+  const [showCWDatePicker, setShowCWDatePicker] = useState(false);
+  const [cwManualDate, setCWManualDate] = useState(() => {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    return yesterday.toISOString().split('T')[0];
+  });
 
   const doUpload = useCallback(
     async (file: File, salesDate?: string) => {
@@ -160,7 +170,7 @@ export function UploadZone({
         // 신규 상품이 있으면 가격 설정 팝업 표시
         if (data.newProducts && data.newProducts.length > 0) {
           setNewProducts(data.newProducts);
-          const isRG = !!data.isRocketGrowth;
+          const isRG = !!data.isRocketGrowth || !!data.isCoupangWing;
           setIsRGUpload(isRG);
 
           if (isRG) {
@@ -226,15 +236,33 @@ export function UploadZone({
         return;
       }
 
+      if (isCoupangWing) {
+        pendingFileRef.current = file;
+        setShowCWDatePicker(true);
+        return;
+      }
+
       doUpload(file);
     },
-    [isRocketGrowth, doUpload],
+    [isRocketGrowth, isCoupangWing, doUpload],
   );
 
   const handleDateConfirm = () => {
     if (!pendingFileRef.current || !extractedDate) return;
     setShowDateConfirm(false);
     doUpload(pendingFileRef.current, extractedDate.from);
+    pendingFileRef.current = null;
+  };
+
+  const handleCWDateConfirm = () => {
+    if (!pendingFileRef.current || !cwManualDate) return;
+    setShowCWDatePicker(false);
+    doUpload(pendingFileRef.current, cwManualDate);
+    pendingFileRef.current = null;
+  };
+
+  const handleCWDateCancel = () => {
+    setShowCWDatePicker(false);
     pendingFileRef.current = null;
   };
 
@@ -399,7 +427,9 @@ export function UploadZone({
             <p className="mt-1 text-xs text-muted-foreground">
               {isRocketGrowth
                 ? '쿠팡 로켓그로스 판매통계 .xlsx 파일'
-                : '스마트스토어 주문조회 .xlsx 파일'}
+                : isCoupangWing
+                  ? '쿠팡 윙 SELLER_INSIGHTS .xlsx 파일'
+                  : '스마트스토어 주문조회 .xlsx 파일'}
             </p>
           </>
         )}
@@ -487,6 +517,48 @@ export function UploadZone({
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* 쿠팡 윙 날짜 선택 팝업 */}
+      <Dialog
+        open={showCWDatePicker}
+        onOpenChange={(open) => {
+          if (!open) handleCWDateCancel();
+        }}
+      >
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CalendarCheck className="h-5 w-5 text-primary" />
+              판매 날짜 선택
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              업로드할 데이터의 판매 날짜를 선택해주세요.
+            </p>
+            <input
+              type="date"
+              value={cwManualDate}
+              onChange={(e) => setCWManualDate(e.target.value)}
+              className="w-full rounded-lg border border-input bg-background px-4 py-2 text-sm font-mono"
+            />
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={handleCWDateCancel}
+                className="rounded-lg border border-input px-4 py-2 text-sm hover:bg-muted"
+              >
+                취소
+              </button>
+              <button
+                onClick={handleCWDateConfirm}
+                className="rounded-lg bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90"
+              >
+                확인, 업로드
+              </button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
 

@@ -120,8 +120,20 @@ export async function GET(request: NextRequest) {
         _sum: { salesQuantity: true },
       });
 
+      // CoupangDailyMetrics (쿠팡 윙) 판매 수량
+      const cwAgg = await prisma.coupangDailyMetrics.aggregate({
+        where: {
+          productId: { in: sameNameForDaily.map((p) => p.id) },
+          channelId: budget.channelId,
+          date: { gte: monthStart, lte: monthEnd },
+        },
+        _sum: { salesQuantity: true },
+      });
+
       const actualQuantity =
-        (orderAgg._sum.quantity ?? 0) + (dailySalesAgg._sum.salesQuantity ?? 0);
+        (orderAgg._sum.quantity ?? 0) +
+        (dailySalesAgg._sum.salesQuantity ?? 0) +
+        (cwAgg._sum.salesQuantity ?? 0);
 
       return {
         ...budget,

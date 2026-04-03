@@ -60,10 +60,11 @@ model Product {
   thumbnailUrl    String?               // 네이버 쇼핑 썸네일 URL
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
-  orders          Order[]
-  dailySales      DailySales[]
-  keywords        ProductKeyword[]
-  adBudgets       ProductAdBudget[]
+  orders              Order[]
+  dailySales          DailySales[]
+  coupangDailyMetrics CoupangDailyMetrics[]
+  keywords            ProductKeyword[]
+  adBudgets           ProductAdBudget[]
 
   @@index([name])
   @@map("products")
@@ -77,11 +78,12 @@ model Channel {
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  orders     Order[]
-  uploads    Upload[]
-  adCosts    AdCost[]
-  dailySales DailySales[]
-  adBudgets  ProductAdBudget[]
+  orders              Order[]
+  uploads             Upload[]
+  adCosts             AdCost[]
+  dailySales          DailySales[]
+  coupangDailyMetrics CoupangDailyMetrics[]
+  adBudgets           ProductAdBudget[]
 
   @@map("channels")
 }
@@ -98,8 +100,9 @@ model Upload {
   errorRows    Int      @default(0)
   errors       Json?
   createdAt    DateTime @default(now())
-  orders       Order[]
-  dailySales   DailySales[]
+  orders              Order[]
+  dailySales          DailySales[]
+  coupangDailyMetrics CoupangDailyMetrics[]
 
   @@index([createdAt])
   @@map("uploads")
@@ -217,6 +220,47 @@ model DailySales {
   @@index([channelId])
   @@index([uploadId])
   @@map("daily_sales")
+}
+
+model CoupangDailyMetrics {
+  id                      String   @id @default(cuid())
+  date                    DateTime @db.Date
+  optionId                String
+  registeredProductId     String?               // 등록상품ID
+  optionName              String
+  productName             String
+  categoryName            String?
+  salesMethod             String?               // 판매방식 (판매자배송 등)
+  salesAmount             Decimal  @db.Decimal(12, 2) // 매출(원)
+  orderCount              Int                   // 주문 건수
+  salesQuantity           Int                   // 판매량
+  visitors                Int?                  // 방문자
+  views                   Int?                  // 조회
+  cart                    Int?                  // 장바구니
+  conversionRate          Decimal? @db.Decimal(5, 2)  // 구매전환율(%)
+  itemWinnerRate          Decimal? @db.Decimal(5, 2)  // 아이템위너 비율(%)
+  totalAmount             Decimal? @db.Decimal(12, 2) // 총 매출(원)
+  totalQuantity           Int?                  // 총 판매수
+  cancelAmount            Decimal? @db.Decimal(12, 2) // 총 취소 금액(원)
+  cancelQuantity          Int?                  // 총 취소된 상품수
+  immediateCancelQuantity Int?                  // 즉시 취소된 상품수
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+  channelId String
+  channel   Channel @relation(fields: [channelId], references: [id])
+  uploadId  String
+  upload    Upload  @relation(fields: [uploadId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([date, optionId, channelId])
+  @@index([date])
+  @@index([productId])
+  @@index([channelId])
+  @@index([uploadId])
+  @@map("coupang_daily_metrics")
 }
 
 // ============================================================

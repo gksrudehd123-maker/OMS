@@ -3,6 +3,7 @@ import {
   REQUIRED_COLUMNS,
   COUPANG_REQUIRED_COLUMNS,
   ROCKETGROWTH_REQUIRED_COLUMNS,
+  COUPANG_WING_REQUIRED_COLUMNS,
 } from './column-map';
 
 // 스마트스토어 엑셀 고유 헤더 (쿠팡에는 없는 것)
@@ -13,9 +14,14 @@ const COUPANG_SIGNATURE = ['묶음배송번호', '등록상품명', '노출상�
 export type DetectedFormat =
   | 'smartstore'
   | 'coupang'
+  | 'coupang_wing'
   | 'rocketgrowth'
   | 'unknown';
-export type ExpectedFormat = 'smartstore' | 'coupang' | 'rocketgrowth';
+export type ExpectedFormat =
+  | 'smartstore'
+  | 'coupang'
+  | 'coupang_wing'
+  | 'rocketgrowth';
 
 export type FormatValidation = {
   valid: boolean;
@@ -26,7 +32,8 @@ export type FormatValidation = {
 
 const FORMAT_NAMES: Record<string, string> = {
   smartstore: '스마트스토어',
-  coupang: '쿠팡',
+  coupang: '쿠팡 (배송목록)',
+  coupang_wing: '쿠팡 윙 (판매통계)',
   rocketgrowth: '로켓그로스',
 };
 
@@ -40,6 +47,8 @@ export async function validateExcelFormat(
   let expectedFormat: ExpectedFormat;
   if (channelCode === 'coupang_rocket_growth') {
     expectedFormat = 'rocketgrowth';
+  } else if (channelCode === 'coupang_wing') {
+    expectedFormat = 'coupang_wing';
   } else if (channelCode.startsWith('coupang_')) {
     expectedFormat = 'coupang';
   } else {
@@ -96,9 +105,21 @@ export async function validateExcelFormat(
     headers.includes('옵션ID') &&
     headers.includes('옵션명') &&
     headers.some((h) => h.startsWith('아이템위너'));
+  // 쿠팡 윙 SELLER_INSIGHTS: '옵션 ID'(공백) + '판매방식'
+  const hasCWHeaders =
+    headers.includes('옵션 ID') &&
+    headers.includes('상품명') &&
+    headers.includes('판매방식');
 
   let detectedFormat: DetectedFormat = 'unknown';
-  if (hasRGHeaders && !hasSmartstoreHeaders && !hasCoupangHeaders) {
+  if (
+    hasCWHeaders &&
+    !hasSmartstoreHeaders &&
+    !hasCoupangHeaders &&
+    !hasRGHeaders
+  ) {
+    detectedFormat = 'coupang_wing';
+  } else if (hasRGHeaders && !hasSmartstoreHeaders && !hasCoupangHeaders) {
     detectedFormat = 'rocketgrowth';
   } else if (hasSmartstoreHeaders && !hasCoupangHeaders) {
     detectedFormat = 'smartstore';
@@ -122,6 +143,8 @@ export async function validateExcelFormat(
   let requiredCols: string[];
   if (expectedFormat === 'rocketgrowth') {
     requiredCols = ROCKETGROWTH_REQUIRED_COLUMNS;
+  } else if (expectedFormat === 'coupang_wing') {
+    requiredCols = COUPANG_WING_REQUIRED_COLUMNS;
   } else if (expectedFormat === 'coupang') {
     requiredCols = COUPANG_REQUIRED_COLUMNS;
   } else {

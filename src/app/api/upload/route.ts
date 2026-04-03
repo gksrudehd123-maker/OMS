@@ -5,14 +5,15 @@ import { apiPaginated } from '@/lib/api-response';
 import { parseSmartstoreExcel } from '@/lib/excel/smartstore-parser';
 import { parseCoupangExcel } from '@/lib/excel/coupang-parser';
 import { parseRocketGrowthExcel } from '@/lib/excel/rocketgrowth-parser';
+import { parseCoupangWingExcel } from '@/lib/excel/coupangwing-parser';
 import { processOrders } from '@/lib/services/order-processor';
 import { processDailySales } from '@/lib/services/dailysales-processor';
+import { processCoupangWingMetrics } from '@/lib/services/coupangwing-processor';
 import { validateExcelFormat } from '@/lib/excel/validate-format';
 import { writeAuditLog } from '@/lib/audit-log';
 
-// 채널 코드로 파서 분기
+// 채널 코드로 파서 분기 (쿠팡 윙은 별도 처리)
 const COUPANG_CHANNEL_CODES = [
-  'coupang_wing',
   'coupang_rocket_growth',
   'coupang_rocket_delivery',
 ];
@@ -49,13 +50,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const isRocketGrowth =
-      channel.code.toLowerCase() === 'coupang_rocket_growth';
+    const channelCodeLower = channel.code.toLowerCase();
+    const isRocketGrowth = channelCodeLower === 'coupang_rocket_growth';
+    const isCoupangWing = channelCodeLower === 'coupang_wing';
 
-    // RG일 때 salesDate 필수
-    if (isRocketGrowth && !salesDateStr) {
+    // RG/CW일 때 salesDate 필수
+    if ((isRocketGrowth || isCoupangWing) && !salesDateStr) {
       return NextResponse.json(
-        { error: '로켓그로스는 판매 날짜를 선택해주세요' },
+        { error: '판매 날짜를 선택해주세요' },
         { status: 400 },
       );
     }
@@ -161,7 +163,95 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // 기존 주문 기반 처리 (스마트스토어 / 쿠팡 윙)
+    // 쿠팡 윙 SELLER_INSIGHTS 분기
+    if (isCoupangWing) {
+      const salesDate = new Date(salesDateStr!);
+      if (isNaN(salesDate.getTime())) {
+        return NextResponse.json(
+          { error: '잘못된 날짜 형식입니다' },
+          { status: 400 },
+        );
+      }
+
+      const { metrics: parsedMetrics, errors } =
+        await parseCoupangWingExcel(buffer);
+
+      const upload = await prisma.upload.create({
+        data: {
+          fileName: file.name,
+          channelId,
+          totalRows: parsedMetrics.length + errors.length,
+          successRows: 0,
+          errorRows: errors.length,
+          errors: errors.length > 0 ? errors : undefined,
+        },
+      });
+
+      const result = await processCoupangWingMetrics(
+        parsedMetrics,
+        channelId,
+        upload.id,
+        salesDate,
+        errors,
+      );
+
+      const updatedUpload = await prisma.upload.update({
+        where: { id: upload.id },
+        data: {
+          successRows: result.successCount,
+          errorRows: result.errors.length,
+          errors: result.errors.length > 0 ? result.errors : undefined,
+        },
+      });
+
+      await writeAuditLog({
+        userId: user.id,
+        userName: user.name || undefined,
+        action: 'EXCEL_UPLOAD',
+        target: 'CoupangDailyMetrics',
+        targetId: upload.id,
+        summary: `${channel.name} 엑셀 업로드 (${salesDateStr}) — ${result.successCount}건 성공, ${result.errors.length}건 오류`,
+        changes: {
+          channel: { from: null, to: channel.name },
+          salesDate: { from: null, to: salesDateStr },
+          fileName: { from: null, to: file.name },
+          successCount: { from: null, to: result.successCount },
+          errorCount: { from: null, to: result.errors.length },
+        },
+      });
+
+      const newProducts =
+        result.newProductIds.size > 0
+          ? await prisma.product.findMany({
+              where: { id: { in: Array.from(result.newProductIds) } },
+              select: {
+                id: true,
+                name: true,
+                optionInfo: true,
+                sellingPrice: true,
+                costPrice: true,
+                feeRate: true,
+                fulfillmentFee: true,
+                couponDiscount: true,
+              },
+            })
+          : [];
+
+      return NextResponse.json({
+        upload: updatedUpload,
+        summary: {
+          total: parsedMetrics.length + errors.length,
+          success: result.successCount,
+          errors: result.errors.length,
+          duplicates: result.errors.filter((e) => e.message.startsWith('중복'))
+            .length,
+        },
+        newProducts,
+        isCoupangWing: true,
+      });
+    }
+
+    // 기존 주문 기반 처리 (스마트스토어)
     const isCoupang = COUPANG_CHANNEL_CODES.includes(
       channel.code.toLowerCase(),
     );

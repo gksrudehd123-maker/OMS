@@ -77,3 +77,31 @@ export const ROCKETGROWTH_PREFIX_COLUMNS: Record<string, string> = {
 };
 
 export const ROCKETGROWTH_REQUIRED_COLUMNS = ['옵션ID', '옵션명'];
+
+// 쿠팡 윙 SELLER_INSIGHTS 엑셀 컬럼 매핑
+export const COUPANG_WING_COLUMNS: Record<string, string> = {
+  '옵션 ID': 'optionId', // 공백 주의 (RG는 '옵션ID')
+  옵션명: 'optionName',
+  상품명: 'productName',
+  등록상품ID: 'registeredProductId',
+  카테고리: 'categoryName',
+  판매방식: 'salesMethod',
+  주문: 'orderCount',
+  판매량: 'salesQuantity',
+  방문자: 'visitors',
+  조회: 'views',
+  장바구니: 'cart',
+};
+
+export const COUPANG_WING_PREFIX_COLUMNS: Record<string, string> = {
+  '총 취소 금액': 'cancelAmount',
+  '총 취소된 상품수': 'cancelQuantity',
+  '총 매출': 'totalAmount',
+  '총 판매수': 'totalQuantity',
+  '즉시 취소된 상품수': 'immediateCancelQuantity',
+  구매전환율: 'conversionRate',
+  아이템위너: 'itemWinnerRate',
+  매출: 'salesAmount',
+};
+
+export const COUPANG_WING_REQUIRED_COLUMNS = ['옵션 ID', '옵션명', '상품명'];

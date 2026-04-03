@@ -30,6 +30,12 @@ const DailySalesTable = dynamic(
   { loading: () => <Skeleton className="h-96 w-full rounded-xl" /> },
 );
 
+const CWMetricsTable = dynamic(
+  () =>
+    import('@/components/sales/cw-metrics-table').then((m) => m.CWMetricsTable),
+  { loading: () => <Skeleton className="h-96 w-full rounded-xl" /> },
+);
+
 const SyncHistory = dynamic(
   () => import('@/components/sales/sync-history').then((m) => m.SyncHistory),
   { loading: () => <Skeleton className="h-32 w-full rounded-xl" /> },
@@ -126,6 +132,7 @@ export default function SalesPage() {
     channels.find((ch) => ch.id === selectedChannel)?.code || '';
   const isRocketGrowth =
     selectedChannelCode.toLowerCase() === 'coupang_rocket_growth';
+  const isCoupangWing = selectedChannelCode.toLowerCase() === 'coupang_wing';
 
   // 조회 기간 일수 계산
   const syncDays =
@@ -455,6 +462,8 @@ export default function SalesPage() {
             channelId={selectedChannel}
             refreshKey={refreshKey}
           />
+        ) : isCoupangWing ? (
+          <CWMetricsTable channelId={selectedChannel} refreshKey={refreshKey} />
         ) : (
           <OrderTable channelId={selectedChannel} refreshKey={refreshKey} />
         )}

@@ -32,39 +32,37 @@
 | 채널 | 수집 방식 | 데이터 유형 | DB 테이블 |
 |------|-----------|-------------|-----------|
 | **스마트스토어** (다중 스토어 지원) | 엑셀 업로드 + API 자동 동기화 | 주문 단건 | `Order` |
-| **쿠팡 윙** | 엑셀 업로드 (DeliveryList) | 주문 단건 | `Order` |
+| **쿠팡 윙** | 엑셀 업로드 (SELLER_INSIGHTS) | 일별 집계 + 마케팅 지표 | `CoupangDailyMetrics` |
 | **쿠팡 로켓그로스** | 엑셀 업로드 (Statistics) | 일별 상품 집계 | `DailySales` |
 
 ### DB 테이블 분리 설계
 
 로켓그로스는 쿠팡 판매자센터에서 주문 단건이 아닌 **일별 상품별 판매 집계** 데이터만 제공합니다 (주문번호, 구매자, 배송상태 없음). 따라서 기존 `Order` 테이블에 넣지 않고 `DailySales` 테이블로 분리했습니다.
 
-- **Order**: 주문 단건 데이터를 저장하는 채널 (스마트스토어, 쿠팡 윙)
+- **Order**: 주문 단건 데이터를 저장하는 채널 (스마트스토어)
 - **DailySales**: 일별 집계 데이터를 저장하는 채널 (쿠팡 로켓그로스)
-- 대시보드/리포트에서는 **두 테이블을 합산**하여 KPI, 차트, 상품별 마진에 표시
-- 매출 관리에서는 **선택된 채널에 따라 OrderTable / DailySalesTable 전환** 표시
+- **CoupangDailyMetrics**: 일별 집계 + 마케팅 지표를 저장하는 채널 (쿠팡 윙) — 방문자, 조회, 장바구니, 구매전환율 포함
+- 대시보드/리포트에서는 **세 테이블을 합산**하여 KPI, 차트, 상품별 마진에 표시
+- 매출 관리에서는 **선택된 채널에 따라 OrderTable / DailySalesTable / CWMetricsTable 전환** 표시
 
 ### 엑셀 파서별 처리 흐름
 
 ```
-스마트스토어 (.xlsx)  → smartstore-parser  → order-processor    → Order 테이블
-쿠팡 윙 (.xlsx)       → coupang-parser     → order-processor    → Order 테이블
-로켓그로스 (.xlsx)    → rocketgrowth-parser → dailysales-processor → DailySales 테이블
+스마트스토어 (.xlsx)  → smartstore-parser    → order-processor         → Order 테이블
+쿠팡 윙 (.xlsx)       → coupangwing-parser   → coupangwing-processor   → CoupangDailyMetrics 테이블
+로켓그로스 (.xlsx)    → rocketgrowth-parser  → dailysales-processor    → DailySales 테이블
 ```
 
 ### 쿠팡 윙 엑셀 파서 현황
 
-- **파서**: `coupang-parser.ts` — DeliveryList 엑셀 파일 파싱
-- **암호화**: 기본 비밀번호 `1234` (xlsx-populate로 복호화)
-- **주요 컬럼**: 주문번호, 묶음배송번호, 주문일, 등록상품명, 등록옵션명, 구매수(수량), 옵션판매가, 결제액, 노출상품ID, 택배사, 배송유형, 구매자, 수취인이름
-- **주문상태 추론**: 쿠팡 윙 엑셀에는 주문상태 컬럼이 없어 배송일자 기반으로 추론
-  - 구매확정일자 있음 → `PURCHASE_DECIDED`
-  - 배송완료일 있음 → `DELIVERED`
-  - 출고일 있음 → `DELIVERING`
-  - 그 외 → `PAYED`
-- **날짜 파싱**: Excel 시리얼 넘버(float > 10000) 자동 감지 → UTC 날짜 변환
-- **중복 방지**: `(productOrderNumber, channelId)` 유니크 제약
-- **당일 주문 차단**: 오늘 날짜 주문은 자동 스킵
+- **파서**: `coupangwing-parser.ts` — SELLER_INSIGHTS (판매통계) 엑셀 파일 파싱
+- **주요 컬럼**: 옵션 ID, 옵션명, 상품명, 등록상품ID, 카테고리, 판매방식, 매출(원), 주문, 판매량, 방문자, 조회, 장바구니, 구매전환율, 아이템위너 비율(%), 총 매출(원), 총 판매수, 총 취소 금액(원), 총 취소된 상품수, 즉시 취소된 상품수
+- **특이사항**:
+  - 주문 단건이 아닌 **일별 상품별 집계 + 마케팅 지표** (방문자, 조회, 장바구니, 구매전환율)
+  - 업로드 시 **판매 날짜를 사용자가 직접 선택** (엑셀에 날짜 정보 없음, 기본값 어제)
+  - 쿠팡 통합 계정이라 **모든 브랜드(방짜/웰스파) 상품이 한 파일에 포함**
+- **중복 방지**: `(date, optionId, channelId)` 유니크 제약
+- **매출 관리**: 전용 CWMetricsTable로 마케팅 지표까지 표시
 
 ### 쿠팡 로켓그로스 엑셀 파서 현황
 
@@ -253,7 +251,7 @@ OMS/
 │       ├── rate-limit.ts           # IP 기반 Rate Limiter
 │       ├── excel/                  # 엑셀 파서
 │       │   ├── smartstore-parser.ts
-│       │   ├── coupang-parser.ts
+│       │   ├── coupangwing-parser.ts  # 쿠팡 윙 SELLER_INSIGHTS
 │       │   ├── rocketgrowth-parser.ts
 │       │   └── validate-format.ts  # 채널-양식 자동 검증
 │       ├── helpers/                # 비즈니스 로직
@@ -269,6 +267,7 @@ OMS/
 │       └── services/
 │           ├── order-processor.ts
 │           ├── dailysales-processor.ts
+│           ├── coupangwing-processor.ts
 │           └── report-generator.ts
 ├── vitest.config.ts                # Vitest 설정
 ├── .env.example
@@ -474,6 +473,7 @@ GitHub Push → Vercel Auto Deploy (main branch → Production)
 - **채널별 차트 색상 통일**: 모든 차트에서 동일 채널은 동일 색상 표시 (스마트스토어=Blue, 쿠팡_윙=Green, 쿠팡_로켓그로스=Amber) — 일별 매출, 채널별 매출/광고비, 리포트 파이차트 적용
 - **광고 손익분기 판매 수량 매칭 개선**: 상품명 기준 → channelProductId(노출상품ID) 기준 합산으로 변경 — 네이버에서 상품명 변경해도 판매 수량 정상 집계
 - **키워드 자동 조회 후 데이터 갱신 수정**: invalidateQueries → refetchQueries로 변경하여 조회 완료 즉시 UI 반영
+- **쿠팡 윙 SELLER_INSIGHTS 전환**: DeliveryList(Order) → SELLER_INSIGHTS(CoupangDailyMetrics) 전환. 마케팅 지표(방문자, 조회, 장바구니, 구매전환율) 포함 별도 테이블. 파서/프로세서/포맷검증/업로드UI/날짜선택팝업/CWMetricsTable 신규 생성. 대시보드/리포트 3테이블(Order+DailySales+CoupangDailyMetrics) 합산
 
 ---
 

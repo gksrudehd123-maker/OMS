@@ -1,3 +1,5 @@
+// DEPRECATED: 쿠팡 윙은 SELLER_INSIGHTS 형식으로 전환 (coupangwing-parser.ts 사용)
+// 이 파일은 참고용으로 유지하며, 더 이상 upload/route.ts에서 사용하지 않음
 import XlsxPopulate from 'xlsx-populate';
 import { COUPANG_COLUMNS, COUPANG_REQUIRED_COLUMNS } from './column-map';
 import { generateProductKey } from '../helpers/product-key';

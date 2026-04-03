@@ -59,8 +59,8 @@ export async function GET(request: NextRequest) {
     adWhere.channelId = { in: allowedChannels };
   }
 
-  // 3개 쿼리 병렬 실행 + 필요한 필드만 select
-  const [orders, dailySalesRecords, adCostAgg] = await Promise.all([
+  // 4개 쿼리 병렬 실행 + 필요한 필드만 select
+  const [orders, dailySalesRecords, cwRecords, adCostAgg] = await Promise.all([
     prisma.order.findMany({
       where: orderWhere,
       select: {
@@ -85,6 +85,27 @@ export async function GET(request: NextRequest) {
       orderBy: { orderDate: 'asc' },
     }),
     prisma.dailySales.findMany({
+      where: dsWhere,
+      select: {
+        date: true,
+        salesAmount: true,
+        salesQuantity: true,
+        productId: true,
+        channelId: true,
+        product: {
+          select: {
+            name: true,
+            optionInfo: true,
+            costPrice: true,
+            feeRate: true,
+            fulfillmentFee: true,
+            couponDiscount: true,
+          },
+        },
+        channel: { select: { name: true } },
+      },
+    }),
+    prisma.coupangDailyMetrics.findMany({
       where: dsWhere,
       select: {
         date: true,
@@ -150,7 +171,7 @@ export async function GET(request: NextRequest) {
       prevAdWhere.channelId = { in: allowedChannels };
     }
 
-    const [prevOrders, prevDs, prevAdAgg] = await Promise.all([
+    const [prevOrders, prevDs, prevCw, prevAdAgg] = await Promise.all([
       prisma.order.findMany({
         where: prevOrderWhere,
         select: {
@@ -169,6 +190,21 @@ export async function GET(request: NextRequest) {
         },
       }),
       prisma.dailySales.findMany({
+        where: prevDsWhere,
+        select: {
+          salesAmount: true,
+          salesQuantity: true,
+          product: {
+            select: {
+              costPrice: true,
+              feeRate: true,
+              fulfillmentFee: true,
+              couponDiscount: true,
+            },
+          },
+        },
+      }),
+      prisma.coupangDailyMetrics.findMany({
         where: prevDsWhere,
         select: {
           salesAmount: true,
@@ -250,6 +286,25 @@ export async function GET(request: NextRequest) {
       prevSales += Number(ds.salesAmount);
       if (rgM.isCalculable) prevMargin += rgM.margin;
       prevOrderCount += ds.salesQuantity;
+    }
+
+    // CW (CoupangDailyMetrics) 이전 기간 합산
+    for (const cw of prevCw) {
+      const cwM = calculateRGMargin({
+        salesAmount: Number(cw.salesAmount),
+        salesQuantity: cw.salesQuantity,
+        costPrice: cw.product.costPrice ? Number(cw.product.costPrice) : null,
+        feeRate: cw.product.feeRate ? Number(cw.product.feeRate) : null,
+        fulfillmentFee: cw.product.fulfillmentFee
+          ? Number(cw.product.fulfillmentFee)
+          : null,
+        couponDiscount: cw.product.couponDiscount
+          ? Number(cw.product.couponDiscount)
+          : null,
+      });
+      prevSales += Number(cw.salesAmount);
+      if (cwM.isCalculable) prevMargin += cwM.margin;
+      prevOrderCount += cw.salesQuantity;
     }
 
     const prevAdCost = Number(prevAdAgg._sum.cost ?? 0);
@@ -378,6 +433,7 @@ export async function GET(request: NextRequest) {
 
   // RG DailySales 합산 (단일 루프)
   let rgSalesCount = 0;
+  let cwSalesCount = 0;
   for (const ds of dailySalesRecords) {
     const rgMargin = calculateRGMargin({
       salesAmount: Number(ds.salesAmount),
@@ -435,6 +491,64 @@ export async function GET(request: NextRequest) {
     }
   }
 
+  // CW (CoupangDailyMetrics) 합산 (단일 루프)
+  for (const cw of cwRecords) {
+    const cwMargin = calculateRGMargin({
+      salesAmount: Number(cw.salesAmount),
+      salesQuantity: cw.salesQuantity,
+      costPrice: cw.product.costPrice ? Number(cw.product.costPrice) : null,
+      feeRate: cw.product.feeRate ? Number(cw.product.feeRate) : null,
+      fulfillmentFee: cw.product.fulfillmentFee
+        ? Number(cw.product.fulfillmentFee)
+        : null,
+      couponDiscount: cw.product.couponDiscount
+        ? Number(cw.product.couponDiscount)
+        : null,
+    });
+
+    cwSalesCount++;
+    const cwSalesAmt = Number(cw.salesAmount);
+    totalSales += cwSalesAmt;
+
+    const dateKey = toDateString(cw.date);
+    if (!dailyMap[dateKey])
+      dailyMap[dateKey] = { date: dateKey, sales: 0, margin: 0, orders: 0 };
+    dailyMap[dateKey].orders += cw.salesQuantity;
+    dailyMap[dateKey].sales += cwSalesAmt;
+
+    const chId = cw.channelId;
+    if (!channelMap[chId])
+      channelMap[chId] = {
+        name: cw.channel.name,
+        sales: 0,
+        margin: 0,
+        orders: 0,
+      };
+    channelMap[chId].orders += cw.salesQuantity;
+    channelMap[chId].sales += cwSalesAmt;
+
+    const pid = cw.productId;
+    if (!productMarginMap[pid]) {
+      productMarginMap[pid] = {
+        name: cw.product.name,
+        optionInfo: cw.product.optionInfo,
+        sales: 0,
+        margin: 0,
+        orders: 0,
+      };
+    }
+    productMarginMap[pid].sales += cwSalesAmt;
+    productMarginMap[pid].orders += cw.salesQuantity;
+
+    if (cwMargin.isCalculable) {
+      totalMargin += cwMargin.margin;
+      calculableCount++;
+      dailyMap[dateKey].margin += cwMargin.margin;
+      channelMap[chId].margin += cwMargin.margin;
+      productMarginMap[pid].margin += cwMargin.margin;
+    }
+  }
+
   const netMargin = totalMargin - totalAdCostAmount;
   const avgMarginRate =
     totalSales > 0 ? Math.round((netMargin / totalSales) * 1000) / 10 : 0;
@@ -453,7 +567,7 @@ export async function GET(request: NextRequest) {
       totalMargin: staff ? undefined : Math.round(netMargin),
       totalAdCost: staff ? undefined : Math.round(totalAdCostAmount),
       avgMarginRate: staff ? undefined : avgMarginRate,
-      totalOrders: orders.length + rgSalesCount,
+      totalOrders: orders.length + rgSalesCount + cwSalesCount,
       calculableCount: staff ? undefined : calculableCount,
     },
     prevKpi: staff ? undefined : prevKpi,

@@ -69,7 +69,7 @@ export async function generateReportData(
     dsWhere.channelId = channelId;
   }
 
-  const [orders, dailySalesRecords] = await Promise.all([
+  const [orders, dailySalesRecords, cwRecords] = await Promise.all([
     prisma.order.findMany({
       where: orderWhere,
       select: {
@@ -94,6 +94,27 @@ export async function generateReportData(
       orderBy: { orderDate: 'asc' },
     }),
     prisma.dailySales.findMany({
+      where: dsWhere,
+      select: {
+        date: true,
+        salesAmount: true,
+        salesQuantity: true,
+        productId: true,
+        channelId: true,
+        product: {
+          select: {
+            name: true,
+            optionInfo: true,
+            costPrice: true,
+            feeRate: true,
+            fulfillmentFee: true,
+            couponDiscount: true,
+          },
+        },
+        channel: { select: { name: true } },
+      },
+    }),
+    prisma.coupangDailyMetrics.findMany({
       where: dsWhere,
       select: {
         date: true,
@@ -321,6 +342,78 @@ export async function generateReportData(
     }
   }
 
+  // CW (CoupangDailyMetrics) 합산
+  for (const cw of cwRecords) {
+    const cwm = calculateRGMargin({
+      salesAmount: Number(cw.salesAmount),
+      salesQuantity: cw.salesQuantity,
+      costPrice: cw.product.costPrice ? Number(cw.product.costPrice) : null,
+      feeRate: cw.product.feeRate ? Number(cw.product.feeRate) : null,
+      fulfillmentFee: cw.product.fulfillmentFee
+        ? Number(cw.product.fulfillmentFee)
+        : null,
+      couponDiscount: cw.product.couponDiscount
+        ? Number(cw.product.couponDiscount)
+        : null,
+    });
+
+    const cwSalesAmt = Number(cw.salesAmount);
+    totalSales += cwSalesAmt;
+
+    const dateKey = toDateString(cw.date);
+    if (!dailyMap[dateKey])
+      dailyMap[dateKey] = { date: dateKey, sales: 0, margin: 0, orders: 0 };
+    dailyMap[dateKey].orders += cw.salesQuantity;
+    dailyMap[dateKey].sales += cwSalesAmt;
+
+    const chId = cw.channelId;
+    if (!channelMap[chId])
+      channelMap[chId] = {
+        name: cw.channel.name,
+        sales: 0,
+        margin: 0,
+        cost: 0,
+        fee: 0,
+        shipping: 0,
+        orders: 0,
+      };
+    channelMap[chId].sales += cwSalesAmt;
+    channelMap[chId].orders += cw.salesQuantity;
+
+    const pid = cw.productId;
+    if (!productMap[pid]) {
+      productMap[pid] = {
+        name: cw.product.name,
+        optionInfo: cw.product.optionInfo,
+        quantity: 0,
+        sales: 0,
+        cost: 0,
+        fee: 0,
+        shipping: 0,
+        margin: 0,
+      };
+    }
+    productMap[pid].quantity += cw.salesQuantity;
+    productMap[pid].sales += cwSalesAmt;
+
+    if (cwm.isCalculable) {
+      totalMargin += cwm.margin;
+      totalCost += cwm.costAmount;
+      totalFee += cwm.fee + cwm.feeVat;
+      totalShipping += cwm.shippingFee + cwm.shippingVat;
+
+      dailyMap[dateKey].margin += cwm.margin;
+      channelMap[chId].margin += cwm.margin;
+      channelMap[chId].cost += cwm.costAmount;
+      channelMap[chId].fee += cwm.fee + cwm.feeVat;
+      channelMap[chId].shipping += cwm.shippingFee + cwm.shippingVat;
+      productMap[pid].cost += cwm.costAmount;
+      productMap[pid].fee += cwm.fee + cwm.feeVat;
+      productMap[pid].shipping += cwm.shippingFee + cwm.shippingVat;
+      productMap[pid].margin += cwm.margin;
+    }
+  }
+
   return {
     period: { from, to },
     kpi: {
@@ -331,7 +424,7 @@ export async function generateReportData(
       totalMargin: Math.round(totalMargin),
       avgMarginRate:
         totalSales > 0 ? Math.round((totalMargin / totalSales) * 1000) / 10 : 0,
-      totalOrders: orders.length + dailySalesRecords.length,
+      totalOrders: orders.length + dailySalesRecords.length + cwRecords.length,
     },
     channelData: Object.values(channelMap)
       .map((ch) => ({
