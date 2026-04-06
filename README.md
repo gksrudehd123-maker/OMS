@@ -474,6 +474,9 @@ GitHub Push → Vercel Auto Deploy (main branch → Production)
 - **광고 손익분기 판매 수량 매칭 개선**: 상품명 기준 → channelProductId(노출상품ID) 기준 합산으로 변경 — 네이버에서 상품명 변경해도 판매 수량 정상 집계
 - **키워드 자동 조회 후 데이터 갱신 수정**: invalidateQueries → refetchQueries로 변경하여 조회 완료 즉시 UI 반영
 - **쿠팡 윙 SELLER_INSIGHTS 전환**: DeliveryList(Order) → SELLER_INSIGHTS(CoupangDailyMetrics) 전환. 마케팅 지표(방문자, 조회, 장바구니, 구매전환율) 포함 별도 테이블. 파서/프로세서/포맷검증/업로드UI/날짜선택팝업/CWMetricsTable 신규 생성. 대시보드/리포트 3테이블(Order+DailySales+CoupangDailyMetrics) 합산
+- **쿠팡 윙 실데이터 검증 완료**: SELLER_INSIGHTS 샘플 19건 파싱 검증 — 포맷 감지/컬럼 매핑(19개)/숫자·비율 파싱 모두 정상, 에러 0건
+- **업로드 에러 팝업 개선**: 잘못된 엑셀 양식 업로드 시 토스트 대신 중앙 Dialog 팝업으로 에러 메시지 표시
+- **업로드 드래그 영역 확대**: 엑셀 드래그 앤 드롭 영역 패딩 확대로 사용성 개선
 
 ---
 

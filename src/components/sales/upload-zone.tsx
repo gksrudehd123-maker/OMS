@@ -120,6 +120,10 @@ export function UploadZone({
   const [isRGUpload, setIsRGUpload] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  // 에러 팝업
+  const [showErrorDialog, setShowErrorDialog] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+
   // 로켓그로스 날짜 확인 팝업
   const [showDateConfirm, setShowDateConfirm] = useState(false);
   const [extractedDate, setExtractedDate] = useState<{
@@ -204,7 +208,9 @@ export function UploadZone({
           setShowPriceDialog(true);
         }
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : '업로드 중 오류 발생');
+        const msg = err instanceof Error ? err.message : '업로드 중 오류 발생';
+        setErrorMessage(msg);
+        setShowErrorDialog(true);
       } finally {
         setUploading(false);
       }
@@ -404,7 +410,7 @@ export function UploadZone({
     <div className="space-y-4">
       <div
         {...getRootProps()}
-        className={`flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed p-6 sm:p-8 transition-colors ${
+        className={`flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed p-14 sm:p-20 transition-colors ${
           isDragActive
             ? 'border-primary bg-primary/5'
             : 'border-border hover:border-primary/50'
@@ -862,6 +868,29 @@ export function UploadZone({
             >
               {saving ? '저장 중...' : '저장'}
             </button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* 업로드 에러 팝업 */}
+      <Dialog open={showErrorDialog} onOpenChange={setShowErrorDialog}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <XCircle className="h-5 w-5 text-destructive" />
+              업로드 실패
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">{errorMessage}</p>
+            <div className="flex justify-end">
+              <button
+                onClick={() => setShowErrorDialog(false)}
+                className="rounded-lg bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90"
+              >
+                확인
+              </button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
