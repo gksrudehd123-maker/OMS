@@ -61,7 +61,7 @@ const mainNavItems: NavItem[] = [
     href: '/ad-costs',
     label: '광고비 관리',
     icon: Megaphone,
-    roles: ['OWNER', 'MANAGER'],
+    roles: ['OWNER'],
   },
   {
     href: '/cs',
@@ -73,12 +73,17 @@ const mainNavItems: NavItem[] = [
     href: '/reports',
     label: '리포트',
     icon: FileBarChart,
-    roles: ['OWNER', 'MANAGER'],
+    roles: ['OWNER'],
   },
 ];
 
 const settingsSubItems: NavItem[] = [
-  { href: '/settings', label: '설정', icon: Settings, roles: ['OWNER'] },
+  {
+    href: '/settings',
+    label: '설정',
+    icon: Settings,
+    roles: ['OWNER', 'MANAGER', 'STAFF'],
+  },
   { href: '/channels', label: '채널 분석', icon: Store, roles: ['OWNER'] },
   { href: '/users', label: '사용자 관리', icon: Users, roles: ['OWNER'] },
   {

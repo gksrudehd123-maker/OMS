@@ -75,7 +75,8 @@ export default function SettingsPage() {
     return false;
   });
   const router = useRouter();
-  const isOwner = session?.user?.role === 'OWNER';
+  const userRole = session?.user?.role;
+  const isOwner = userRole === 'OWNER';
   const queryClient = useQueryClient();
 
   // 프로필 설정 state
@@ -425,8 +426,8 @@ export default function SettingsPage() {
         )}
       </div>
 
-      {/* 기본값 설정 */}
-      <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
+      {/* 기본값 설정 (OWNER만) */}
+      {isOwner && <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
         <h2 className="text-lg font-semibold">기본값 설정</h2>
         <p className="mt-1 text-sm text-muted-foreground">
           신규 상품이 업로드로 자동 등록될 때 적용되는 기본값
@@ -503,9 +504,9 @@ export default function SettingsPage() {
             </div>
           </div>
         )}
-      </div>
+      </div>}
 
-      {/* 채널 관리 바로가기 */}
+      {isOwner && <>{/* 채널 관리 바로가기 */}
       <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
         <div className="flex items-center justify-between">
           <div>
@@ -753,6 +754,7 @@ export default function SettingsPage() {
           </div>
         )}
       </div>
+      </>}
     </div>
   );
 }

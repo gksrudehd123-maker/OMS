@@ -413,7 +413,7 @@ export default function CSPage() {
   const saving = saveMutation.isPending;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 overflow-hidden">
       <ProgressBar loading={isLoading} />
       <Toaster richColors position="top-right" />
 
