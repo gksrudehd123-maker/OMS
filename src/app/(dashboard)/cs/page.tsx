@@ -509,7 +509,7 @@ export default function CSPage() {
 
       {/* 테이블 */}
       <div className="rounded-xl border border-border bg-card shadow-sm">
-        <div className="overflow-x-auto">
+        <div className="max-h-[calc(100vh-280px)] overflow-auto">
           <table
             className="text-sm"
             style={{
@@ -518,7 +518,7 @@ export default function CSPage() {
             }}
           >
             <thead>
-              <tr className="border-b-2 border-border bg-muted">
+              <tr className="border-b-2 border-border bg-muted sticky top-0 z-20">
                 {colOrder.map((colIdx, orderIdx) => {
                   const col = COLUMNS[colIdx];
                   return (

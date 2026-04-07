@@ -485,7 +485,7 @@ GitHub Push → Vercel Auto Deploy (main branch → Production)
 | 04-07 | 권한   | STAFF 역할 메뉴 제한 (CS 관리만 표시), 로그인 시 /cs 리다이렉트                       |
 | 04-07 | UX     | 회원가입 버튼 → 관리자 문의 안내, 개발환경 Rate Limit 비활성화                        |
 | 04-07 | 정리   | Notion API 설정/로드맵 제거, samples 폴더 gitignore 추가                              |
-| 04-07 | CS     | 테이블 컬럼 리사이즈 + 드래그 순서 변경, 전화번호 자동 포맷, 등록 UX 개선             |
+| 04-07 | CS     | 테이블 컬럼 리사이즈 + 드래그 순서 변경, 전화번호 자동 포맷, 등록 UX 개선, 헤더 고정  |
 
 ---
 
