@@ -38,6 +38,7 @@ const TARGET_LABELS: Record<string, string> = {
   User: '사용자',
   Upload: '업로드',
   AdCost: '광고비',
+  CSRecord: 'CS',
   Setting: '설정',
 };
 
