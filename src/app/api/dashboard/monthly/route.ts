@@ -159,7 +159,7 @@ export async function GET(request: NextRequest) {
   const channelNamesSet = new Set<string>();
   const channelSalesMap: Record<
     string,
-    { name: string; sales: number; orders: number }
+    { name: string; sales: number; margin: number; orders: number }
   > = {};
 
   // 브랜드별 판매 갯수 집계 (채널별 분리)
@@ -195,7 +195,7 @@ export async function GET(request: NextRequest) {
 
     const chId = order.channelId;
     if (!channelSalesMap[chId])
-      channelSalesMap[chId] = { name: order.channel.name, sales: 0, orders: 0 };
+      channelSalesMap[chId] = { name: order.channel.name, sales: 0, margin: 0, orders: 0 };
     channelSalesMap[chId].orders++;
 
     // 브랜드별 판매 갯수 (채널별)
@@ -218,6 +218,7 @@ export async function GET(request: NextRequest) {
       dailyChannelMap[dateKey][chName] =
         (dailyChannelMap[dateKey][chName] || 0) + margin.salesAmount;
       channelSalesMap[chId].sales += margin.salesAmount;
+      channelSalesMap[chId].margin += margin.margin;
     }
   }
 
@@ -249,7 +250,7 @@ export async function GET(request: NextRequest) {
 
     const chId = ds.channelId;
     if (!channelSalesMap[chId])
-      channelSalesMap[chId] = { name: ds.channel.name, sales: 0, orders: 0 };
+      channelSalesMap[chId] = { name: ds.channel.name, sales: 0, margin: 0, orders: 0 };
     channelSalesMap[chId].sales += rgSalesAmt;
     channelSalesMap[chId].orders += ds.salesQuantity;
 
@@ -266,6 +267,7 @@ export async function GET(request: NextRequest) {
 
     if (rgMargin.isCalculable) {
       totalMargin += rgMargin.margin;
+      channelSalesMap[chId].margin += rgMargin.margin;
     }
   }
 
@@ -297,7 +299,7 @@ export async function GET(request: NextRequest) {
 
     const chId = cw.channelId;
     if (!channelSalesMap[chId])
-      channelSalesMap[chId] = { name: cw.channel.name, sales: 0, orders: 0 };
+      channelSalesMap[chId] = { name: cw.channel.name, sales: 0, margin: 0, orders: 0 };
     channelSalesMap[chId].sales += cwSalesAmt;
     channelSalesMap[chId].orders += cw.salesQuantity;
 
@@ -314,6 +316,7 @@ export async function GET(request: NextRequest) {
 
     if (cwMargin.isCalculable) {
       totalMargin += cwMargin.margin;
+      channelSalesMap[chId].margin += cwMargin.margin;
     }
   }
 
@@ -368,6 +371,11 @@ export async function GET(request: NextRequest) {
           .map((ch) => ({
             name: ch.name,
             sales: Math.round(ch.sales),
+            margin: Math.round(ch.margin),
+            marginRate:
+              ch.sales > 0
+                ? Math.round((ch.margin / ch.sales) * 1000) / 10
+                : 0,
             orders: ch.orders,
           }))
           .sort((a, b) => b.sales - a.sales),

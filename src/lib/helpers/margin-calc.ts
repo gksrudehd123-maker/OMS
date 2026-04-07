@@ -57,7 +57,7 @@ export function calculateMargin(input: MarginInput): MarginResult {
   const salesAmount = sellingPrice * quantity;
   const costAmount = costPrice * quantity;
   const effectiveFeeRate = productFeeRate !== null ? productFeeRate : feeRate;
-  const fee = Math.round(salesAmount * (effectiveFeeRate / 100));
+  const fee = Math.ceil((salesAmount * (effectiveFeeRate / 100)) / 10) * 10;
 
   // 배송비 판단
   let shipping = shippingCost;

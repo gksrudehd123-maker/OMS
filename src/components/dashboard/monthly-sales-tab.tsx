@@ -62,7 +62,7 @@ type MonthlyData = {
   };
   channelNames: string[];
   dailyData: (Record<string, unknown> & { date: string; day: number })[];
-  channelSales: { name: string; sales: number; orders: number }[];
+  channelSales: { name: string; sales: number; margin: number; marginRate: number; orders: number }[];
   channelAdCosts: { name: string; cost: number }[];
   brandSales: BrandSales[];
 };
@@ -261,7 +261,39 @@ export function MonthlySalesTab() {
           {loading ? (
             <Skeleton className="mt-4 h-[260px] w-full rounded-lg" />
           ) : (
-            <ChannelSalesChart data={data?.channelSales || []} />
+            <>
+              <ChannelSalesChart data={data?.channelSales || []} />
+              {(data?.channelSales?.length ?? 0) > 0 && (
+                <div className="mt-4 overflow-x-auto rounded-lg border border-border">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-border bg-muted/50">
+                        <th className="px-4 py-2.5 text-left font-medium">채널</th>
+                        <th className="px-4 py-2.5 text-right font-medium">매출</th>
+                        <th className="px-4 py-2.5 text-right font-medium">마진</th>
+                        <th className="px-4 py-2.5 text-center font-medium">마진율</th>
+                        <th className="px-4 py-2.5 text-right font-medium">주문수</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {data!.channelSales.map((ch) => (
+                        <tr key={ch.name} className="border-b border-border last:border-0 hover:bg-muted/30">
+                          <td className="px-4 py-2.5 font-medium">{ch.name}</td>
+                          <td className="px-4 py-2.5 text-right font-mono">₩{ch.sales.toLocaleString()}</td>
+                          <td className={`px-4 py-2.5 text-right font-mono ${ch.margin >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                            ₩{ch.margin.toLocaleString()}
+                          </td>
+                          <td className={`px-4 py-2.5 text-center font-mono ${ch.marginRate >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                            {ch.marginRate.toFixed(1)}%
+                          </td>
+                          <td className="px-4 py-2.5 text-right font-mono">{ch.orders.toLocaleString()}건</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </>
           )}
         </div>
         <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
