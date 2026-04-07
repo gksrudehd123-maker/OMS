@@ -33,20 +33,60 @@ type NavItem = {
 };
 
 const mainNavItems: NavItem[] = [
-  { href: '/', label: '대시보드', icon: LayoutDashboard, roles: ['OWNER', 'MANAGER'] },
-  { href: '/sales', label: '매출 관리', icon: ShoppingCart, roles: ['OWNER', 'MANAGER'] },
-  { href: '/products', label: '상품 관리', icon: Package, roles: ['OWNER', 'MANAGER'] },
-  { href: '/margins', label: '마진 분석', icon: TrendingUp, roles: ['OWNER', 'MANAGER'] },
-  { href: '/ad-costs', label: '광고비 관리', icon: Megaphone, roles: ['OWNER', 'MANAGER'] },
-  { href: '/cs', label: 'CS 관리', icon: Headphones, roles: ['OWNER', 'MANAGER', 'STAFF'] },
-  { href: '/reports', label: '리포트', icon: FileBarChart, roles: ['OWNER', 'MANAGER'] },
+  {
+    href: '/',
+    label: '대시보드',
+    icon: LayoutDashboard,
+    roles: ['OWNER', 'MANAGER'],
+  },
+  {
+    href: '/sales',
+    label: '매출 관리',
+    icon: ShoppingCart,
+    roles: ['OWNER', 'MANAGER'],
+  },
+  {
+    href: '/products',
+    label: '상품 관리',
+    icon: Package,
+    roles: ['OWNER', 'MANAGER'],
+  },
+  {
+    href: '/margins',
+    label: '마진 분석',
+    icon: TrendingUp,
+    roles: ['OWNER', 'MANAGER'],
+  },
+  {
+    href: '/ad-costs',
+    label: '광고비 관리',
+    icon: Megaphone,
+    roles: ['OWNER', 'MANAGER'],
+  },
+  {
+    href: '/cs',
+    label: 'CS 관리',
+    icon: Headphones,
+    roles: ['OWNER', 'MANAGER', 'STAFF'],
+  },
+  {
+    href: '/reports',
+    label: '리포트',
+    icon: FileBarChart,
+    roles: ['OWNER', 'MANAGER'],
+  },
 ];
 
 const settingsSubItems: NavItem[] = [
   { href: '/settings', label: '설정', icon: Settings, roles: ['OWNER'] },
   { href: '/channels', label: '채널 분석', icon: Store, roles: ['OWNER'] },
   { href: '/users', label: '사용자 관리', icon: Users, roles: ['OWNER'] },
-  { href: '/audit-logs', label: '감사 로그', icon: ScrollText, roles: ['OWNER'] },
+  {
+    href: '/audit-logs',
+    label: '감사 로그',
+    icon: ScrollText,
+    roles: ['OWNER'],
+  },
 ];
 
 export function Sidebar() {

@@ -27,15 +27,23 @@ type CSRecord = {
   trackingNumber: string | null;
 };
 
-const STATUS_LIST = ['교환요청', '진행 중', '미입고', '연락처없음', '안내완료', '완료'] as const;
+const STATUS_LIST = [
+  '교환요청',
+  '진행 중',
+  '미입고',
+  '연락처없음',
+  '안내완료',
+  '완료',
+] as const;
 
 const STATUS_COLORS: Record<string, string> = {
-  '교환요청': 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400',
-  '미입고': 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400',
-  '연락처없음': 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400',
-  '진행 중': 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400',
-  '안내완료': 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400',
-  '완료': 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400',
+  교환요청: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400',
+  미입고: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400',
+  연락처없음: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400',
+  '진행 중':
+    'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400',
+  안내완료: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400',
+  완료: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400',
 };
 
 const EMPTY_FORM = {
@@ -104,7 +112,10 @@ export default function CSPage() {
 
   // 등록/수정 mutation
   const saveMutation = useMutation({
-    mutationFn: async (payload: { id?: string; data: Record<string, unknown> }) => {
+    mutationFn: async (payload: {
+      id?: string;
+      data: Record<string, unknown>;
+    }) => {
       const url = payload.id ? `/api/cs/${payload.id}` : '/api/cs';
       const method = payload.id ? 'PATCH' : 'POST';
       const res = await fetch(url, {
@@ -184,7 +195,12 @@ export default function CSPage() {
   };
 
   const handleSave = () => {
-    if (!form.consultDate || !form.customerName || !form.customerPhone || !form.productName) {
+    if (
+      !form.consultDate ||
+      !form.customerName ||
+      !form.customerPhone ||
+      !form.productName
+    ) {
       toast.error('상담날짜, 고객명, 전화번호, 제품명은 필수입니다');
       return;
     }
@@ -321,8 +337,7 @@ export default function CSPage() {
           onClick={openCreate}
           className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
         >
-          <Plus className="h-4 w-4" />
-          새 CS 등록
+          <Plus className="h-4 w-4" />새 CS 등록
         </button>
       </div>
 
@@ -332,21 +347,51 @@ export default function CSPage() {
           <table className="min-w-[1400px] text-sm">
             <thead>
               <tr className="border-b border-border bg-muted/50">
-                <th className="whitespace-nowrap px-4 py-3 text-left font-medium">상담날짜</th>
-                <th className="whitespace-nowrap px-4 py-3 text-left font-medium">구입일자</th>
-                <th className="whitespace-nowrap px-4 py-3 text-center font-medium">안내상태</th>
-                <th className="whitespace-nowrap px-4 py-3 text-left font-medium">입고날짜</th>
-                <th className="whitespace-nowrap px-4 py-3 text-left font-medium">고객명</th>
-                <th className="whitespace-nowrap px-4 py-3 text-left font-medium">제품명</th>
-                <th className="whitespace-nowrap px-4 py-3 text-left font-medium">상담내용</th>
-                <th className="whitespace-nowrap px-4 py-3 text-left font-medium">입고제품</th>
-                <th className="whitespace-nowrap px-4 py-3 text-left font-medium">A/S 진행상황</th>
-                <th className="whitespace-nowrap px-4 py-3 text-left font-medium">출고날짜</th>
-                <th className="whitespace-nowrap px-4 py-3 text-left font-medium">고객주소</th>
-                <th className="whitespace-nowrap px-4 py-3 text-left font-medium">전화번호</th>
-                <th className="whitespace-nowrap px-4 py-3 text-center font-medium">유상/무료</th>
-                <th className="whitespace-nowrap px-4 py-3 text-right font-medium">수리비용</th>
-                <th className="whitespace-nowrap px-4 py-3 text-left font-medium">배송번호</th>
+                <th className="whitespace-nowrap px-4 py-3 text-left font-medium">
+                  상담날짜
+                </th>
+                <th className="whitespace-nowrap px-4 py-3 text-left font-medium">
+                  구입일자
+                </th>
+                <th className="whitespace-nowrap px-4 py-3 text-center font-medium">
+                  안내상태
+                </th>
+                <th className="whitespace-nowrap px-4 py-3 text-left font-medium">
+                  입고날짜
+                </th>
+                <th className="whitespace-nowrap px-4 py-3 text-left font-medium">
+                  고객명
+                </th>
+                <th className="whitespace-nowrap px-4 py-3 text-left font-medium">
+                  제품명
+                </th>
+                <th className="whitespace-nowrap px-4 py-3 text-left font-medium">
+                  상담내용
+                </th>
+                <th className="whitespace-nowrap px-4 py-3 text-left font-medium">
+                  입고제품
+                </th>
+                <th className="whitespace-nowrap px-4 py-3 text-left font-medium">
+                  A/S 진행상황
+                </th>
+                <th className="whitespace-nowrap px-4 py-3 text-left font-medium">
+                  출고날짜
+                </th>
+                <th className="whitespace-nowrap px-4 py-3 text-left font-medium">
+                  고객주소
+                </th>
+                <th className="whitespace-nowrap px-4 py-3 text-left font-medium">
+                  전화번호
+                </th>
+                <th className="whitespace-nowrap px-4 py-3 text-center font-medium">
+                  유상/무료
+                </th>
+                <th className="whitespace-nowrap px-4 py-3 text-right font-medium">
+                  수리비용
+                </th>
+                <th className="whitespace-nowrap px-4 py-3 text-left font-medium">
+                  배송번호
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -380,35 +425,63 @@ export default function CSPage() {
                       {new Date(r.consultDate).toLocaleDateString('ko-KR')}
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 font-mono text-xs">
-                      {r.purchaseDate ? new Date(r.purchaseDate).toLocaleDateString('ko-KR') : '-'}
+                      {r.purchaseDate
+                        ? new Date(r.purchaseDate).toLocaleDateString('ko-KR')
+                        : '-'}
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-center">
-                      <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_COLORS[r.status] || 'bg-muted text-muted-foreground'}`}>
+                      <span
+                        className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_COLORS[r.status] || 'bg-muted text-muted-foreground'}`}
+                      >
                         {r.status}
                       </span>
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 font-mono text-xs">
-                      {r.receivedDate ? new Date(r.receivedDate).toLocaleDateString('ko-KR') : '-'}
+                      {r.receivedDate
+                        ? new Date(r.receivedDate).toLocaleDateString('ko-KR')
+                        : '-'}
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3 font-medium">{r.customerName}</td>
-                    <td className="max-w-[160px] truncate px-4 py-3">{r.productName}</td>
-                    <td className="max-w-[200px] truncate px-4 py-3 text-muted-foreground">{r.consultNote || '-'}</td>
-                    <td className="max-w-[160px] truncate px-4 py-3">{r.receivedProduct || '-'}</td>
-                    <td className="max-w-[200px] truncate px-4 py-3 text-muted-foreground">{r.serviceProgress || '-'}</td>
+                    <td className="whitespace-nowrap px-4 py-3 font-medium">
+                      {r.customerName}
+                    </td>
+                    <td className="max-w-[160px] truncate px-4 py-3">
+                      {r.productName}
+                    </td>
+                    <td className="max-w-[200px] truncate px-4 py-3 text-muted-foreground">
+                      {r.consultNote || '-'}
+                    </td>
+                    <td className="max-w-[160px] truncate px-4 py-3">
+                      {r.receivedProduct || '-'}
+                    </td>
+                    <td className="max-w-[200px] truncate px-4 py-3 text-muted-foreground">
+                      {r.serviceProgress || '-'}
+                    </td>
                     <td className="whitespace-nowrap px-4 py-3 font-mono text-xs">
-                      {r.shippingDate ? new Date(r.shippingDate).toLocaleDateString('ko-KR') : '-'}
+                      {r.shippingDate
+                        ? new Date(r.shippingDate).toLocaleDateString('ko-KR')
+                        : '-'}
                     </td>
-                    <td className="max-w-[200px] truncate px-4 py-3 text-muted-foreground">{r.customerAddress || '-'}</td>
-                    <td className="whitespace-nowrap px-4 py-3 font-mono text-xs">{r.customerPhone}</td>
+                    <td className="max-w-[200px] truncate px-4 py-3 text-muted-foreground">
+                      {r.customerAddress || '-'}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3 font-mono text-xs">
+                      {r.customerPhone}
+                    </td>
                     <td className="whitespace-nowrap px-4 py-3 text-center">
-                      <span className={`text-xs font-medium ${r.chargeType === '유상' ? 'text-orange-600 dark:text-orange-400' : 'text-blue-600 dark:text-blue-400'}`}>
+                      <span
+                        className={`text-xs font-medium ${r.chargeType === '유상' ? 'text-orange-600 dark:text-orange-400' : 'text-blue-600 dark:text-blue-400'}`}
+                      >
                         {r.chargeType}
                       </span>
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-right font-mono">
-                      {r.repairCost ? `${r.repairCost.toLocaleString()}원` : '-'}
+                      {r.repairCost
+                        ? `${r.repairCost.toLocaleString()}원`
+                        : '-'}
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3 font-mono text-xs">{r.trackingNumber || '-'}</td>
+                    <td className="whitespace-nowrap px-4 py-3 font-mono text-xs">
+                      {r.trackingNumber || '-'}
+                    </td>
                   </tr>
                 ))
               )}
@@ -420,12 +493,17 @@ export default function CSPage() {
       {/* 등록/수정 다이얼로그 */}
       {dialogOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className={`max-h-[90vh] w-full overflow-y-auto rounded-xl border border-border bg-card p-6 shadow-xl ${editingId ? 'max-w-2xl' : 'max-w-md'}`}>
+          <div
+            className={`max-h-[90vh] w-full overflow-y-auto rounded-xl border border-border bg-card p-6 shadow-xl ${editingId ? 'max-w-2xl' : 'max-w-md'}`}
+          >
             <div className="mb-6 flex items-center justify-between">
               <h2 className="text-lg font-semibold">
                 {editingId ? 'CS 상세 / 수정' : '새 CS 등록'}
               </h2>
-              <button onClick={closeDialog} className="rounded p-1 hover:bg-muted">
+              <button
+                onClick={closeDialog}
+                className="rounded p-1 hover:bg-muted"
+              >
                 <X className="h-5 w-5" />
               </button>
             </div>
@@ -434,61 +512,172 @@ export default function CSPage() {
               /* 수정 모드: 전체 필드 2컬럼 */
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                 <div className="space-y-4">
-                  <h3 className="text-sm font-semibold text-muted-foreground">고객 정보</h3>
+                  <h3 className="text-sm font-semibold text-muted-foreground">
+                    고객 정보
+                  </h3>
                   <Field label="고객명 *">
-                    <input type="text" value={form.customerName} onChange={(e) => updateField('customerName', e.target.value)} className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+                    <input
+                      type="text"
+                      value={form.customerName}
+                      onChange={(e) =>
+                        updateField('customerName', e.target.value)
+                      }
+                      className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    />
                   </Field>
                   <Field label="전화번호 *">
-                    <input type="text" value={form.customerPhone} onChange={(e) => updateField('customerPhone', e.target.value)} placeholder="010-0000-0000" className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+                    <input
+                      type="text"
+                      value={form.customerPhone}
+                      onChange={(e) =>
+                        updateField('customerPhone', e.target.value)
+                      }
+                      placeholder="010-0000-0000"
+                      className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    />
                   </Field>
                   <Field label="고객 주소">
-                    <input type="text" value={form.customerAddress} onChange={(e) => updateField('customerAddress', e.target.value)} className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+                    <input
+                      type="text"
+                      value={form.customerAddress}
+                      onChange={(e) =>
+                        updateField('customerAddress', e.target.value)
+                      }
+                      className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    />
                   </Field>
                   <Field label="상담날짜 *">
-                    <input type="date" value={form.consultDate} onChange={(e) => updateField('consultDate', e.target.value)} className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+                    <input
+                      type="date"
+                      value={form.consultDate}
+                      onChange={(e) =>
+                        updateField('consultDate', e.target.value)
+                      }
+                      className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    />
                   </Field>
                   <Field label="제품구입일자">
-                    <input type="date" value={form.purchaseDate} onChange={(e) => updateField('purchaseDate', e.target.value)} className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+                    <input
+                      type="date"
+                      value={form.purchaseDate}
+                      onChange={(e) =>
+                        updateField('purchaseDate', e.target.value)
+                      }
+                      className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    />
                   </Field>
                   <Field label="제품명 *">
-                    <input type="text" value={form.productName} onChange={(e) => updateField('productName', e.target.value)} className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+                    <input
+                      type="text"
+                      value={form.productName}
+                      onChange={(e) =>
+                        updateField('productName', e.target.value)
+                      }
+                      className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    />
                   </Field>
                 </div>
                 <div className="space-y-4">
-                  <h3 className="text-sm font-semibold text-muted-foreground">A/S 정보</h3>
+                  <h3 className="text-sm font-semibold text-muted-foreground">
+                    A/S 정보
+                  </h3>
                   <Field label="안내상태">
-                    <select value={form.status} onChange={(e) => updateField('status', e.target.value)} className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring">
-                      {STATUS_LIST.map((s) => (<option key={s} value={s}>{s}</option>))}
+                    <select
+                      value={form.status}
+                      onChange={(e) => updateField('status', e.target.value)}
+                      className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    >
+                      {STATUS_LIST.map((s) => (
+                        <option key={s} value={s}>
+                          {s}
+                        </option>
+                      ))}
                     </select>
                   </Field>
                   <Field label="A/S 내용 및 상담내용">
-                    <textarea value={form.consultNote} onChange={(e) => updateField('consultNote', e.target.value)} rows={2} className="w-full resize-none rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+                    <textarea
+                      value={form.consultNote}
+                      onChange={(e) =>
+                        updateField('consultNote', e.target.value)
+                      }
+                      rows={2}
+                      className="w-full resize-none rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    />
                   </Field>
                   <Field label="입고된 제품">
-                    <input type="text" value={form.receivedProduct} onChange={(e) => updateField('receivedProduct', e.target.value)} className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+                    <input
+                      type="text"
+                      value={form.receivedProduct}
+                      onChange={(e) =>
+                        updateField('receivedProduct', e.target.value)
+                      }
+                      className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    />
                   </Field>
                   <Field label="A/S 진행상황">
-                    <textarea value={form.serviceProgress} onChange={(e) => updateField('serviceProgress', e.target.value)} rows={2} className="w-full resize-none rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+                    <textarea
+                      value={form.serviceProgress}
+                      onChange={(e) =>
+                        updateField('serviceProgress', e.target.value)
+                      }
+                      rows={2}
+                      className="w-full resize-none rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    />
                   </Field>
                   <Field label="제품입고날짜">
-                    <input type="date" value={form.receivedDate} onChange={(e) => updateField('receivedDate', e.target.value)} className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+                    <input
+                      type="date"
+                      value={form.receivedDate}
+                      onChange={(e) =>
+                        updateField('receivedDate', e.target.value)
+                      }
+                      className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    />
                   </Field>
                   <Field label="출고날짜">
-                    <input type="date" value={form.shippingDate} onChange={(e) => updateField('shippingDate', e.target.value)} className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+                    <input
+                      type="date"
+                      value={form.shippingDate}
+                      onChange={(e) =>
+                        updateField('shippingDate', e.target.value)
+                      }
+                      className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    />
                   </Field>
                   <div className="grid grid-cols-2 gap-3">
                     <Field label="유상/무료">
-                      <select value={form.chargeType} onChange={(e) => updateField('chargeType', e.target.value)} className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring">
+                      <select
+                        value={form.chargeType}
+                        onChange={(e) =>
+                          updateField('chargeType', e.target.value)
+                        }
+                        className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                      >
                         <option value="유상">유상</option>
                         <option value="무료">무료</option>
                       </select>
                     </Field>
                     <Field label="수리비용 (원)">
-                      <input type="number" value={form.repairCost} onChange={(e) => updateField('repairCost', e.target.value)} placeholder="0" className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+                      <input
+                        type="number"
+                        value={form.repairCost}
+                        onChange={(e) =>
+                          updateField('repairCost', e.target.value)
+                        }
+                        placeholder="0"
+                        className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                      />
                     </Field>
                   </div>
                   <Field label="배송번호">
-                    <input type="text" value={form.trackingNumber} onChange={(e) => updateField('trackingNumber', e.target.value)} className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+                    <input
+                      type="text"
+                      value={form.trackingNumber}
+                      onChange={(e) =>
+                        updateField('trackingNumber', e.target.value)
+                      }
+                      className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    />
                   </Field>
                 </div>
               </div>
@@ -496,22 +685,59 @@ export default function CSPage() {
               /* 등록 모드: 간단한 폼 */
               <div className="space-y-4">
                 <Field label="고객명 *">
-                  <input type="text" value={form.customerName} onChange={(e) => updateField('customerName', e.target.value)} className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+                  <input
+                    type="text"
+                    value={form.customerName}
+                    onChange={(e) =>
+                      updateField('customerName', e.target.value)
+                    }
+                    className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                  />
                 </Field>
                 <Field label="전화번호 *">
-                  <input type="text" value={form.customerPhone} onChange={(e) => updateField('customerPhone', e.target.value)} placeholder="010-0000-0000" className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+                  <input
+                    type="text"
+                    value={form.customerPhone}
+                    onChange={(e) =>
+                      updateField('customerPhone', e.target.value)
+                    }
+                    placeholder="010-0000-0000"
+                    className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                  />
                 </Field>
                 <Field label="고객 주소">
-                  <input type="text" value={form.customerAddress} onChange={(e) => updateField('customerAddress', e.target.value)} className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+                  <input
+                    type="text"
+                    value={form.customerAddress}
+                    onChange={(e) =>
+                      updateField('customerAddress', e.target.value)
+                    }
+                    className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                  />
                 </Field>
                 <Field label="상담날짜 *">
-                  <input type="date" value={form.consultDate} onChange={(e) => updateField('consultDate', e.target.value)} className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+                  <input
+                    type="date"
+                    value={form.consultDate}
+                    onChange={(e) => updateField('consultDate', e.target.value)}
+                    className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                  />
                 </Field>
                 <Field label="제품명 *">
-                  <input type="text" value={form.productName} onChange={(e) => updateField('productName', e.target.value)} className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+                  <input
+                    type="text"
+                    value={form.productName}
+                    onChange={(e) => updateField('productName', e.target.value)}
+                    className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                  />
                 </Field>
                 <Field label="A/S 내용 및 상담내용">
-                  <textarea value={form.consultNote} onChange={(e) => updateField('consultNote', e.target.value)} rows={3} className="w-full resize-none rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+                  <textarea
+                    value={form.consultNote}
+                    onChange={(e) => updateField('consultNote', e.target.value)}
+                    rows={3}
+                    className="w-full resize-none rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                  />
                 </Field>
               </div>
             )}
