@@ -264,6 +264,36 @@ model CoupangDailyMetrics {
 }
 
 // ============================================================
+// CS(A/S) 관리
+// ============================================================
+
+model CSRecord {
+  id              String    @id @default(cuid())
+  consultDate     DateTime  @db.Date              // 상담날짜
+  purchaseDate    DateTime? @db.Date              // 제품구입일자
+  status          String    @default("교환요청")    // 교환요청|안내완료|진행 중|연락처없음|미입고
+  receivedDate    DateTime? @db.Date              // 제품입고날짜
+  customerName    String                          // 고객명
+  productName     String                          // 제품명
+  consultNote     String?                         // A/S 내용 및 상담내용
+  receivedProduct String?                         // 입고된 제품
+  serviceProgress String?                         // A/S 진행상황
+  shippingDate    DateTime? @db.Date              // 출고날짜
+  customerAddress String?                         // 고객주소
+  customerPhone   String                          // 전화번호
+  chargeType      String    @default("유상")       // 유상|무료
+  repairCost      Int?                            // 수리비용
+  trackingNumber  String?                         // 배송번호
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([consultDate])
+  @@index([status])
+  @@index([customerName])
+  @@map("cs_records")
+}
+
+// ============================================================
 // 감사 로그 (Audit Log)
 // ============================================================
 

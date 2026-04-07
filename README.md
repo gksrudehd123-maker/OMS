@@ -477,6 +477,10 @@ GitHub Push → Vercel Auto Deploy (main branch → Production)
 | 04-03 | 데이터 | 쿠팡 윙 SELLER_INSIGHTS 전환 — CoupangDailyMetrics 테이블 + 마케팅 지표 |
 | 04-06 | 검증 | 쿠팡 윙 실데이터 검증 완료 (SELLER_INSIGHTS 19건, 에러 0건) |
 | 04-06 | UX | 업로드 에러 토스트 → Dialog 팝업 전환, 드래그 영역 확대 |
+| 04-07 | CS | CS(A/S) 관리 기능 — 접수/수정/삭제, 상태별 필터, 월별/검색, 전체 필드 테이블 |
+| 04-07 | 권한 | STAFF 역할 메뉴 제한 (CS 관리만 표시), 로그인 시 /cs 리다이렉트 |
+| 04-07 | UX | 회원가입 버튼 → 관리자 문의 안내, 개발환경 Rate Limit 비활성화 |
+| 04-07 | 정리 | Notion API 설정/로드맵 제거, samples 폴더 gitignore 추가 |
 
 ---
 

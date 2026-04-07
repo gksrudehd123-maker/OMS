@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { signIn } from 'next-auth/react';
+import { signIn, getSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Loader2, CheckCircle } from 'lucide-react';
@@ -30,8 +30,10 @@ export default function LoginPage() {
         setError(result.error);
       } else {
         setSuccess(true);
+        const session = await getSession();
+        const redirectTo = session?.user?.role === 'STAFF' ? '/cs' : '/';
         setTimeout(() => {
-          router.push('/');
+          router.push(redirectTo);
           router.refresh();
         }, 500);
       }
@@ -102,9 +104,13 @@ export default function LoginPage() {
 
         <p className="text-center text-sm text-muted-foreground">
           계정이 없으신가요?{' '}
-          <Link href="/register" className="text-primary hover:underline">
+          <button
+            type="button"
+            onClick={() => alert('계정 생성은 관리자에게 문의해주세요.')}
+            className="text-primary hover:underline"
+          >
             회원가입
-          </Link>
+          </button>
         </p>
       </div>
     </div>

@@ -27,6 +27,8 @@ export function rateLimit(
   limit = 60,
   windowMs = 60_000,
 ): NextResponse | null {
+  if (process.env.NODE_ENV === 'development') return null;
+
   const now = Date.now();
   const entry = store.get(ip);
 

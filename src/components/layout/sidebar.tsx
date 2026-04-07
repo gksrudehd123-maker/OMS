@@ -19,30 +19,34 @@ import {
   ChevronUp,
   Menu,
   X,
+  Headphones,
 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { cn } from '@/lib/utils';
 import { useState, useEffect } from 'react';
 
-const mainNavItems = [
-  { href: '/', label: '대시보드', icon: LayoutDashboard },
-  { href: '/sales', label: '매출 관리', icon: ShoppingCart },
-  { href: '/products', label: '상품 관리', icon: Package },
-  { href: '/margins', label: '마진 분석', icon: TrendingUp },
-  { href: '/ad-costs', label: '광고비 관리', icon: Megaphone },
-  { href: '/reports', label: '리포트', icon: FileBarChart },
+type NavItem = {
+  href: string;
+  label: string;
+  icon: typeof LayoutDashboard;
+  roles?: string[]; // 미지정 시 OWNER, MANAGER만 표시
+};
+
+const mainNavItems: NavItem[] = [
+  { href: '/', label: '대시보드', icon: LayoutDashboard, roles: ['OWNER', 'MANAGER'] },
+  { href: '/sales', label: '매출 관리', icon: ShoppingCart, roles: ['OWNER', 'MANAGER'] },
+  { href: '/products', label: '상품 관리', icon: Package, roles: ['OWNER', 'MANAGER'] },
+  { href: '/margins', label: '마진 분석', icon: TrendingUp, roles: ['OWNER', 'MANAGER'] },
+  { href: '/ad-costs', label: '광고비 관리', icon: Megaphone, roles: ['OWNER', 'MANAGER'] },
+  { href: '/cs', label: 'CS 관리', icon: Headphones, roles: ['OWNER', 'MANAGER', 'STAFF'] },
+  { href: '/reports', label: '리포트', icon: FileBarChart, roles: ['OWNER', 'MANAGER'] },
 ];
 
-const settingsSubItems = [
-  { href: '/settings', label: '설정', icon: Settings },
-  { href: '/channels', label: '채널 분석', icon: Store },
-  { href: '/users', label: '사용자 관리', icon: Users, ownerOnly: true },
-  {
-    href: '/audit-logs',
-    label: '감사 로그',
-    icon: ScrollText,
-    ownerOnly: true,
-  },
+const settingsSubItems: NavItem[] = [
+  { href: '/settings', label: '설정', icon: Settings, roles: ['OWNER'] },
+  { href: '/channels', label: '채널 분석', icon: Store, roles: ['OWNER'] },
+  { href: '/users', label: '사용자 관리', icon: Users, roles: ['OWNER'] },
+  { href: '/audit-logs', label: '감사 로그', icon: ScrollText, roles: ['OWNER'] },
 ];
 
 export function Sidebar() {
@@ -52,10 +56,13 @@ export function Sidebar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
-  const isOwner = session?.user?.role === 'OWNER';
-  const visibleSubItems = settingsSubItems.filter(
-    (item) => !item.ownerOnly || isOwner,
-  );
+  const userRole = session?.user?.role;
+
+  const canSee = (item: NavItem) =>
+    !userRole || !item.roles || item.roles.includes(userRole);
+
+  const visibleMainItems = mainNavItems.filter(canSee);
+  const visibleSubItems = settingsSubItems.filter(canSee);
 
   // 설정 하위 메뉴가 활성화되어 있으면 자동으로 열기
   const isSettingsActive = visibleSubItems.some((item) =>
@@ -236,10 +243,14 @@ export function Sidebar() {
         {/* Navigation */}
         <nav className="flex-1 flex flex-col p-2">
           <div className="space-y-1">
-            {mainNavItems.map((item) => renderMainNav(item))}
+            {visibleMainItems.map((item) => renderMainNav(item))}
           </div>
-          <div className="my-2 border-t border-border" />
-          {renderSettingsGroup()}
+          {visibleSubItems.length > 0 && (
+            <>
+              <div className="my-2 border-t border-border" />
+              {renderSettingsGroup()}
+            </>
+          )}
         </nav>
       </aside>
 
