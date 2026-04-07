@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
 import { Toaster, toast } from 'sonner';
@@ -49,7 +49,7 @@ const STATUS_COLORS: Record<string, string> = {
 const EMPTY_FORM = {
   consultDate: new Date().toISOString().split('T')[0],
   purchaseDate: '',
-  status: '교환요청',
+  status: '안내완료',
   receivedDate: '',
   customerName: '',
   productName: '',
@@ -57,12 +57,30 @@ const EMPTY_FORM = {
   receivedProduct: '',
   serviceProgress: '',
   shippingDate: '',
-  customerAddress: '',
+  customerAddress: '확인필요',
   customerPhone: '',
   chargeType: '유상',
   repairCost: '',
   trackingNumber: '',
 };
+
+const COLUMNS = [
+  { key: 'consultDate', label: '상담날짜', width: 100, align: 'left' },
+  { key: 'purchaseDate', label: '구입일자', width: 100, align: 'left' },
+  { key: 'status', label: '안내상태', width: 90, align: 'center' },
+  { key: 'receivedDate', label: '입고날짜', width: 100, align: 'left' },
+  { key: 'customerName', label: '고객명', width: 80, align: 'left' },
+  { key: 'productName', label: '제품명', width: 140, align: 'left' },
+  { key: 'consultNote', label: '상담내용', width: 180, align: 'left' },
+  { key: 'receivedProduct', label: '입고제품', width: 140, align: 'left' },
+  { key: 'serviceProgress', label: 'A/S 진행상황', width: 180, align: 'left' },
+  { key: 'shippingDate', label: '출고날짜', width: 100, align: 'left' },
+  { key: 'customerAddress', label: '고객주소', width: 200, align: 'left' },
+  { key: 'customerPhone', label: '전화번호', width: 120, align: 'left' },
+  { key: 'chargeType', label: '유상/무료', width: 80, align: 'center' },
+  { key: 'repairCost', label: '수리비용', width: 90, align: 'right' },
+  { key: 'trackingNumber', label: '배송번호', width: 120, align: 'left' },
+] as const;
 
 function toDateInput(value: string | null): string {
   if (!value) return '';
@@ -73,6 +91,76 @@ export default function CSPage() {
   const queryClient = useQueryClient();
   const { data: session } = useSession();
   const isOwner = session?.user?.role === 'OWNER';
+
+  // 컬럼 순서
+  const [colOrder, setColOrder] = useState<number[]>(COLUMNS.map((_, i) => i));
+  const [dragCol, setDragCol] = useState<number | null>(null);
+  const [dragOverCol, setDragOverCol] = useState<number | null>(null);
+
+  const onDragStart = (orderIdx: number, e: React.DragEvent) => {
+    setDragCol(orderIdx);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const onDragOver = (orderIdx: number, e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOverCol(orderIdx);
+  };
+
+  const onDragEnd = () => {
+    if (dragCol !== null && dragOverCol !== null && dragCol !== dragOverCol) {
+      setColOrder((prev) => {
+        const next = [...prev];
+        const [moved] = next.splice(dragCol, 1);
+        next.splice(dragOverCol, 0, moved);
+        return next;
+      });
+      setColWidths((prev) => {
+        const next = [...prev];
+        const [moved] = next.splice(dragCol, 1);
+        next.splice(dragOverCol, 0, moved);
+        return next;
+      });
+    }
+    setDragCol(null);
+    setDragOverCol(null);
+  };
+
+  // 컬럼 리사이즈
+  const [colWidths, setColWidths] = useState<number[]>(
+    COLUMNS.map((c) => c.width),
+  );
+  const onResizeStart = useCallback(
+    (colIdx: number, e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const startX = e.clientX;
+      const startW = colWidths[colIdx];
+
+      const onMouseMove = (ev: MouseEvent) => {
+        const diff = ev.clientX - startX;
+        const newWidth = Math.max(50, startW + diff);
+        setColWidths((prev) => {
+          const next = [...prev];
+          next[colIdx] = newWidth;
+          return next;
+        });
+      };
+
+      const onMouseUp = () => {
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+      };
+
+      document.addEventListener('mousemove', onMouseMove);
+      document.addEventListener('mouseup', onMouseUp);
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+    },
+    [colWidths],
+  );
 
   // 필터
   const now = new Date();
@@ -195,13 +283,8 @@ export default function CSPage() {
   };
 
   const handleSave = () => {
-    if (
-      !form.consultDate ||
-      !form.customerName ||
-      !form.customerPhone ||
-      !form.productName
-    ) {
-      toast.error('상담날짜, 고객명, 전화번호, 제품명은 필수입니다');
+    if (!form.consultDate || !form.customerName || !form.productName) {
+      toast.error('상담날짜, 고객명, 제품명은 필수입니다');
       return;
     }
     saveMutation.mutate({
@@ -233,6 +316,89 @@ export default function CSPage() {
 
   const updateField = (field: string, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const renderCell = (r: CSRecord, key: string) => {
+    const fmtDate = (v: string | null) =>
+      v ? new Date(v).toLocaleDateString('ko-KR') : '-';
+
+    switch (key) {
+      case 'consultDate':
+        return (
+          <span className="font-mono text-xs">{fmtDate(r.consultDate)}</span>
+        );
+      case 'purchaseDate':
+        return (
+          <span className="font-mono text-xs">{fmtDate(r.purchaseDate)}</span>
+        );
+      case 'status':
+        return (
+          <span
+            className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_COLORS[r.status] || 'bg-muted text-muted-foreground'}`}
+          >
+            {r.status}
+          </span>
+        );
+      case 'receivedDate':
+        return (
+          <span className="font-mono text-xs">{fmtDate(r.receivedDate)}</span>
+        );
+      case 'customerName':
+        return <span className="font-medium">{r.customerName}</span>;
+      case 'productName':
+        return r.productName;
+      case 'consultNote':
+        return (
+          <span className="text-muted-foreground">{r.consultNote || '-'}</span>
+        );
+      case 'receivedProduct':
+        return r.receivedProduct || '-';
+      case 'serviceProgress':
+        return (
+          <span className="text-muted-foreground">
+            {r.serviceProgress || '-'}
+          </span>
+        );
+      case 'shippingDate':
+        return (
+          <span className="font-mono text-xs">{fmtDate(r.shippingDate)}</span>
+        );
+      case 'customerAddress':
+        return (
+          <span className="text-muted-foreground">
+            {r.customerAddress || '-'}
+          </span>
+        );
+      case 'customerPhone':
+        return <span className="font-mono text-xs">{r.customerPhone}</span>;
+      case 'chargeType':
+        return (
+          <span
+            className={`text-xs font-medium ${r.chargeType === '유상' ? 'text-orange-600 dark:text-orange-400' : 'text-blue-600 dark:text-blue-400'}`}
+          >
+            {r.chargeType}
+          </span>
+        );
+      case 'repairCost':
+        return (
+          <span className="font-mono">
+            {r.repairCost ? `${r.repairCost.toLocaleString()}원` : '-'}
+          </span>
+        );
+      case 'trackingNumber':
+        return (
+          <span className="font-mono text-xs">{r.trackingNumber || '-'}</span>
+        );
+      default:
+        return '-';
+    }
+  };
+
+  const formatPhone = (value: string) => {
+    const nums = value.replace(/\D/g, '').slice(0, 11);
+    if (nums.length <= 3) return nums;
+    if (nums.length <= 7) return `${nums.slice(0, 3)}-${nums.slice(3)}`;
+    return `${nums.slice(0, 3)}-${nums.slice(3, 7)}-${nums.slice(7)}`;
   };
 
   // 월별 옵션 생성 (최근 12개월)
@@ -344,54 +510,35 @@ export default function CSPage() {
       {/* 테이블 */}
       <div className="rounded-xl border border-border bg-card shadow-sm">
         <div className="overflow-x-auto">
-          <table className="min-w-[1400px] text-sm">
+          <table
+            className="text-sm"
+            style={{
+              tableLayout: 'fixed',
+              width: colWidths.reduce((a, b) => a + b, 0),
+            }}
+          >
             <thead>
-              <tr className="border-b border-border bg-muted/50">
-                <th className="whitespace-nowrap px-4 py-3 text-left font-medium">
-                  상담날짜
-                </th>
-                <th className="whitespace-nowrap px-4 py-3 text-left font-medium">
-                  구입일자
-                </th>
-                <th className="whitespace-nowrap px-4 py-3 text-center font-medium">
-                  안내상태
-                </th>
-                <th className="whitespace-nowrap px-4 py-3 text-left font-medium">
-                  입고날짜
-                </th>
-                <th className="whitespace-nowrap px-4 py-3 text-left font-medium">
-                  고객명
-                </th>
-                <th className="whitespace-nowrap px-4 py-3 text-left font-medium">
-                  제품명
-                </th>
-                <th className="whitespace-nowrap px-4 py-3 text-left font-medium">
-                  상담내용
-                </th>
-                <th className="whitespace-nowrap px-4 py-3 text-left font-medium">
-                  입고제품
-                </th>
-                <th className="whitespace-nowrap px-4 py-3 text-left font-medium">
-                  A/S 진행상황
-                </th>
-                <th className="whitespace-nowrap px-4 py-3 text-left font-medium">
-                  출고날짜
-                </th>
-                <th className="whitespace-nowrap px-4 py-3 text-left font-medium">
-                  고객주소
-                </th>
-                <th className="whitespace-nowrap px-4 py-3 text-left font-medium">
-                  전화번호
-                </th>
-                <th className="whitespace-nowrap px-4 py-3 text-center font-medium">
-                  유상/무료
-                </th>
-                <th className="whitespace-nowrap px-4 py-3 text-right font-medium">
-                  수리비용
-                </th>
-                <th className="whitespace-nowrap px-4 py-3 text-left font-medium">
-                  배송번호
-                </th>
+              <tr className="border-b-2 border-border bg-muted">
+                {colOrder.map((colIdx, orderIdx) => {
+                  const col = COLUMNS[colIdx];
+                  return (
+                    <th
+                      key={col.key}
+                      draggable
+                      onDragStart={(e) => onDragStart(orderIdx, e)}
+                      onDragOver={(e) => onDragOver(orderIdx, e)}
+                      onDragEnd={onDragEnd}
+                      className={`relative cursor-grab whitespace-nowrap border-r border-border px-4 py-3 font-semibold text-foreground active:cursor-grabbing text-${col.align} last:border-r-0 ${dragOverCol === orderIdx && dragCol !== orderIdx ? 'bg-primary/10' : ''}`}
+                      style={{ width: colWidths[orderIdx] }}
+                    >
+                      {col.label}
+                      <div
+                        onMouseDown={(e) => onResizeStart(orderIdx, e)}
+                        className="absolute -right-[3px] top-2 z-10 h-[calc(100%-16px)] w-1 cursor-col-resize rounded-full bg-gray-300 hover:bg-blue-500 dark:bg-gray-600 dark:hover:bg-blue-400"
+                      />
+                    </th>
+                  );
+                })}
               </tr>
             </thead>
             <tbody>
@@ -421,67 +568,17 @@ export default function CSPage() {
                     onClick={() => openEdit(r)}
                     className="cursor-pointer border-b border-border last:border-0 hover:bg-muted/30"
                   >
-                    <td className="whitespace-nowrap px-4 py-3 font-mono text-xs">
-                      {new Date(r.consultDate).toLocaleDateString('ko-KR')}
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3 font-mono text-xs">
-                      {r.purchaseDate
-                        ? new Date(r.purchaseDate).toLocaleDateString('ko-KR')
-                        : '-'}
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-center">
-                      <span
-                        className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_COLORS[r.status] || 'bg-muted text-muted-foreground'}`}
-                      >
-                        {r.status}
-                      </span>
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3 font-mono text-xs">
-                      {r.receivedDate
-                        ? new Date(r.receivedDate).toLocaleDateString('ko-KR')
-                        : '-'}
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3 font-medium">
-                      {r.customerName}
-                    </td>
-                    <td className="max-w-[160px] truncate px-4 py-3">
-                      {r.productName}
-                    </td>
-                    <td className="max-w-[200px] truncate px-4 py-3 text-muted-foreground">
-                      {r.consultNote || '-'}
-                    </td>
-                    <td className="max-w-[160px] truncate px-4 py-3">
-                      {r.receivedProduct || '-'}
-                    </td>
-                    <td className="max-w-[200px] truncate px-4 py-3 text-muted-foreground">
-                      {r.serviceProgress || '-'}
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3 font-mono text-xs">
-                      {r.shippingDate
-                        ? new Date(r.shippingDate).toLocaleDateString('ko-KR')
-                        : '-'}
-                    </td>
-                    <td className="max-w-[200px] truncate px-4 py-3 text-muted-foreground">
-                      {r.customerAddress || '-'}
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3 font-mono text-xs">
-                      {r.customerPhone}
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-center">
-                      <span
-                        className={`text-xs font-medium ${r.chargeType === '유상' ? 'text-orange-600 dark:text-orange-400' : 'text-blue-600 dark:text-blue-400'}`}
-                      >
-                        {r.chargeType}
-                      </span>
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-right font-mono">
-                      {r.repairCost
-                        ? `${r.repairCost.toLocaleString()}원`
-                        : '-'}
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3 font-mono text-xs">
-                      {r.trackingNumber || '-'}
-                    </td>
+                    {colOrder.map((colIdx) => {
+                      const col = COLUMNS[colIdx];
+                      return (
+                        <td
+                          key={col.key}
+                          className={`overflow-hidden truncate px-4 py-3 text-${col.align}`}
+                        >
+                          {renderCell(r, col.key)}
+                        </td>
+                      );
+                    })}
                   </tr>
                 ))
               )}
@@ -530,7 +627,10 @@ export default function CSPage() {
                       type="text"
                       value={form.customerPhone}
                       onChange={(e) =>
-                        updateField('customerPhone', e.target.value)
+                        updateField(
+                          'customerPhone',
+                          formatPhone(e.target.value),
+                        )
                       }
                       placeholder="010-0000-0000"
                       className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
@@ -699,7 +799,7 @@ export default function CSPage() {
                     type="text"
                     value={form.customerPhone}
                     onChange={(e) =>
-                      updateField('customerPhone', e.target.value)
+                      updateField('customerPhone', formatPhone(e.target.value))
                     }
                     placeholder="010-0000-0000"
                     className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"

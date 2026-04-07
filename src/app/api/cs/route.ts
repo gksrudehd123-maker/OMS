@@ -69,17 +69,17 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { consultDate, customerName, customerPhone, productName } = body;
+    const { consultDate, customerName, productName } = body;
 
-    if (!consultDate || !customerName || !customerPhone || !productName) {
-      return apiError('상담날짜, 고객명, 전화번호, 제품명은 필수입니다');
+    if (!consultDate || !customerName || !productName) {
+      return apiError('상담날짜, 고객명, 제품명은 필수입니다');
     }
 
     const record = await prisma.cSRecord.create({
       data: {
         consultDate: parseDate(consultDate),
         purchaseDate: body.purchaseDate ? parseDate(body.purchaseDate) : null,
-        status: body.status || '교환요청',
+        status: body.status || '안내완료',
         receivedDate: body.receivedDate ? parseDate(body.receivedDate) : null,
         customerName,
         productName,
@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
         serviceProgress: body.serviceProgress || null,
         shippingDate: body.shippingDate ? parseDate(body.shippingDate) : null,
         customerAddress: body.customerAddress || null,
-        customerPhone,
+        customerPhone: body.customerPhone || '',
         chargeType: body.chargeType || '유상',
         repairCost: body.repairCost ? parseInt(body.repairCost) : null,
         trackingNumber: body.trackingNumber || null,
