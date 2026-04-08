@@ -427,334 +427,370 @@ export default function SettingsPage() {
       </div>
 
       {/* 기본값 설정 (OWNER만) */}
-      {isOwner && <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
-        <h2 className="text-lg font-semibold">기본값 설정</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          신규 상품이 업로드로 자동 등록될 때 적용되는 기본값
-        </p>
-
-        {loadingDefaults ? (
-          <div className="mt-4 space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2">
-              {Array.from({ length: 2 }).map((_, i) => (
-                <div key={i}>
-                  <Skeleton className="h-4 w-24 mb-1" />
-                  <Skeleton className="h-3 w-40 mb-2" />
-                  <Skeleton className="h-10 w-full rounded-lg" />
-                </div>
-              ))}
-            </div>
-          </div>
-        ) : (
-          <div className="mt-4 space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <label className="text-sm font-medium">기본 배송비 (원)</label>
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  신규 상품의 기본 배송비
-                </p>
-                <input
-                  type="number"
-                  min="0"
-                  step="100"
-                  value={defaultShippingCost}
-                  onChange={(e) => setDefaultShippingCost(e.target.value)}
-                  placeholder="예: 3000"
-                  className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium">
-                  무료배송 기준금액 (원)
-                </label>
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  이 금액 이상 주문 시 배송비 무료 (비워두면 미적용)
-                </p>
-                <input
-                  type="number"
-                  min="0"
-                  step="1000"
-                  value={defaultFreeShippingMin}
-                  onChange={(e) => setDefaultFreeShippingMin(e.target.value)}
-                  placeholder="예: 50000"
-                  className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                />
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <button
-                onClick={handleSaveDefaults}
-                disabled={saving}
-                className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
-              >
-                {saving ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : saved ? (
-                  <Check className="h-4 w-4" />
-                ) : (
-                  <Save className="h-4 w-4" />
-                )}
-                {saving ? '저장 중...' : saved ? '저장 완료!' : '저장'}
-              </button>
-              {saved && (
-                <span className="text-sm text-green-600">
-                  설정이 저장되었습니다
-                </span>
-              )}
-            </div>
-          </div>
-        )}
-      </div>}
-
-      {isOwner && <>{/* 채널 관리 바로가기 */}
-      <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-semibold">채널 관리</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              판매 채널 및 수수료율 관리
-            </p>
-          </div>
-          <button
-            onClick={() => router.push('/channels')}
-            className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted"
-          >
-            <Store className="h-4 w-4" />
-            채널 관리 페이지
-            <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
-          </button>
-        </div>
-
-        {loadingChannels ? (
-          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="rounded-lg border border-border p-4">
-                <div className="flex items-center justify-between">
-                  <Skeleton className="h-4 w-20" />
-                  <Skeleton className="h-4 w-10 rounded-full" />
-                </div>
-                <div className="mt-2 flex items-center gap-4">
-                  <Skeleton className="h-3 w-16" />
-                  <Skeleton className="h-3 w-16" />
-                  <Skeleton className="h-3 w-12" />
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : channels.length === 0 ? (
-          <div className="mt-4 rounded-lg bg-muted/50 p-4 text-center text-sm text-muted-foreground">
-            등록된 채널이 없습니다
-          </div>
-        ) : (
-          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {channels.map((ch) => (
-              <div
-                key={ch.id}
-                onClick={() => router.push('/channels')}
-                className="cursor-pointer rounded-lg border border-border p-4 transition-colors hover:bg-muted/50"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="font-medium">{ch.name}</span>
-                  <span
-                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                      ch.isActive
-                        ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
-                        : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'
-                    }`}
-                  >
-                    {ch.isActive ? '활성' : '비활성'}
-                  </span>
-                </div>
-                <div className="mt-2 flex items-center gap-4 text-xs text-muted-foreground">
-                  <span>코드: {ch.code}</span>
-                  <span>수수료: {ch.feeRate}%</span>
-                  <span>주문: {ch._count.orders + ch._count.dailySales}건</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* 자동 리포트 설정 */}
-      <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
-        <h2 className="text-lg font-semibold">자동 리포트</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          주간 또는 월간 리포트를 자동으로 생성합니다. 생성된 리포트는 리포트
-          페이지에서 확인할 수 있습니다.
-        </p>
-
-        <div className="mt-4 sm:max-w-xs">
-          <label className="text-sm font-medium">생성 주기</label>
-          <select
-            value={autoReportSchedule}
-            onChange={(e) => setAutoReportSchedule(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-          >
-            <option value="off">비활성</option>
-            <option value="weekly">주간 (매주 월요일, 지난주 리포트)</option>
-            <option value="monthly">월간 (매월 1일, 지난달 리포트)</option>
-          </select>
-          <p className="mt-1.5 text-xs text-muted-foreground">
-            변경 후 아래 저장 버튼을 눌러 적용하세요.
-          </p>
-        </div>
-      </div>
-
-      {/* 사용자 관리 바로가기 (OWNER만) */}
       {isOwner && (
         <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-lg font-semibold">사용자 관리</h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                사용자 역할 및 채널 접근 권한 관리
-              </p>
+          <h2 className="text-lg font-semibold">기본값 설정</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            신규 상품이 업로드로 자동 등록될 때 적용되는 기본값
+          </p>
+
+          {loadingDefaults ? (
+            <div className="mt-4 space-y-4">
+              <div className="grid gap-4 sm:grid-cols-2">
+                {Array.from({ length: 2 }).map((_, i) => (
+                  <div key={i}>
+                    <Skeleton className="h-4 w-24 mb-1" />
+                    <Skeleton className="h-3 w-40 mb-2" />
+                    <Skeleton className="h-10 w-full rounded-lg" />
+                  </div>
+                ))}
+              </div>
             </div>
-            <button
-              onClick={() => router.push('/users')}
-              className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted"
-            >
-              <Users className="h-4 w-4" />
-              사용자 관리 페이지
-              <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
-            </button>
-          </div>
+          ) : (
+            <div className="mt-4 space-y-4">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="text-sm font-medium">
+                    기본 배송비 (원)
+                  </label>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    신규 상품의 기본 배송비
+                  </p>
+                  <input
+                    type="number"
+                    min="0"
+                    step="100"
+                    value={defaultShippingCost}
+                    onChange={(e) => setDefaultShippingCost(e.target.value)}
+                    placeholder="예: 3000"
+                    className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">
+                    무료배송 기준금액 (원)
+                  </label>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    이 금액 이상 주문 시 배송비 무료 (비워두면 미적용)
+                  </p>
+                  <input
+                    type="number"
+                    min="0"
+                    step="1000"
+                    value={defaultFreeShippingMin}
+                    onChange={(e) => setDefaultFreeShippingMin(e.target.value)}
+                    placeholder="예: 50000"
+                    className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                  />
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={handleSaveDefaults}
+                  disabled={saving}
+                  className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+                >
+                  {saving ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : saved ? (
+                    <Check className="h-4 w-4" />
+                  ) : (
+                    <Save className="h-4 w-4" />
+                  )}
+                  {saving ? '저장 중...' : saved ? '저장 완료!' : '저장'}
+                </button>
+                {saved && (
+                  <span className="text-sm text-green-600">
+                    설정이 저장되었습니다
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
-      {/* 데이터 관리 */}
-      <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
-        <h2 className="text-lg font-semibold">데이터 관리</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          업로드 이력 조회 및 데이터 삭제
-        </p>
+      {isOwner && (
+        <>
+          {/* 채널 관리 바로가기 */}
+          <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-semibold">채널 관리</h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  판매 채널 및 수수료율 관리
+                </p>
+              </div>
+              <button
+                onClick={() => router.push('/channels')}
+                className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted"
+              >
+                <Store className="h-4 w-4" />
+                채널 관리 페이지
+                <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
+              </button>
+            </div>
 
-        {loadingUploads ? (
-          <div className="mt-4 overflow-x-auto rounded-lg border border-border">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border bg-muted/50">
-                  <th className="px-4 py-3 text-left font-medium">파일명</th>
-                  <th className="px-4 py-3 text-left font-medium">채널</th>
-                  <th className="px-4 py-3 text-center font-medium">성공</th>
-                  <th className="px-4 py-3 text-center font-medium">오류</th>
-                  <th className="px-4 py-3 text-left font-medium">
-                    업로드 일시
-                  </th>
-                  <th className="px-4 py-3 text-center font-medium">관리</th>
-                </tr>
-              </thead>
-              <tbody>
+            {loadingChannels ? (
+              <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {Array.from({ length: 3 }).map((_, i) => (
-                  <tr key={i} className="border-b border-border last:border-0">
-                    {Array.from({ length: 6 }).map((_, j) => (
-                      <td key={j} className="px-4 py-3">
-                        <Skeleton className="h-4 w-full" />
-                      </td>
-                    ))}
-                  </tr>
+                  <div key={i} className="rounded-lg border border-border p-4">
+                    <div className="flex items-center justify-between">
+                      <Skeleton className="h-4 w-20" />
+                      <Skeleton className="h-4 w-10 rounded-full" />
+                    </div>
+                    <div className="mt-2 flex items-center gap-4">
+                      <Skeleton className="h-3 w-16" />
+                      <Skeleton className="h-3 w-16" />
+                      <Skeleton className="h-3 w-12" />
+                    </div>
+                  </div>
                 ))}
-              </tbody>
-            </table>
+              </div>
+            ) : channels.length === 0 ? (
+              <div className="mt-4 rounded-lg bg-muted/50 p-4 text-center text-sm text-muted-foreground">
+                등록된 채널이 없습니다
+              </div>
+            ) : (
+              <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {channels.map((ch) => (
+                  <div
+                    key={ch.id}
+                    onClick={() => router.push('/channels')}
+                    className="cursor-pointer rounded-lg border border-border p-4 transition-colors hover:bg-muted/50"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium">{ch.name}</span>
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                          ch.isActive
+                            ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
+                            : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'
+                        }`}
+                      >
+                        {ch.isActive ? '활성' : '비활성'}
+                      </span>
+                    </div>
+                    <div className="mt-2 flex items-center gap-4 text-xs text-muted-foreground">
+                      <span>코드: {ch.code}</span>
+                      <span>수수료: {ch.feeRate}%</span>
+                      <span>
+                        주문: {ch._count.orders + ch._count.dailySales}건
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-        ) : uploads.length === 0 ? (
-          <div className="mt-4 rounded-lg bg-muted/50 p-6 text-center text-sm text-muted-foreground">
-            <Upload className="mx-auto mb-2 h-6 w-6" />
-            업로드 이력이 없습니다
+
+          {/* 자동 리포트 설정 */}
+          <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
+            <h2 className="text-lg font-semibold">자동 리포트</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              주간 또는 월간 리포트를 자동으로 생성합니다. 생성된 리포트는
+              리포트 페이지에서 확인할 수 있습니다.
+            </p>
+
+            <div className="mt-4 sm:max-w-xs">
+              <label className="text-sm font-medium">생성 주기</label>
+              <select
+                value={autoReportSchedule}
+                onChange={(e) => setAutoReportSchedule(e.target.value)}
+                className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              >
+                <option value="off">비활성</option>
+                <option value="weekly">
+                  주간 (매주 월요일, 지난주 리포트)
+                </option>
+                <option value="monthly">월간 (매월 1일, 지난달 리포트)</option>
+              </select>
+              <p className="mt-1.5 text-xs text-muted-foreground">
+                변경 후 아래 저장 버튼을 눌러 적용하세요.
+              </p>
+            </div>
           </div>
-        ) : (
-          <div className="mt-4">
-            <div className="overflow-x-auto rounded-lg border border-border">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border bg-muted/50">
-                    <th className="px-4 py-3 text-left font-medium">파일명</th>
-                    <th className="px-4 py-3 text-left font-medium">채널</th>
-                    <th className="px-4 py-3 text-center font-medium">성공</th>
-                    <th className="px-4 py-3 text-center font-medium">오류</th>
-                    <th className="px-4 py-3 text-left font-medium">
-                      업로드 일시
-                    </th>
-                    <th className="px-4 py-3 text-center font-medium">관리</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {uploads.map((u) => (
-                    <tr
-                      key={u.id}
-                      className="border-b border-border last:border-0 hover:bg-muted/30"
-                    >
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          <FileSpreadsheet className="h-4 w-4 text-green-600" />
-                          <span className="max-w-[200px] truncate">
-                            {u.fileName}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-muted-foreground">
-                        {u.channel.name}
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <span className="text-green-600">{u.successRows}</span>
-                        <span className="text-muted-foreground">
-                          /{u.totalRows}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        {u.errorRows > 0 ? (
-                          <span className="text-red-500">{u.errorRows}</span>
-                        ) : (
-                          <span className="text-muted-foreground">0</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-muted-foreground">
-                        {new Date(u.createdAt).toLocaleString('ko-KR')}
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        {showDeleteConfirm === u.id ? (
-                          <div className="flex items-center justify-center gap-1">
-                            <button
-                              onClick={() => handleDeleteUpload(u.id)}
-                              disabled={deleting}
-                              className="rounded px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-950"
-                            >
-                              {deleting ? '삭제중...' : '확인'}
-                            </button>
-                            <button
-                              onClick={() => setShowDeleteConfirm(null)}
-                              className="rounded px-2 py-1 text-xs text-muted-foreground hover:bg-muted"
-                            >
-                              취소
-                            </button>
-                          </div>
-                        ) : (
-                          <button
-                            onClick={() => setShowDeleteConfirm(u.id)}
-                            className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950"
-                            title="이 업로드 및 관련 주문 삭제"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        )}
-                      </td>
+
+          {/* 사용자 관리 바로가기 (OWNER만) */}
+          {isOwner && (
+            <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-lg font-semibold">사용자 관리</h2>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    사용자 역할 및 채널 접근 권한 관리
+                  </p>
+                </div>
+                <button
+                  onClick={() => router.push('/users')}
+                  className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted"
+                >
+                  <Users className="h-4 w-4" />
+                  사용자 관리 페이지
+                  <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* 데이터 관리 */}
+          <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
+            <h2 className="text-lg font-semibold">데이터 관리</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              업로드 이력 조회 및 데이터 삭제
+            </p>
+
+            {loadingUploads ? (
+              <div className="mt-4 overflow-x-auto rounded-lg border border-border">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border bg-muted/50">
+                      <th className="px-4 py-3 text-left font-medium">
+                        파일명
+                      </th>
+                      <th className="px-4 py-3 text-left font-medium">채널</th>
+                      <th className="px-4 py-3 text-center font-medium">
+                        성공
+                      </th>
+                      <th className="px-4 py-3 text-center font-medium">
+                        오류
+                      </th>
+                      <th className="px-4 py-3 text-left font-medium">
+                        업로드 일시
+                      </th>
+                      <th className="px-4 py-3 text-center font-medium">
+                        관리
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <div className="mt-3 flex items-start gap-2 rounded-lg bg-amber-50 p-3 text-xs text-amber-700 dark:bg-amber-950/50 dark:text-amber-400">
-              <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-              <span>
-                업로드를 삭제하면 해당 업로드로 추가된 주문 데이터도 함께
-                삭제됩니다. 상품 정보는 유지됩니다.
-              </span>
-            </div>
+                  </thead>
+                  <tbody>
+                    {Array.from({ length: 3 }).map((_, i) => (
+                      <tr
+                        key={i}
+                        className="border-b border-border last:border-0"
+                      >
+                        {Array.from({ length: 6 }).map((_, j) => (
+                          <td key={j} className="px-4 py-3">
+                            <Skeleton className="h-4 w-full" />
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : uploads.length === 0 ? (
+              <div className="mt-4 rounded-lg bg-muted/50 p-6 text-center text-sm text-muted-foreground">
+                <Upload className="mx-auto mb-2 h-6 w-6" />
+                업로드 이력이 없습니다
+              </div>
+            ) : (
+              <div className="mt-4">
+                <div className="overflow-x-auto rounded-lg border border-border">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-border bg-muted/50">
+                        <th className="px-4 py-3 text-left font-medium">
+                          파일명
+                        </th>
+                        <th className="px-4 py-3 text-left font-medium">
+                          채널
+                        </th>
+                        <th className="px-4 py-3 text-center font-medium">
+                          성공
+                        </th>
+                        <th className="px-4 py-3 text-center font-medium">
+                          오류
+                        </th>
+                        <th className="px-4 py-3 text-left font-medium">
+                          업로드 일시
+                        </th>
+                        <th className="px-4 py-3 text-center font-medium">
+                          관리
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {uploads.map((u) => (
+                        <tr
+                          key={u.id}
+                          className="border-b border-border last:border-0 hover:bg-muted/30"
+                        >
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-2">
+                              <FileSpreadsheet className="h-4 w-4 text-green-600" />
+                              <span className="max-w-[200px] truncate">
+                                {u.fileName}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-muted-foreground">
+                            {u.channel.name}
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            <span className="text-green-600">
+                              {u.successRows}
+                            </span>
+                            <span className="text-muted-foreground">
+                              /{u.totalRows}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            {u.errorRows > 0 ? (
+                              <span className="text-red-500">
+                                {u.errorRows}
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground">0</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-muted-foreground">
+                            {new Date(u.createdAt).toLocaleString('ko-KR')}
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            {showDeleteConfirm === u.id ? (
+                              <div className="flex items-center justify-center gap-1">
+                                <button
+                                  onClick={() => handleDeleteUpload(u.id)}
+                                  disabled={deleting}
+                                  className="rounded px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-950"
+                                >
+                                  {deleting ? '삭제중...' : '확인'}
+                                </button>
+                                <button
+                                  onClick={() => setShowDeleteConfirm(null)}
+                                  className="rounded px-2 py-1 text-xs text-muted-foreground hover:bg-muted"
+                                >
+                                  취소
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => setShowDeleteConfirm(u.id)}
+                                className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950"
+                                title="이 업로드 및 관련 주문 삭제"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="mt-3 flex items-start gap-2 rounded-lg bg-amber-50 p-3 text-xs text-amber-700 dark:bg-amber-950/50 dark:text-amber-400">
+                  <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                  <span>
+                    업로드를 삭제하면 해당 업로드로 추가된 주문 데이터도 함께
+                    삭제됩니다. 상품 정보는 유지됩니다.
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
-        )}
-      </div>
-      </>}
+        </>
+      )}
     </div>
   );
 }

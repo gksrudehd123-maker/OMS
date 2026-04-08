@@ -2,7 +2,14 @@ import { withAuth } from 'next-auth/middleware';
 import { NextResponse } from 'next/server';
 
 // STAFF가 접근 가능한 경로
-const STAFF_ALLOWED = ['/cs', '/api/cs', '/api/auth', '/settings', '/api/user', '/api/settings'];
+const STAFF_ALLOWED = [
+  '/cs',
+  '/api/cs',
+  '/api/auth',
+  '/settings',
+  '/api/user',
+  '/api/settings',
+];
 
 // MANAGER가 접근 불가한 경로
 // MANAGER 차단: 페이지만 차단, API는 각 route에서 requireRole('OWNER')로 보호
@@ -31,9 +38,7 @@ export default withAuth(
 
     // MANAGER는 차단 경로 접근 불가
     if (role === 'MANAGER') {
-      const blocked = MANAGER_BLOCKED.some((path) =>
-        pathname.startsWith(path),
-      );
+      const blocked = MANAGER_BLOCKED.some((path) => pathname.startsWith(path));
       if (blocked) {
         const url = req.nextUrl.clone();
         url.pathname = '/';

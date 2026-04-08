@@ -195,7 +195,12 @@ export async function GET(request: NextRequest) {
 
     const chId = order.channelId;
     if (!channelSalesMap[chId])
-      channelSalesMap[chId] = { name: order.channel.name, sales: 0, margin: 0, orders: 0 };
+      channelSalesMap[chId] = {
+        name: order.channel.name,
+        sales: 0,
+        margin: 0,
+        orders: 0,
+      };
     channelSalesMap[chId].orders++;
 
     // 브랜드별 판매 갯수 (채널별)
@@ -250,7 +255,12 @@ export async function GET(request: NextRequest) {
 
     const chId = ds.channelId;
     if (!channelSalesMap[chId])
-      channelSalesMap[chId] = { name: ds.channel.name, sales: 0, margin: 0, orders: 0 };
+      channelSalesMap[chId] = {
+        name: ds.channel.name,
+        sales: 0,
+        margin: 0,
+        orders: 0,
+      };
     channelSalesMap[chId].sales += rgSalesAmt;
     channelSalesMap[chId].orders += ds.salesQuantity;
 
@@ -299,7 +309,12 @@ export async function GET(request: NextRequest) {
 
     const chId = cw.channelId;
     if (!channelSalesMap[chId])
-      channelSalesMap[chId] = { name: cw.channel.name, sales: 0, margin: 0, orders: 0 };
+      channelSalesMap[chId] = {
+        name: cw.channel.name,
+        sales: 0,
+        margin: 0,
+        orders: 0,
+      };
     channelSalesMap[chId].sales += cwSalesAmt;
     channelSalesMap[chId].orders += cw.salesQuantity;
 
@@ -373,9 +388,7 @@ export async function GET(request: NextRequest) {
             sales: Math.round(ch.sales),
             margin: Math.round(ch.margin),
             marginRate:
-              ch.sales > 0
-                ? Math.round((ch.margin / ch.sales) * 1000) / 10
-                : 0,
+              ch.sales > 0 ? Math.round((ch.margin / ch.sales) * 1000) / 10 : 0,
             orders: ch.orders,
           }))
           .sort((a, b) => b.sales - a.sales),

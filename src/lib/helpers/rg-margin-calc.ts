@@ -68,9 +68,9 @@ export function calculateRGMargin(input: RGMarginInput): RGMarginResult {
   }
 
   const discountCouponAmount = (couponDiscount ?? 0) * salesQuantity;
-  const fee = Math.ceil(
-    ((salesAmount - discountCouponAmount) * (feeRate / 100)) / 10,
-  ) * 10;
+  const fee =
+    Math.ceil(((salesAmount - discountCouponAmount) * (feeRate / 100)) / 10) *
+    10;
   const feeVat = Math.round(fee * 0.1);
   const settlementAmount = salesAmount - fee - feeVat - discountCouponAmount;
   const shippingFee = salesQuantity * fulfillmentFee;

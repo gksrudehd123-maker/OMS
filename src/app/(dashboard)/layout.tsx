@@ -17,7 +17,9 @@ export default function DashboardLayout({
         <div data-print-hide>
           <Header />
         </div>
-        <main className="flex-1 p-4 lg:p-6 min-w-0 overflow-x-hidden">{children}</main>
+        <main className="flex-1 p-4 lg:p-6 min-w-0 overflow-x-hidden">
+          {children}
+        </main>
       </div>
     </div>
   );
