@@ -1,10 +1,20 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
 import { Toaster, toast } from 'sonner';
-import { Plus, Search, Headphones, X } from 'lucide-react';
+import {
+  Plus,
+  Search,
+  Headphones,
+  X,
+  List,
+  Calendar,
+  CheckCircle2,
+  ChevronDown,
+  ChevronRight,
+} from 'lucide-react';
 import { ProgressBar } from '@/components/ui/progress-bar';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -35,6 +45,10 @@ const STATUS_LIST = [
   '안내완료',
   '완료',
 ] as const;
+
+const COMPLETE_STATUSES = new Set(['완료']);
+
+type ViewMode = 'list' | 'monthly' | 'status';
 
 const STATUS_COLORS: Record<string, string> = {
   교환요청: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400',
@@ -75,8 +89,6 @@ const COLUMNS = [
   { key: 'receivedProduct', label: '입고제품', width: 140, align: 'left' },
   { key: 'serviceProgress', label: 'A/S 진행상황', width: 180, align: 'left' },
   { key: 'shippingDate', label: '출고날짜', width: 100, align: 'left' },
-  { key: 'customerAddress', label: '고객주소', width: 200, align: 'left' },
-  { key: 'customerPhone', label: '전화번호', width: 120, align: 'left' },
   { key: 'chargeType', label: '유상/무료', width: 80, align: 'center' },
   { key: 'repairCost', label: '수리비용', width: 90, align: 'right' },
   { key: 'trackingNumber', label: '배송번호', width: 120, align: 'left' },
@@ -162,12 +174,53 @@ export default function CSPage() {
     [colWidths],
   );
 
+  // 보기 모드
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+
+  const toggleCollapse = (key: string) => {
+    setCollapsed((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
+
   // 필터
   const now = new Date();
   const [filterStatus, setFilterStatus] = useState('');
-  const [filterMonth, setFilterMonth] = useState('');
+  const [filterMonth] = useState('');
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
+
+  // 텍스트 팝오버 (상담내용, A/S 진행상황)
+  const [popover, setPopover] = useState<{
+    text: string;
+    x: number;
+    y: number;
+  } | null>(null);
+  const popoverRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!popover) return;
+    const handleClick = (e: MouseEvent) => {
+      if (
+        popoverRef.current &&
+        !popoverRef.current.contains(e.target as Node)
+      ) {
+        setPopover(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [popover]);
+
+  const openPopover = (text: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    setPopover({ text, x: rect.left, y: rect.bottom + 4 });
+  };
 
   // 다이얼로그
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -322,11 +375,33 @@ export default function CSPage() {
     const fmtDate = (v: string | null) =>
       v ? new Date(v).toLocaleDateString('ko-KR') : '-';
 
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const daysAgo = (v: string | null) => {
+      if (!v) return Infinity;
+      const d = new Date(v);
+      d.setHours(0, 0, 0, 0);
+      return Math.floor((today.getTime() - d.getTime()) / 86400000);
+    };
+
     switch (key) {
-      case 'consultDate':
+      case 'consultDate': {
+        const days = daysAgo(r.consultDate);
+        const colorClass =
+          days === 0
+            ? 'text-blue-600 dark:text-blue-400 font-semibold'
+            : days <= 3
+              ? 'text-blue-500/70 dark:text-blue-400/70 font-medium'
+              : '';
         return (
-          <span className="font-mono text-xs">{fmtDate(r.consultDate)}</span>
+          <span className={`font-mono text-xs ${colorClass}`}>
+            {fmtDate(r.consultDate)}
+            {days === 0 && (
+              <span className="ml-1 text-[10px] font-semibold">오늘</span>
+            )}
+          </span>
         );
+      }
       case 'purchaseDate':
         return (
           <span className="font-mono text-xs">{fmtDate(r.purchaseDate)}</span>
@@ -344,33 +419,41 @@ export default function CSPage() {
           <span className="font-mono text-xs">{fmtDate(r.receivedDate)}</span>
         );
       case 'customerName':
-        return <span className="font-medium">{r.customerName}</span>;
+        return (
+          <span className="text-sm font-semibold text-foreground">
+            {r.customerName}
+          </span>
+        );
       case 'productName':
         return r.productName;
       case 'consultNote':
-        return (
-          <span className="text-muted-foreground">{r.consultNote || '-'}</span>
+        return r.consultNote ? (
+          <span
+            className="cursor-pointer text-muted-foreground hover:text-foreground hover:underline"
+            onClick={(e) => openPopover(r.consultNote!, e)}
+          >
+            {r.consultNote}
+          </span>
+        ) : (
+          <span className="text-muted-foreground">-</span>
         );
       case 'receivedProduct':
         return r.receivedProduct || '-';
       case 'serviceProgress':
-        return (
-          <span className="text-muted-foreground">
-            {r.serviceProgress || '-'}
+        return r.serviceProgress ? (
+          <span
+            className="cursor-pointer text-muted-foreground hover:text-foreground hover:underline"
+            onClick={(e) => openPopover(r.serviceProgress!, e)}
+          >
+            {r.serviceProgress}
           </span>
+        ) : (
+          <span className="text-muted-foreground">-</span>
         );
       case 'shippingDate':
         return (
           <span className="font-mono text-xs">{fmtDate(r.shippingDate)}</span>
         );
-      case 'customerAddress':
-        return (
-          <span className="text-muted-foreground">
-            {r.customerAddress || '-'}
-          </span>
-        );
-      case 'customerPhone':
-        return <span className="font-mono text-xs">{r.customerPhone}</span>;
       case 'chargeType':
         return (
           <span
@@ -401,16 +484,308 @@ export default function CSPage() {
     return `${nums.slice(0, 3)}-${nums.slice(3, 7)}-${nums.slice(7)}`;
   };
 
-  // 월별 옵션 생성 (최근 12개월)
-  const monthOptions: string[] = [];
-  for (let i = 0; i < 12; i++) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    monthOptions.push(
-      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
-    );
-  }
-
   const saving = saveMutation.isPending;
+
+  const colCount = colOrder.length;
+  const tableWidth = colWidths.reduce((a, b) => a + b, 0);
+
+  const renderTableHead = () => (
+    <thead>
+      <tr className="border-b-2 border-border bg-muted sticky top-0 z-20">
+        {colOrder.map((colIdx, orderIdx) => {
+          const col = COLUMNS[colIdx];
+          return (
+            <th
+              key={col.key}
+              draggable
+              onDragStart={(e) => onDragStart(orderIdx, e)}
+              onDragOver={(e) => onDragOver(orderIdx, e)}
+              onDragEnd={onDragEnd}
+              className={`relative cursor-grab whitespace-nowrap border-r border-border px-4 py-3 font-semibold text-foreground active:cursor-grabbing text-${col.align} last:border-r-0 ${dragOverCol === orderIdx && dragCol !== orderIdx ? 'bg-primary/10' : ''}`}
+              style={{ width: colWidths[orderIdx] }}
+            >
+              {col.label}
+              <div
+                onMouseDown={(e) => onResizeStart(orderIdx, e)}
+                className="absolute -right-[3px] top-2 z-10 h-[calc(100%-16px)] w-1 cursor-col-resize rounded-full bg-gray-300 hover:bg-blue-500 dark:bg-gray-600 dark:hover:bg-blue-400"
+              />
+            </th>
+          );
+        })}
+      </tr>
+    </thead>
+  );
+
+  const renderTableRows = (rows: CSRecord[]) =>
+    rows.map((r) => (
+      <tr
+        key={r.id}
+        onClick={() => openEdit(r)}
+        className="cursor-pointer border-b border-border last:border-0 hover:bg-muted/30"
+      >
+        {colOrder.map((colIdx) => {
+          const col = COLUMNS[colIdx];
+          return (
+            <td
+              key={col.key}
+              className={`overflow-hidden truncate px-4 py-3 text-${col.align}`}
+            >
+              {renderCell(r, col.key)}
+            </td>
+          );
+        })}
+      </tr>
+    ));
+
+  const renderTable = (rows: CSRecord[]) => (
+    <div className="rounded-xl border border-border bg-card shadow-sm">
+      <div className="max-h-[calc(100vh-280px)] overflow-auto">
+        <table
+          className="text-sm"
+          style={{ tableLayout: 'fixed', width: tableWidth }}
+        >
+          {renderTableHead()}
+          <tbody>
+            {isLoading ? (
+              Array.from({ length: 5 }).map((_, i) => (
+                <tr key={i} className="border-b border-border last:border-0">
+                  {Array.from({ length: colCount }).map((_, j) => (
+                    <td key={j} className="px-4 py-3">
+                      <Skeleton className="h-4 w-full" />
+                    </td>
+                  ))}
+                </tr>
+              ))
+            ) : rows.length === 0 ? (
+              <tr>
+                <td
+                  colSpan={colCount}
+                  className="px-4 py-12 text-center text-muted-foreground"
+                >
+                  등록된 CS 데이터가 없습니다
+                </td>
+              </tr>
+            ) : (
+              renderTableRows(rows)
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+
+  const renderGroupedTable = (rows: CSRecord[], emptyMessage: string) => (
+    <div className="rounded-xl border border-border bg-card shadow-sm">
+      <div className="max-h-[calc(100vh-340px)] overflow-auto">
+        <table
+          className="text-sm"
+          style={{ tableLayout: 'fixed', width: tableWidth }}
+        >
+          {renderTableHead()}
+          <tbody>
+            {rows.length === 0 ? (
+              <tr>
+                <td
+                  colSpan={colCount}
+                  className="px-4 py-6 text-center text-sm text-muted-foreground"
+                >
+                  {emptyMessage}
+                </td>
+              </tr>
+            ) : (
+              renderTableRows(rows)
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+
+  const renderMonthlyView = (rows: CSRecord[]) => {
+    if (isLoading) return renderTable(rows);
+
+    // 월별 그룹핑
+    const groups = new Map<string, CSRecord[]>();
+    for (const r of rows) {
+      const d = new Date(r.consultDate);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key)!.push(r);
+    }
+
+    // 최신 월 순으로 정렬
+    const sortedKeys = Array.from(groups.keys()).sort((a, b) =>
+      b.localeCompare(a),
+    );
+    const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+    if (sortedKeys.length === 0) return renderTable(rows);
+
+    return (
+      <div className="space-y-4">
+        {sortedKeys.map((monthKey) => {
+          const monthRecords = groups.get(monthKey)!;
+          const incomplete = monthRecords.filter(
+            (r) => !COMPLETE_STATUSES.has(r.status),
+          );
+          const complete = monthRecords.filter((r) =>
+            COMPLETE_STATUSES.has(r.status),
+          );
+          const [year, month] = monthKey.split('-');
+          const label = `${year}년 ${parseInt(month)}월`;
+
+          const isCurrentMonth = monthKey === currentMonth;
+          const monthCollapsed =
+            !isCurrentMonth && !collapsed.has(`${monthKey}-open`);
+          const incKey = `${monthKey}-inc`;
+          const compKey = `${monthKey}-comp`;
+
+          // 상태별 카운트 요약
+          const incStatusCounts: Record<string, number> = {};
+          for (const r of incomplete) {
+            incStatusCounts[r.status] = (incStatusCounts[r.status] || 0) + 1;
+          }
+          const incSummary = Object.entries(incStatusCounts)
+            .map(([s, c]) => `${s} ${c}`)
+            .join(', ');
+
+          return (
+            <div key={monthKey} className="space-y-2">
+              <button
+                onClick={() => {
+                  if (isCurrentMonth) {
+                    toggleCollapse(`${monthKey}-close`);
+                  } else {
+                    toggleCollapse(`${monthKey}-open`);
+                  }
+                }}
+                className="flex items-center gap-2 text-base font-semibold hover:text-primary transition-colors"
+              >
+                {(isCurrentMonth && !collapsed.has(`${monthKey}-close`)) ||
+                (!isCurrentMonth && collapsed.has(`${monthKey}-open`)) ? (
+                  <ChevronDown className="h-4 w-4" />
+                ) : (
+                  <ChevronRight className="h-4 w-4" />
+                )}
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+                {label}
+                <span className="text-sm font-normal text-muted-foreground">
+                  ({monthRecords.length}건
+                  {incomplete.length > 0 && ` · 미완료 ${incomplete.length}`})
+                </span>
+              </button>
+
+              {((isCurrentMonth && !collapsed.has(`${monthKey}-close`)) ||
+                (!isCurrentMonth && collapsed.has(`${monthKey}-open`))) && (
+                <>
+                  {/* 미완료 */}
+                  <div>
+                    <button
+                      onClick={() => toggleCollapse(incKey)}
+                      className="mb-1 flex items-center gap-2 rounded-lg px-2 py-1 text-sm font-medium text-yellow-700 hover:bg-yellow-50 dark:text-yellow-400 dark:hover:bg-yellow-950/30"
+                    >
+                      {collapsed.has(incKey) ? (
+                        <ChevronRight className="h-4 w-4" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4" />
+                      )}
+                      미완료 ({incomplete.length}건)
+                      {incSummary && (
+                        <span className="text-xs font-normal text-muted-foreground">
+                          — {incSummary}
+                        </span>
+                      )}
+                    </button>
+                    {!collapsed.has(incKey) &&
+                      renderGroupedTable(incomplete, '미완료 건이 없습니다')}
+                  </div>
+
+                  {/* 완료 */}
+                  <div>
+                    <button
+                      onClick={() => toggleCollapse(compKey)}
+                      className="mb-1 flex items-center gap-2 rounded-lg px-2 py-1 text-sm font-medium text-green-700 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-950/30"
+                    >
+                      {collapsed.has(compKey) ? (
+                        <ChevronRight className="h-4 w-4" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4" />
+                      )}
+                      완료 ({complete.length}건)
+                    </button>
+                    {!collapsed.has(compKey) &&
+                      renderGroupedTable(complete, '완료 건이 없습니다')}
+                  </div>
+                </>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
+  const renderStatusView = (rows: CSRecord[]) => {
+    if (isLoading) return renderTable(rows);
+
+    const incomplete = rows.filter((r) => !COMPLETE_STATUSES.has(r.status));
+    const complete = rows.filter((r) => COMPLETE_STATUSES.has(r.status));
+
+    // 미완료 상태별 카운트 요약
+    const incStatusCounts: Record<string, number> = {};
+    for (const r of incomplete) {
+      incStatusCounts[r.status] = (incStatusCounts[r.status] || 0) + 1;
+    }
+    const incSummary = Object.entries(incStatusCounts)
+      .map(([s, c]) => `${s} ${c}`)
+      .join(', ');
+
+    const incKey = 'status-inc';
+    const compKey = 'status-comp';
+
+    return (
+      <div className="space-y-4">
+        {/* 미완료 */}
+        <div>
+          <button
+            onClick={() => toggleCollapse(incKey)}
+            className="mb-1 flex items-center gap-2 rounded-lg px-2 py-1 text-sm font-medium text-yellow-700 hover:bg-yellow-50 dark:text-yellow-400 dark:hover:bg-yellow-950/30"
+          >
+            {collapsed.has(incKey) ? (
+              <ChevronRight className="h-4 w-4" />
+            ) : (
+              <ChevronDown className="h-4 w-4" />
+            )}
+            미완료 ({incomplete.length}건)
+            {incSummary && (
+              <span className="text-xs font-normal text-muted-foreground">
+                — {incSummary}
+              </span>
+            )}
+          </button>
+          {!collapsed.has(incKey) &&
+            renderGroupedTable(incomplete, '미완료 건이 없습니다')}
+        </div>
+
+        {/* 완료 */}
+        <div>
+          <button
+            onClick={() => toggleCollapse(compKey)}
+            className="mb-1 flex items-center gap-2 rounded-lg px-2 py-1 text-sm font-medium text-green-700 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-950/30"
+          >
+            {collapsed.has(compKey) ? (
+              <ChevronRight className="h-4 w-4" />
+            ) : (
+              <ChevronDown className="h-4 w-4" />
+            )}
+            완료 ({complete.length}건)
+          </button>
+          {!collapsed.has(compKey) &&
+            renderGroupedTable(complete, '완료 건이 없습니다')}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-6 overflow-hidden">
@@ -455,20 +830,39 @@ export default function CSPage() {
         ))}
       </div>
 
-      {/* 월별 필터 + 검색 */}
+      {/* 필터 + 검색 */}
       <div className="flex flex-wrap items-center gap-3">
-        <select
-          value={filterMonth}
-          onChange={(e) => setFilterMonth(e.target.value)}
-          className="rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-        >
-          <option value="">전체 기간</option>
-          {monthOptions.map((m) => (
-            <option key={m} value={m}>
-              {m.replace('-', '년 ')}월
-            </option>
+        {/* 보기 모드 토글 */}
+        <div className="flex rounded-lg border border-input bg-background">
+          {(
+            [
+              { mode: 'list' as ViewMode, icon: List, label: '목록' },
+              { mode: 'monthly' as ViewMode, icon: Calendar, label: '월별' },
+              {
+                mode: 'status' as ViewMode,
+                icon: CheckCircle2,
+                label: '상태별',
+              },
+            ] as const
+          ).map(({ mode, icon: Icon, label }) => (
+            <button
+              key={mode}
+              onClick={() => {
+                setViewMode(mode);
+                setCollapsed(new Set());
+              }}
+              className={`inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-colors ${
+                viewMode === mode
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+              } ${mode === 'list' ? 'rounded-l-lg' : mode === 'status' ? 'rounded-r-lg' : ''}`}
+            >
+              <Icon className="h-4 w-4" />
+              {label}
+            </button>
           ))}
-        </select>
+        </div>
+
         <div className="flex items-center gap-1">
           <input
             type="text"
@@ -499,6 +893,7 @@ export default function CSPage() {
             </button>
           )}
         </div>
+
         <button
           onClick={openCreate}
           className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
@@ -508,84 +903,11 @@ export default function CSPage() {
       </div>
 
       {/* 테이블 */}
-      <div className="rounded-xl border border-border bg-card shadow-sm">
-        <div className="max-h-[calc(100vh-280px)] overflow-auto">
-          <table
-            className="text-sm"
-            style={{
-              tableLayout: 'fixed',
-              width: colWidths.reduce((a, b) => a + b, 0),
-            }}
-          >
-            <thead>
-              <tr className="border-b-2 border-border bg-muted sticky top-0 z-20">
-                {colOrder.map((colIdx, orderIdx) => {
-                  const col = COLUMNS[colIdx];
-                  return (
-                    <th
-                      key={col.key}
-                      draggable
-                      onDragStart={(e) => onDragStart(orderIdx, e)}
-                      onDragOver={(e) => onDragOver(orderIdx, e)}
-                      onDragEnd={onDragEnd}
-                      className={`relative cursor-grab whitespace-nowrap border-r border-border px-4 py-3 font-semibold text-foreground active:cursor-grabbing text-${col.align} last:border-r-0 ${dragOverCol === orderIdx && dragCol !== orderIdx ? 'bg-primary/10' : ''}`}
-                      style={{ width: colWidths[orderIdx] }}
-                    >
-                      {col.label}
-                      <div
-                        onMouseDown={(e) => onResizeStart(orderIdx, e)}
-                        className="absolute -right-[3px] top-2 z-10 h-[calc(100%-16px)] w-1 cursor-col-resize rounded-full bg-gray-300 hover:bg-blue-500 dark:bg-gray-600 dark:hover:bg-blue-400"
-                      />
-                    </th>
-                  );
-                })}
-              </tr>
-            </thead>
-            <tbody>
-              {isLoading ? (
-                Array.from({ length: 5 }).map((_, i) => (
-                  <tr key={i} className="border-b border-border last:border-0">
-                    {Array.from({ length: 15 }).map((_, j) => (
-                      <td key={j} className="px-4 py-3">
-                        <Skeleton className="h-4 w-full" />
-                      </td>
-                    ))}
-                  </tr>
-                ))
-              ) : records.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={15}
-                    className="px-4 py-12 text-center text-muted-foreground"
-                  >
-                    등록된 CS 데이터가 없습니다
-                  </td>
-                </tr>
-              ) : (
-                records.map((r) => (
-                  <tr
-                    key={r.id}
-                    onClick={() => openEdit(r)}
-                    className="cursor-pointer border-b border-border last:border-0 hover:bg-muted/30"
-                  >
-                    {colOrder.map((colIdx) => {
-                      const col = COLUMNS[colIdx];
-                      return (
-                        <td
-                          key={col.key}
-                          className={`overflow-hidden truncate px-4 py-3 text-${col.align}`}
-                        >
-                          {renderCell(r, col.key)}
-                        </td>
-                      );
-                    })}
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      {viewMode === 'list'
+        ? renderTable(records)
+        : viewMode === 'monthly'
+          ? renderMonthlyView(records)
+          : renderStatusView(records)}
 
       {/* 등록/수정 다이얼로그 */}
       {dialogOpen && (
@@ -831,6 +1153,19 @@ export default function CSPage() {
                     className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                   />
                 </Field>
+                <Field label="진행상태">
+                  <select
+                    value={form.status}
+                    onChange={(e) => updateField('status', e.target.value)}
+                    className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                  >
+                    {STATUS_LIST.map((s) => (
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
                 <Field label="A/S 내용 및 상담내용">
                   <textarea
                     value={form.consultNote}
@@ -872,6 +1207,17 @@ export default function CSPage() {
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* 텍스트 팝오버 */}
+      {popover && (
+        <div
+          ref={popoverRef}
+          className="fixed z-[100] max-w-sm whitespace-pre-wrap rounded-lg border border-border bg-popover px-4 py-3 text-sm text-popover-foreground shadow-lg"
+          style={{ left: popover.x, top: popover.y }}
+        >
+          {popover.text}
         </div>
       )}
     </div>

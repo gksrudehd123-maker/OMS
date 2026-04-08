@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
   BarChart,
   Bar,
@@ -51,18 +52,19 @@ export default function MarginsPage() {
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
   const [channelId, setChannelId] = useState('');
-  const [data, setData] = useState<ReportData | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>('margin');
   const [sortAsc, setSortAsc] = useState(false);
 
-  useEffect(() => {
-    if (!from || !to) return;
-    const params = new URLSearchParams({ from, to });
-    if (channelId) params.set('channelId', channelId);
-    fetch(`/api/report?${params}`)
-      .then((res) => res.json())
-      .then(setData);
-  }, [from, to, channelId]);
+  const { data } = useQuery<ReportData>({
+    queryKey: ['report', from, to, channelId],
+    queryFn: async () => {
+      const params = new URLSearchParams({ from, to });
+      if (channelId) params.set('channelId', channelId);
+      const res = await fetch(`/api/report?${params}`);
+      return res.json();
+    },
+    enabled: !!from && !!to,
+  });
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
