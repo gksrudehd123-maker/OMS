@@ -5,6 +5,9 @@ import { NextResponse } from 'next/server';
 const STAFF_ALLOWED = [
   '/cs',
   '/api/cs',
+  '/api/cs-products',
+  '/api/message-templates',
+  '/api/og-image',
   '/api/auth',
   '/settings',
   '/api/user',

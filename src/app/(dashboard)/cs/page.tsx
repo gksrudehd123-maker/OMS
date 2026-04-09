@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
 import { Toaster, toast } from 'sonner';
@@ -14,7 +15,11 @@ import {
   CheckCircle2,
   ChevronDown,
   ChevronRight,
+  MessageSquareText,
+  ShoppingBag,
 } from 'lucide-react';
+import MessageTemplateTab from '@/components/cs/message-template-tab';
+import CSProductTab from '@/components/cs/cs-product-tab';
 import { ProgressBar } from '@/components/ui/progress-bar';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -103,6 +108,28 @@ export default function CSPage() {
   const queryClient = useQueryClient();
   const { data: session } = useSession();
   const isOwner = session?.user?.role === 'OWNER';
+
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const tabParam = searchParams.get('tab');
+  const activeTab = useMemo<'cs' | 'templates' | 'products'>(() => {
+    if (tabParam === 'templates' || tabParam === 'products') return tabParam;
+    return 'cs';
+  }, [tabParam]);
+
+  const setActiveTab = useCallback(
+    (tab: 'cs' | 'templates' | 'products') => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (tab === 'cs') {
+        params.delete('tab');
+      } else {
+        params.set('tab', tab);
+      }
+      const query = params.toString();
+      router.replace(`/cs${query ? `?${query}` : ''}`, { scroll: false });
+    },
+    [searchParams, router],
+  );
 
   // 컬럼 순서
   const [colOrder, setColOrder] = useState<number[]>(COLUMNS.map((_, i) => i));
@@ -796,429 +823,489 @@ export default function CSPage() {
       <div>
         <h1 className="flex items-center gap-2 text-2xl font-semibold">
           <Headphones className="h-6 w-6" />
-          CS 관리
+          고객 관리
         </h1>
         <p className="text-sm text-muted-foreground">
           A/S 접수 및 처리 현황을 관리합니다
         </p>
       </div>
 
-      {/* 상태 필터 배지 */}
-      <div className="flex flex-wrap gap-2">
+      {/* 탭 */}
+      <div className="flex gap-1 rounded-lg border border-border bg-muted/50 p-1">
         <button
-          onClick={() => setFilterStatus('')}
-          className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
-            filterStatus === ''
-              ? 'bg-primary text-primary-foreground'
-              : 'bg-muted text-muted-foreground hover:bg-muted/80'
+          onClick={() => setActiveTab('cs')}
+          className={`inline-flex items-center gap-2 rounded-md px-5 py-2.5 text-base font-semibold transition-all ${
+            activeTab === 'cs'
+              ? 'bg-blue-500 text-white shadow-md'
+              : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
           }`}
         >
-          전체 {stats['전체'] !== undefined && `(${stats['전체']})`}
+          <Headphones className="h-5 w-5" />
+          CS 목록
         </button>
-        {STATUS_LIST.map((s) => (
-          <button
-            key={s}
-            onClick={() => setFilterStatus(filterStatus === s ? '' : s)}
-            className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
-              filterStatus === s
-                ? 'bg-primary text-primary-foreground'
-                : `${STATUS_COLORS[s]} hover:opacity-80`
-            }`}
-          >
-            {s} {stats[s] !== undefined && `(${stats[s]})`}
-          </button>
-        ))}
-      </div>
-
-      {/* 필터 + 검색 */}
-      <div className="flex flex-wrap items-center gap-3">
-        {/* 보기 모드 토글 */}
-        <div className="flex rounded-lg border border-input bg-background">
-          {(
-            [
-              { mode: 'list' as ViewMode, icon: List, label: '목록' },
-              { mode: 'monthly' as ViewMode, icon: Calendar, label: '월별' },
-              {
-                mode: 'status' as ViewMode,
-                icon: CheckCircle2,
-                label: '상태별',
-              },
-            ] as const
-          ).map(({ mode, icon: Icon, label }) => (
-            <button
-              key={mode}
-              onClick={() => {
-                setViewMode(mode);
-                setCollapsed(new Set());
-              }}
-              className={`inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-colors ${
-                viewMode === mode
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-              } ${mode === 'list' ? 'rounded-l-lg' : mode === 'status' ? 'rounded-r-lg' : ''}`}
-            >
-              <Icon className="h-4 w-4" />
-              {label}
-            </button>
-          ))}
-        </div>
-
-        <div className="flex items-center gap-1">
-          <input
-            type="text"
-            value={searchInput}
-            onChange={(e) => {
-              setSearchInput(e.target.value);
-              if (e.target.value === '') setSearch('');
-            }}
-            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-            placeholder="고객명 / 전화번호 검색"
-            className="w-48 rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-          />
-          <button
-            onClick={handleSearch}
-            className="rounded-lg border border-input bg-background p-2 hover:bg-muted"
-          >
-            <Search className="h-4 w-4" />
-          </button>
-          {search && (
-            <button
-              onClick={() => {
-                setSearchInput('');
-                setSearch('');
-              }}
-              className="rounded-lg border border-input bg-background p-2 hover:bg-muted"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          )}
-        </div>
-
         <button
-          onClick={openCreate}
-          className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+          onClick={() => setActiveTab('templates')}
+          className={`inline-flex items-center gap-2 rounded-md px-5 py-2.5 text-base font-semibold transition-all ${
+            activeTab === 'templates'
+              ? 'bg-violet-500 text-white shadow-md'
+              : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
+          }`}
         >
-          <Plus className="h-4 w-4" />새 CS 등록
+          <MessageSquareText className="h-5 w-5" />
+          메시지 템플릿
+        </button>
+        <button
+          onClick={() => setActiveTab('products')}
+          className={`inline-flex items-center gap-2 rounded-md px-5 py-2.5 text-base font-semibold transition-all ${
+            activeTab === 'products'
+              ? 'bg-emerald-500 text-white shadow-md'
+              : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
+          }`}
+        >
+          <ShoppingBag className="h-5 w-5" />
+          상품 정보
         </button>
       </div>
 
-      {/* 테이블 */}
-      {viewMode === 'list'
-        ? renderTable(records)
-        : viewMode === 'monthly'
-          ? renderMonthlyView(records)
-          : renderStatusView(records)}
-
-      {/* 등록/수정 다이얼로그 */}
-      {dialogOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div
-            className={`max-h-[90vh] w-full overflow-y-auto rounded-xl border border-border bg-card p-6 shadow-xl ${editingId ? 'max-w-2xl' : 'max-w-md'}`}
-          >
-            <div className="mb-6 flex items-center justify-between">
-              <h2 className="text-lg font-semibold">
-                {editingId ? 'CS 상세 / 수정' : '새 CS 등록'}
-              </h2>
+      {activeTab === 'templates' ? (
+        <MessageTemplateTab />
+      ) : activeTab === 'products' ? (
+        <CSProductTab />
+      ) : (
+        <>
+          {/* 상태 필터 배지 */}
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => setFilterStatus('')}
+              className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
+                filterStatus === ''
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-muted text-muted-foreground hover:bg-muted/80'
+              }`}
+            >
+              전체 {stats['전체'] !== undefined && `(${stats['전체']})`}
+            </button>
+            {STATUS_LIST.map((s) => (
               <button
-                onClick={closeDialog}
-                className="rounded p-1 hover:bg-muted"
+                key={s}
+                onClick={() => setFilterStatus(filterStatus === s ? '' : s)}
+                className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
+                  filterStatus === s
+                    ? 'bg-primary text-primary-foreground'
+                    : `${STATUS_COLORS[s]} hover:opacity-80`
+                }`}
               >
-                <X className="h-5 w-5" />
+                {s} {stats[s] !== undefined && `(${stats[s]})`}
               </button>
+            ))}
+          </div>
+
+          {/* 필터 + 검색 */}
+          <div className="flex flex-wrap items-center gap-3">
+            {/* 보기 모드 토글 */}
+            <div className="flex rounded-lg border border-input bg-background">
+              {(
+                [
+                  { mode: 'list' as ViewMode, icon: List, label: '목록' },
+                  {
+                    mode: 'monthly' as ViewMode,
+                    icon: Calendar,
+                    label: '월별',
+                  },
+                  {
+                    mode: 'status' as ViewMode,
+                    icon: CheckCircle2,
+                    label: '상태별',
+                  },
+                ] as const
+              ).map(({ mode, icon: Icon, label }) => (
+                <button
+                  key={mode}
+                  onClick={() => {
+                    setViewMode(mode);
+                    setCollapsed(new Set());
+                  }}
+                  className={`inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-colors ${
+                    viewMode === mode
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                  } ${mode === 'list' ? 'rounded-l-lg' : mode === 'status' ? 'rounded-r-lg' : ''}`}
+                >
+                  <Icon className="h-4 w-4" />
+                  {label}
+                </button>
+              ))}
             </div>
 
-            {editingId ? (
-              /* 수정 모드: 전체 필드 2컬럼 */
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                <div className="space-y-4">
-                  <h3 className="text-sm font-semibold text-muted-foreground">
-                    고객 정보
-                  </h3>
-                  <Field label="고객명 *">
-                    <input
-                      type="text"
-                      value={form.customerName}
-                      onChange={(e) =>
-                        updateField('customerName', e.target.value)
-                      }
-                      className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                    />
-                  </Field>
-                  <Field label="전화번호 *">
-                    <input
-                      type="text"
-                      value={form.customerPhone}
-                      onChange={(e) =>
-                        updateField(
-                          'customerPhone',
-                          formatPhone(e.target.value),
-                        )
-                      }
-                      placeholder="010-0000-0000"
-                      className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                    />
-                  </Field>
-                  <Field label="고객 주소">
-                    <input
-                      type="text"
-                      value={form.customerAddress}
-                      onChange={(e) =>
-                        updateField('customerAddress', e.target.value)
-                      }
-                      className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                    />
-                  </Field>
-                  <Field label="상담날짜 *">
-                    <input
-                      type="date"
-                      value={form.consultDate}
-                      onChange={(e) =>
-                        updateField('consultDate', e.target.value)
-                      }
-                      className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                    />
-                  </Field>
-                  <Field label="제품구입일자">
-                    <input
-                      type="date"
-                      value={form.purchaseDate}
-                      onChange={(e) =>
-                        updateField('purchaseDate', e.target.value)
-                      }
-                      className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                    />
-                  </Field>
-                  <Field label="제품명 *">
-                    <input
-                      type="text"
-                      value={form.productName}
-                      onChange={(e) =>
-                        updateField('productName', e.target.value)
-                      }
-                      className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                    />
-                  </Field>
+            <div className="flex items-center gap-1">
+              <input
+                type="text"
+                value={searchInput}
+                onChange={(e) => {
+                  setSearchInput(e.target.value);
+                  if (e.target.value === '') setSearch('');
+                }}
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                placeholder="고객명 / 전화번호 검색"
+                className="w-48 rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+              <button
+                onClick={handleSearch}
+                className="rounded-lg border border-input bg-background p-2 hover:bg-muted"
+              >
+                <Search className="h-4 w-4" />
+              </button>
+              {search && (
+                <button
+                  onClick={() => {
+                    setSearchInput('');
+                    setSearch('');
+                  }}
+                  className="rounded-lg border border-input bg-background p-2 hover:bg-muted"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+
+            <button
+              onClick={openCreate}
+              className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+            >
+              <Plus className="h-4 w-4" />새 CS 등록
+            </button>
+          </div>
+
+          {/* 테이블 */}
+          {viewMode === 'list'
+            ? renderTable(records)
+            : viewMode === 'monthly'
+              ? renderMonthlyView(records)
+              : renderStatusView(records)}
+
+          {/* 등록/수정 다이얼로그 */}
+          {dialogOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+              <div
+                className={`max-h-[90vh] w-full overflow-y-auto rounded-xl border border-border bg-card p-6 shadow-xl ${editingId ? 'max-w-2xl' : 'max-w-md'}`}
+              >
+                <div className="mb-6 flex items-center justify-between">
+                  <h2 className="text-lg font-semibold">
+                    {editingId ? 'CS 상세 / 수정' : '새 CS 등록'}
+                  </h2>
+                  <button
+                    onClick={closeDialog}
+                    className="rounded p-1 hover:bg-muted"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
                 </div>
-                <div className="space-y-4">
-                  <h3 className="text-sm font-semibold text-muted-foreground">
-                    A/S 정보
-                  </h3>
-                  <Field label="안내상태">
-                    <select
-                      value={form.status}
-                      onChange={(e) => updateField('status', e.target.value)}
-                      className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                    >
-                      {STATUS_LIST.map((s) => (
-                        <option key={s} value={s}>
-                          {s}
-                        </option>
-                      ))}
-                    </select>
-                  </Field>
-                  <Field label="A/S 내용 및 상담내용">
-                    <textarea
-                      value={form.consultNote}
-                      onChange={(e) =>
-                        updateField('consultNote', e.target.value)
-                      }
-                      rows={2}
-                      className="w-full resize-none rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                    />
-                  </Field>
-                  <Field label="입고된 제품">
-                    <input
-                      type="text"
-                      value={form.receivedProduct}
-                      onChange={(e) =>
-                        updateField('receivedProduct', e.target.value)
-                      }
-                      className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                    />
-                  </Field>
-                  <Field label="A/S 진행상황">
-                    <textarea
-                      value={form.serviceProgress}
-                      onChange={(e) =>
-                        updateField('serviceProgress', e.target.value)
-                      }
-                      rows={2}
-                      className="w-full resize-none rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                    />
-                  </Field>
-                  <Field label="제품입고날짜">
-                    <input
-                      type="date"
-                      value={form.receivedDate}
-                      onChange={(e) =>
-                        updateField('receivedDate', e.target.value)
-                      }
-                      className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                    />
-                  </Field>
-                  <Field label="출고날짜">
-                    <input
-                      type="date"
-                      value={form.shippingDate}
-                      onChange={(e) =>
-                        updateField('shippingDate', e.target.value)
-                      }
-                      className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                    />
-                  </Field>
-                  <div className="grid grid-cols-2 gap-3">
-                    <Field label="유상/무료">
-                      <select
-                        value={form.chargeType}
-                        onChange={(e) =>
-                          updateField('chargeType', e.target.value)
-                        }
-                        className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                      >
-                        <option value="유상">유상</option>
-                        <option value="무료">무료</option>
-                      </select>
-                    </Field>
-                    <Field label="수리비용 (원)">
+
+                {editingId ? (
+                  /* 수정 모드: 전체 필드 2컬럼 */
+                  <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                    <div className="space-y-4">
+                      <h3 className="text-sm font-semibold text-muted-foreground">
+                        고객 정보
+                      </h3>
+                      <Field label="고객명 *">
+                        <input
+                          type="text"
+                          value={form.customerName}
+                          onChange={(e) =>
+                            updateField('customerName', e.target.value)
+                          }
+                          className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                        />
+                      </Field>
+                      <Field label="전화번호 *">
+                        <input
+                          type="text"
+                          value={form.customerPhone}
+                          onChange={(e) =>
+                            updateField(
+                              'customerPhone',
+                              formatPhone(e.target.value),
+                            )
+                          }
+                          placeholder="010-0000-0000"
+                          className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                        />
+                      </Field>
+                      <Field label="고객 주소">
+                        <input
+                          type="text"
+                          value={form.customerAddress}
+                          onChange={(e) =>
+                            updateField('customerAddress', e.target.value)
+                          }
+                          className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                        />
+                      </Field>
+                      <Field label="상담날짜 *">
+                        <input
+                          type="date"
+                          value={form.consultDate}
+                          onChange={(e) =>
+                            updateField('consultDate', e.target.value)
+                          }
+                          className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                        />
+                      </Field>
+                      <Field label="제품구입일자">
+                        <input
+                          type="date"
+                          value={form.purchaseDate}
+                          onChange={(e) =>
+                            updateField('purchaseDate', e.target.value)
+                          }
+                          className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                        />
+                      </Field>
+                      <Field label="제품명 *">
+                        <input
+                          type="text"
+                          value={form.productName}
+                          onChange={(e) =>
+                            updateField('productName', e.target.value)
+                          }
+                          className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                        />
+                      </Field>
+                    </div>
+                    <div className="space-y-4">
+                      <h3 className="text-sm font-semibold text-muted-foreground">
+                        A/S 정보
+                      </h3>
+                      <Field label="안내상태">
+                        <select
+                          value={form.status}
+                          onChange={(e) =>
+                            updateField('status', e.target.value)
+                          }
+                          className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                        >
+                          {STATUS_LIST.map((s) => (
+                            <option key={s} value={s}>
+                              {s}
+                            </option>
+                          ))}
+                        </select>
+                      </Field>
+                      <Field label="A/S 내용 및 상담내용">
+                        <textarea
+                          value={form.consultNote}
+                          onChange={(e) =>
+                            updateField('consultNote', e.target.value)
+                          }
+                          rows={2}
+                          className="w-full resize-none rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                        />
+                      </Field>
+                      <Field label="입고된 제품">
+                        <input
+                          type="text"
+                          value={form.receivedProduct}
+                          onChange={(e) =>
+                            updateField('receivedProduct', e.target.value)
+                          }
+                          className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                        />
+                      </Field>
+                      <Field label="A/S 진행상황">
+                        <textarea
+                          value={form.serviceProgress}
+                          onChange={(e) =>
+                            updateField('serviceProgress', e.target.value)
+                          }
+                          rows={2}
+                          className="w-full resize-none rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                        />
+                      </Field>
+                      <Field label="제품입고날짜">
+                        <input
+                          type="date"
+                          value={form.receivedDate}
+                          onChange={(e) =>
+                            updateField('receivedDate', e.target.value)
+                          }
+                          className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                        />
+                      </Field>
+                      <Field label="출고날짜">
+                        <input
+                          type="date"
+                          value={form.shippingDate}
+                          onChange={(e) =>
+                            updateField('shippingDate', e.target.value)
+                          }
+                          className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                        />
+                      </Field>
+                      <div className="grid grid-cols-2 gap-3">
+                        <Field label="유상/무료">
+                          <select
+                            value={form.chargeType}
+                            onChange={(e) =>
+                              updateField('chargeType', e.target.value)
+                            }
+                            className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                          >
+                            <option value="유상">유상</option>
+                            <option value="무료">무료</option>
+                          </select>
+                        </Field>
+                        <Field label="수리비용 (원)">
+                          <input
+                            type="number"
+                            value={form.repairCost}
+                            onChange={(e) =>
+                              updateField('repairCost', e.target.value)
+                            }
+                            placeholder="0"
+                            className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                          />
+                        </Field>
+                      </div>
+                      <Field label="배송번호">
+                        <input
+                          type="text"
+                          value={form.trackingNumber}
+                          onChange={(e) =>
+                            updateField('trackingNumber', e.target.value)
+                          }
+                          className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                        />
+                      </Field>
+                    </div>
+                  </div>
+                ) : (
+                  /* 등록 모드: 간단한 폼 */
+                  <div className="space-y-4">
+                    <Field label="고객명 *">
                       <input
-                        type="number"
-                        value={form.repairCost}
+                        type="text"
+                        value={form.customerName}
                         onChange={(e) =>
-                          updateField('repairCost', e.target.value)
+                          updateField('customerName', e.target.value)
                         }
-                        placeholder="0"
                         className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                       />
                     </Field>
+                    <Field label="전화번호 *">
+                      <input
+                        type="text"
+                        value={form.customerPhone}
+                        onChange={(e) =>
+                          updateField(
+                            'customerPhone',
+                            formatPhone(e.target.value),
+                          )
+                        }
+                        placeholder="010-0000-0000"
+                        className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                      />
+                    </Field>
+                    <Field label="고객 주소">
+                      <input
+                        type="text"
+                        value={form.customerAddress}
+                        onChange={(e) =>
+                          updateField('customerAddress', e.target.value)
+                        }
+                        className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                      />
+                    </Field>
+                    <Field label="상담날짜 *">
+                      <input
+                        type="date"
+                        value={form.consultDate}
+                        onChange={(e) =>
+                          updateField('consultDate', e.target.value)
+                        }
+                        className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                      />
+                    </Field>
+                    <Field label="제품명 *">
+                      <input
+                        type="text"
+                        value={form.productName}
+                        onChange={(e) =>
+                          updateField('productName', e.target.value)
+                        }
+                        className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                      />
+                    </Field>
+                    <Field label="진행상태">
+                      <select
+                        value={form.status}
+                        onChange={(e) => updateField('status', e.target.value)}
+                        className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                      >
+                        {STATUS_LIST.map((s) => (
+                          <option key={s} value={s}>
+                            {s}
+                          </option>
+                        ))}
+                      </select>
+                    </Field>
+                    <Field label="A/S 내용 및 상담내용">
+                      <textarea
+                        value={form.consultNote}
+                        onChange={(e) =>
+                          updateField('consultNote', e.target.value)
+                        }
+                        rows={3}
+                        className="w-full resize-none rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                      />
+                    </Field>
                   </div>
-                  <Field label="배송번호">
-                    <input
-                      type="text"
-                      value={form.trackingNumber}
-                      onChange={(e) =>
-                        updateField('trackingNumber', e.target.value)
-                      }
-                      className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                    />
-                  </Field>
+                )}
+
+                {/* 버튼 */}
+                <div className="mt-6 flex items-center justify-between border-t border-border pt-4">
+                  <div>
+                    {editingId && isOwner && (
+                      <button
+                        onClick={handleDelete}
+                        disabled={deleteMutation.isPending}
+                        className="rounded-lg px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950"
+                      >
+                        {deleteMutation.isPending ? '삭제 중...' : '삭제'}
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={closeDialog}
+                      className="rounded-lg border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted"
+                    >
+                      취소
+                    </button>
+                    <button
+                      onClick={handleSave}
+                      disabled={saving}
+                      className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+                    >
+                      {saving ? '저장 중...' : '저장'}
+                    </button>
+                  </div>
                 </div>
               </div>
-            ) : (
-              /* 등록 모드: 간단한 폼 */
-              <div className="space-y-4">
-                <Field label="고객명 *">
-                  <input
-                    type="text"
-                    value={form.customerName}
-                    onChange={(e) =>
-                      updateField('customerName', e.target.value)
-                    }
-                    className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                  />
-                </Field>
-                <Field label="전화번호 *">
-                  <input
-                    type="text"
-                    value={form.customerPhone}
-                    onChange={(e) =>
-                      updateField('customerPhone', formatPhone(e.target.value))
-                    }
-                    placeholder="010-0000-0000"
-                    className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                  />
-                </Field>
-                <Field label="고객 주소">
-                  <input
-                    type="text"
-                    value={form.customerAddress}
-                    onChange={(e) =>
-                      updateField('customerAddress', e.target.value)
-                    }
-                    className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                  />
-                </Field>
-                <Field label="상담날짜 *">
-                  <input
-                    type="date"
-                    value={form.consultDate}
-                    onChange={(e) => updateField('consultDate', e.target.value)}
-                    className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                  />
-                </Field>
-                <Field label="제품명 *">
-                  <input
-                    type="text"
-                    value={form.productName}
-                    onChange={(e) => updateField('productName', e.target.value)}
-                    className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                  />
-                </Field>
-                <Field label="진행상태">
-                  <select
-                    value={form.status}
-                    onChange={(e) => updateField('status', e.target.value)}
-                    className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                  >
-                    {STATUS_LIST.map((s) => (
-                      <option key={s} value={s}>
-                        {s}
-                      </option>
-                    ))}
-                  </select>
-                </Field>
-                <Field label="A/S 내용 및 상담내용">
-                  <textarea
-                    value={form.consultNote}
-                    onChange={(e) => updateField('consultNote', e.target.value)}
-                    rows={3}
-                    className="w-full resize-none rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                  />
-                </Field>
-              </div>
-            )}
-
-            {/* 버튼 */}
-            <div className="mt-6 flex items-center justify-between border-t border-border pt-4">
-              <div>
-                {editingId && isOwner && (
-                  <button
-                    onClick={handleDelete}
-                    disabled={deleteMutation.isPending}
-                    className="rounded-lg px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950"
-                  >
-                    {deleteMutation.isPending ? '삭제 중...' : '삭제'}
-                  </button>
-                )}
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={closeDialog}
-                  className="rounded-lg border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted"
-                >
-                  취소
-                </button>
-                <button
-                  onClick={handleSave}
-                  disabled={saving}
-                  className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
-                >
-                  {saving ? '저장 중...' : '저장'}
-                </button>
-              </div>
             </div>
-          </div>
-        </div>
-      )}
+          )}
 
-      {/* 텍스트 팝오버 */}
-      {popover && (
-        <div
-          ref={popoverRef}
-          className="fixed z-[100] max-w-sm whitespace-pre-wrap rounded-lg border border-border bg-popover px-4 py-3 text-sm text-popover-foreground shadow-lg"
-          style={{ left: popover.x, top: popover.y }}
-        >
-          {popover.text}
-        </div>
+          {/* 텍스트 팝오버 */}
+          {popover && (
+            <div
+              ref={popoverRef}
+              className="fixed z-[100] max-w-sm whitespace-pre-wrap rounded-lg border border-border bg-popover px-4 py-3 text-sm text-popover-foreground shadow-lg"
+              style={{ left: popover.x, top: popover.y }}
+            >
+              {popover.text}
+            </div>
+          )}
+        </>
       )}
     </div>
   );

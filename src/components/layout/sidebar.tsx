@@ -65,7 +65,7 @@ const mainNavItems: NavItem[] = [
   },
   {
     href: '/cs',
-    label: 'CS 관리',
+    label: '고객 관리',
     icon: Headphones,
     roles: ['OWNER', 'MANAGER', 'STAFF'],
   },

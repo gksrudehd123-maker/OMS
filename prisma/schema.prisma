@@ -294,6 +294,70 @@ model CSRecord {
 }
 
 // ============================================================
+// CS 상품 카탈로그 (고객 관리용)
+// ============================================================
+
+model CSProduct {
+  id          String   @id @default(cuid())
+  name        String                          // 상품명
+  brand       String                          // 브랜드 (방짜/웰스파/카모도)
+  price       Int?                            // 판매가
+  imageUrl    String?                         // 메인 이미지 URL
+  storeUrl    String?                         // 스마트스토어 링크
+  description String?                         // 제품 설명 (스펙, 사용법 등)
+  sortOrder   Int      @default(0)            // 정렬 순서
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  parts CSProductPart[]
+  faqs  CSProductFAQ[]
+
+  @@index([brand])
+  @@map("cs_products")
+}
+
+model CSProductPart {
+  id        String   @id @default(cuid())
+  productId String
+  product   CSProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+  name      String                            // 구성품명
+  price     Int?                              // 개별 가격
+  storeUrl  String?                           // 개별 구매 링크
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([productId])
+  @@map("cs_product_parts")
+}
+
+model CSProductFAQ {
+  id        String   @id @default(cuid())
+  productId String
+  product   CSProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+  question  String                            // 질문
+  answer    String                            // 답변
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([productId])
+  @@map("cs_product_faqs")
+}
+
+// ============================================================
+// 메시지 템플릿
+// ============================================================
+
+model MessageTemplate {
+  id        String   @id @default(cuid())
+  title     String                          // 템플릿 제목
+  body      String                          // 본문 ({{변수명}} 포함)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("message_templates")
+}
+
+// ============================================================
 // 감사 로그 (Audit Log)
 // ============================================================
 
