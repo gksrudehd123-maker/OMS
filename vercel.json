@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/keywords/check-all",
+      "schedule": "0 0 * * *"
+    }
+  ]
+}

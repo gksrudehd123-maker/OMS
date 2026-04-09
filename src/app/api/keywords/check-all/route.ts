@@ -2,9 +2,8 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { checkKeywordRank } from '@/lib/naver/shopping-search';
 
-// POST /api/keywords/check-all
-// 전체 키워드 일괄 순위 조회 (스케줄러용, 인증 없음)
-export async function POST() {
+// 전체 키워드 일괄 순위 조회 공통 로직
+async function checkAllKeywords() {
   const storeName = process.env.NAVER_STORE_NAME;
   if (!storeName) {
     return NextResponse.json(
@@ -65,4 +64,19 @@ export async function POST() {
     checked: results.filter((r) => r.success).length,
     results,
   });
+}
+
+// GET /api/keywords/check-all (Vercel Cron용)
+export async function GET(req: Request) {
+  const authHeader = req.headers.get('authorization');
+  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  return checkAllKeywords();
+}
+
+// POST /api/keywords/check-all (로컬 스케줄러/수동 호출용, 인증 없음)
+export async function POST() {
+  return checkAllKeywords();
 }
