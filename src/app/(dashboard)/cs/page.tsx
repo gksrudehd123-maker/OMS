@@ -1,6 +1,13 @@
 'use client';
 
-import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
+import {
+  useState,
+  useCallback,
+  useRef,
+  useEffect,
+  useMemo,
+  Suspense,
+} from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
@@ -104,7 +111,7 @@ function toDateInput(value: string | null): string {
   return new Date(value).toISOString().split('T')[0];
 }
 
-export default function CSPage() {
+function CSPageContent() {
   const queryClient = useQueryClient();
   const { data: session } = useSession();
   const isOwner = session?.user?.role === 'OWNER';
@@ -1325,5 +1332,13 @@ function Field({
       </label>
       {children}
     </div>
+  );
+}
+
+export default function CSPage() {
+  return (
+    <Suspense fallback={null}>
+      <CSPageContent />
+    </Suspense>
   );
 }
