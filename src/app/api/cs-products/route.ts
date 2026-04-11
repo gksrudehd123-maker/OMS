@@ -23,6 +23,7 @@ export async function GET(request: NextRequest) {
     include: {
       parts: { orderBy: { sortOrder: 'asc' } },
       faqs: { orderBy: { sortOrder: 'asc' } },
+      options: { orderBy: { sortOrder: 'asc' } },
     },
     orderBy: { sortOrder: 'asc' },
   });
@@ -52,7 +53,7 @@ export async function POST(request: NextRequest) {
         storeUrl: body.storeUrl?.trim() || null,
         description: body.description?.trim() || null,
       },
-      include: { parts: true, faqs: true },
+      include: { parts: true, faqs: true, options: true },
     });
 
     return apiSuccess(product);

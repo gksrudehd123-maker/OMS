@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { requireAuth, isError } from '@/lib/auth-guard';
 import { apiSuccess, apiError } from '@/lib/api-response';
 
-// 구성품 추가
+// 옵션 추가
 export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } },
@@ -14,23 +14,25 @@ export async function POST(
   try {
     const body = await request.json();
     if (!body.name?.trim()) {
-      return apiError('구성품명은 필수입니다');
+      return apiError('옵션명은 필수입니다');
     }
 
-    const part = await prisma.cSProductPart.create({
+    const contents: string[] = Array.isArray(body.contents)
+      ? body.contents.map((c: string) => String(c).trim()).filter(Boolean)
+      : [];
+
+    const option = await prisma.cSProductOption.create({
       data: {
         productId: params.id,
         name: body.name.trim(),
         price: body.price ? parseInt(body.price) : null,
-        storeUrl: body.storeUrl?.trim() || null,
-        imageUrl: body.imageUrl?.trim() || null,
-        description: body.description?.trim() || null,
+        contents,
       },
     });
 
-    return apiSuccess(part);
+    return apiSuccess(option);
   } catch (err) {
-    console.error('CSProductPart create error:', err);
-    return apiError('구성품 추가 중 오류가 발생했습니다', 500);
+    console.error('CSProductOption create error:', err);
+    return apiError('옵션 추가 중 오류가 발생했습니다', 500);
   }
 }

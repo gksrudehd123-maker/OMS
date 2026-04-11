@@ -29,7 +29,7 @@ export async function PATCH(
     const product = await prisma.cSProduct.update({
       where: { id: params.id },
       data,
-      include: { parts: true, faqs: true },
+      include: { parts: true, faqs: true, options: true },
     });
 
     return apiSuccess(product);

@@ -20,6 +20,10 @@ export async function PATCH(
       data.price = body.price ? parseInt(body.price) : null;
     if (body.storeUrl !== undefined)
       data.storeUrl = body.storeUrl?.trim() || null;
+    if (body.imageUrl !== undefined)
+      data.imageUrl = body.imageUrl?.trim() || null;
+    if (body.description !== undefined)
+      data.description = body.description?.trim() || null;
 
     const part = await prisma.cSProductPart.update({
       where: { id: params.partId },

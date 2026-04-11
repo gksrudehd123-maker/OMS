@@ -20,12 +20,21 @@ type CSProductPart = {
   name: string;
   price: number | null;
   storeUrl: string | null;
+  imageUrl: string | null;
+  description: string | null;
 };
 
 type CSProductFAQ = {
   id: string;
   question: string;
   answer: string;
+};
+
+export type CSProductOption = {
+  id: string;
+  name: string;
+  price: number | null;
+  contents: string[];
 };
 
 export type CSProduct = {
@@ -38,6 +47,7 @@ export type CSProduct = {
   description: string | null;
   parts: CSProductPart[];
   faqs: CSProductFAQ[];
+  options: CSProductOption[];
 };
 
 const BRANDS = ['방짜', '웰스파', '카모도'] as const;
@@ -185,11 +195,11 @@ export default function CSProductTab() {
             />
           ))}
         </div>
-        <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-          {[1, 2, 3, 4].map((i) => (
+        <div className="grid gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8">
+          {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
             <div
               key={i}
-              className="h-64 animate-pulse rounded-xl border border-border bg-muted/50"
+              className="h-44 animate-pulse rounded-lg border border-border bg-muted/50"
             />
           ))}
         </div>
@@ -277,12 +287,12 @@ export default function CSProductTab() {
           </button>
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+        <div className="grid gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8">
           {products.map((product) => (
             <div
               key={product.id}
               onClick={() => setDetailProduct(product)}
-              className="group cursor-pointer overflow-hidden rounded-xl border border-border bg-card shadow-sm transition-all hover:shadow-lg hover:border-primary/30"
+              className="group cursor-pointer overflow-hidden rounded-lg border border-border bg-card shadow-sm transition-all hover:shadow-md hover:border-primary/30"
             >
               {/* 이미지 */}
               <div className="aspect-square overflow-hidden bg-muted">
@@ -294,58 +304,69 @@ export default function CSProductTab() {
                   />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center">
-                    <Package className="h-12 w-12 text-muted-foreground/40" />
+                    <Package className="h-8 w-8 text-muted-foreground/40" />
                   </div>
                 )}
               </div>
 
               {/* 정보 */}
-              <div className="p-3">
-                <h3 className="font-semibold leading-tight line-clamp-2">
+              <div className="p-2">
+                <h3 className="text-sm font-semibold leading-tight line-clamp-2">
                   {product.name}
                 </h3>
-                <div className="mt-1 flex items-center gap-2">
-                  <span
-                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${BRAND_COLORS[product.brand] || 'bg-gray-100 text-gray-700'}`}
+                {product.storeUrl && (
+                  <a
+                    href={product.storeUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="mt-1 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary hover:underline"
                   >
-                    {product.brand}
-                  </span>
-                  {product.storeUrl && (
-                    <a
-                      href={product.storeUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={(e) => e.stopPropagation()}
-                      className="text-muted-foreground hover:text-primary"
-                    >
-                      <ExternalLink className="h-3.5 w-3.5" />
-                    </a>
-                  )}
-                </div>
-                {product.price && (
-                  <p className="mt-1.5 text-lg font-bold text-primary">
-                    {formatPrice(product.price)}
-                  </p>
+                    <ExternalLink className="h-3 w-3" />
+                    스토어 바로가기
+                  </a>
                 )}
+                {(() => {
+                  const optionPrices = product.options
+                    .map((o) => o.price)
+                    .filter((p): p is number => p != null);
+                  if (optionPrices.length > 0) {
+                    const min = Math.min(...optionPrices);
+                    return (
+                      <p className="mt-1 text-base font-bold text-primary">
+                        {formatPrice(min)}
+                        <span className="text-xs font-medium">~</span>
+                      </p>
+                    );
+                  }
+                  if (product.price) {
+                    return (
+                      <p className="mt-1 text-base font-bold text-primary">
+                        {formatPrice(product.price)}
+                      </p>
+                    );
+                  }
+                  return null;
+                })()}
 
                 {/* 수정/삭제 버튼 */}
-                <div className="mt-2 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                <div className="mt-1.5 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
                   <button
                     onClick={(e) => openEdit(product, e)}
-                    className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+                    className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
                     title="수정"
                   >
-                    <Pencil className="h-4 w-4" />
+                    <Pencil className="h-3.5 w-3.5" />
                   </button>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       setDeleteConfirm(product.id);
                     }}
-                    className="rounded-md p-1.5 text-muted-foreground hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/30"
+                    className="rounded-md p-1 text-muted-foreground hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/30"
                     title="삭제"
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 className="h-3.5 w-3.5" />
                   </button>
                 </div>
               </div>

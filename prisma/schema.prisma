@@ -309,22 +309,39 @@ model CSProduct {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  parts CSProductPart[]
-  faqs  CSProductFAQ[]
+  parts   CSProductPart[]
+  faqs    CSProductFAQ[]
+  options CSProductOption[]
 
   @@index([brand])
   @@map("cs_products")
 }
 
-model CSProductPart {
-  id        String   @id @default(cuid())
+model CSProductOption {
+  id        String    @id @default(cuid())
   productId String
   product   CSProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
-  name      String                            // 구성품명
-  price     Int?                              // 개별 가격
-  storeUrl  String?                           // 개별 구매 링크
-  sortOrder Int      @default(0)
-  createdAt DateTime @default(now())
+  name      String // 옵션명 (예: 단품, 싱글세트, 더블세트)
+  price     Int? // 옵션 가격
+  contents  String[] // 포함 구성품 목록 (예: ["배터리 1개", "가방 1개", "저속충전기", "케이블"])
+  sortOrder Int       @default(0)
+  createdAt DateTime  @default(now())
+
+  @@index([productId])
+  @@map("cs_product_options")
+}
+
+model CSProductPart {
+  id          String    @id @default(cuid())
+  productId   String
+  product     CSProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+  name        String // 구성품명
+  price       Int? // 개별 가격
+  storeUrl    String? // 개별 구매 링크
+  imageUrl    String? // 구성품 이미지
+  description String? // 스펙/설명 (freeform)
+  sortOrder   Int       @default(0)
+  createdAt   DateTime  @default(now())
 
   @@index([productId])
   @@map("cs_product_parts")
