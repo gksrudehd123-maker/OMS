@@ -427,11 +427,37 @@ GitHub Push → Vercel Auto Deploy (main branch → Production)
 
 #### 문자 발송 기능 (알리고 SMS API)
 
-- [ ] 알리고 회원가입 + 발신번호 등록 + API Key 발급 + 충전
+> **진행 일정:** 2026-04-13(월) 작업 재개. 알리고 가입은 사용자가 핸드폰 확보 후 직접 진행.
+
+**Phase 1 — 인프라 준비 (가입 전 선행 가능)**
+
+- [ ] Prisma `SmsLog` 모델 추가 (수신자, 템플릿ID, 본문, 상태, 응답코드, 발송자, 타임스탬프)
+- [ ] `.env.example`에 `ALIGO_API_KEY`, `ALIGO_USER_ID`, `ALIGO_SENDER` 추가
+- [ ] `src/lib/aligo.ts` 알리고 REST 클라이언트 (패키지 미사용, fetch 직접 호출)
+  - `sendSms()`: 단문(SMS, 90바이트)/장문(LMS) 자동 판별
+  - `getRemainingQuota()`: 잔여 건수 조회
+  - `/send_test/` 엔드포인트로 테스트 모드 지원
+
+**Phase 2 — API 라우트**
+
+- [ ] `POST /api/sms/send` — 발송 (requireAuth, 감사 로그 기록)
+- [ ] `GET /api/sms/logs` — 발송 이력 조회 (페이징, 고객명/전화번호 필터)
+- [ ] `GET /api/sms/quota` — 잔여 건수
+
+**Phase 3 — UI (CS 페이지 통합)**
+
 - [x] 메시지 템플릿 관리 페이지 (생성/수정/삭제, {{고객명}} 등 변수 지원)
-- [ ] 문자 발송 API 연동 (알리고 REST API)
-- [ ] CS 관리 화면에서 고객 선택 → 템플릿 선택 → 미리보기 → 발송
-- [ ] 발송 이력 관리 (누구에게, 언제, 어떤 템플릿)
+- [ ] CS 목록 행에 "문자발송" 버튼 추가 → 모달 오픈
+- [ ] 발송 모달: 템플릿 선택 → 변수 입력 → 미리보기(바이트 수/SMS/LMS 표시) → 발송
+- [ ] 발송 이력 탭 (CS 페이지 4번째 탭 or 별도 `/sms` 페이지 — 월요일 결정)
+
+**Phase 4 — 실계정 연동 (사용자 작업 필요)**
+
+- [ ] 알리고 회원가입 (smartsms.aligo.in) — **핸드폰 본인인증 필요**
+- [ ] 발신번호 등록 (통신사 가입증명서 업로드, 승인 1영업일)
+- [ ] API Key 발급 (마이페이지 → API 문자서비스)
+- [ ] 충전 (SMS 약 8.4원/건, LMS 약 25원/건, 최소 1만원)
+- [ ] `/send_test/`로 테스트 → `/send/`로 실발송 검증
 
 #### Phase 11 - SaaS 전환 (다중 셀러 서비스)
 
