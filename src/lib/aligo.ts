@@ -11,7 +11,7 @@ export interface AligoSendParams {
   title?: string; // LMS/MMS 제목
   sender?: string; // 발신번호 (미지정 시 env)
   msgType?: SmsMsgType; // 미지정 시 바이트 수로 자동 판별
-  testMode?: boolean; // true면 /send_test/ 사용
+  testMode?: boolean; // true면 testmode_yn=Y (과금 없음)
 }
 
 export interface AligoSendResult {
@@ -77,7 +77,6 @@ export async function sendSms(
 
   const envTestMode = process.env.ALIGO_TEST_MODE === 'true';
   const testMode = params.testMode ?? envTestMode;
-  const endpoint = testMode ? '/send_test/' : '/send/';
 
   const form = new URLSearchParams();
   form.set('key', apiKey);
@@ -87,8 +86,9 @@ export async function sendSms(
   form.set('msg', params.msg);
   form.set('msg_type', msgType);
   if (params.title) form.set('title', params.title);
+  if (testMode) form.set('testmode_yn', 'Y');
 
-  const res = await fetch(`${ALIGO_BASE_URL}${endpoint}`, {
+  const res = await fetch(`${ALIGO_BASE_URL}/send/`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: form.toString(),
