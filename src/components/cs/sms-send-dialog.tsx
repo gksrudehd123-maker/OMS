@@ -17,6 +17,7 @@ type Props = {
   onClose: () => void;
   defaultRecipient?: string;
   defaultVariables?: Record<string, string>;
+  defaultBody?: string; // 재발송용 — 설정 시 템플릿 선택 불가
 };
 
 function extractVariables(text: string): string[] {
@@ -38,6 +39,7 @@ export default function SmsSendDialog({
   onClose,
   defaultRecipient = '',
   defaultVariables = {},
+  defaultBody,
 }: Props) {
   const queryClient = useQueryClient();
   const [recipient, setRecipient] = useState('');
@@ -67,7 +69,7 @@ export default function SmsSendDialog({
     if (open) {
       setRecipient(defaultRecipient.replace(/-/g, ''));
       setTemplateId('');
-      setManualBody('');
+      setManualBody(defaultBody || '');
       setTitle('');
       setVars(defaultVariables);
     }

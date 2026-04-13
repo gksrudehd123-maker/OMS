@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { MessageSquare, RefreshCw } from 'lucide-react';
+import { MessageSquare, RefreshCw, Repeat2 } from 'lucide-react';
+import SmsSendDialog from './sms-send-dialog';
 
 type SmsLog = {
   id: string;
@@ -25,6 +26,11 @@ export default function SmsLogTab() {
   const [page, setPage] = useState(1);
   const [recipientFilter, setRecipientFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [resend, setResend] = useState<{
+    open: boolean;
+    recipient: string;
+    body: string;
+  }>({ open: false, recipient: '', body: '' });
   const limit = 20;
 
   const { data, isLoading, refetch } = useQuery<{
@@ -115,13 +121,14 @@ export default function SmsLogTab() {
                 <th className="px-4 py-3 font-semibold">내용</th>
                 <th className="px-4 py-3 font-semibold">상태</th>
                 <th className="px-4 py-3 font-semibold">발송자</th>
+                <th className="px-4 py-3 font-semibold">재발송</th>
               </tr>
             </thead>
             <tbody>
               {isLoading ? (
                 <tr>
                   <td
-                    colSpan={6}
+                    colSpan={7}
                     className="px-4 py-12 text-center text-muted-foreground"
                   >
                     로딩 중...
@@ -130,7 +137,7 @@ export default function SmsLogTab() {
               ) : logs.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={6}
+                    colSpan={7}
                     className="px-4 py-12 text-center text-muted-foreground"
                   >
                     <MessageSquare className="mx-auto mb-2 h-8 w-8" />
@@ -188,6 +195,22 @@ export default function SmsLogTab() {
                     <td className="whitespace-nowrap px-4 py-3 text-muted-foreground">
                       {log.userName || '-'}
                     </td>
+                    <td className="whitespace-nowrap px-4 py-3">
+                      <button
+                        onClick={() =>
+                          setResend({
+                            open: true,
+                            recipient: log.recipient,
+                            body: log.body,
+                          })
+                        }
+                        className="inline-flex items-center gap-1 rounded-md border border-input px-2 py-1 text-xs hover:bg-muted"
+                        title="재발송"
+                      >
+                        <Repeat2 className="h-3.5 w-3.5" />
+                        재발송
+                      </button>
+                    </td>
                   </tr>
                 ))
               )}
@@ -195,6 +218,13 @@ export default function SmsLogTab() {
           </table>
         </div>
       </div>
+
+      <SmsSendDialog
+        open={resend.open}
+        onClose={() => setResend((s) => ({ ...s, open: false }))}
+        defaultRecipient={resend.recipient}
+        defaultBody={resend.body}
+      />
 
       {meta && meta.totalPages > 1 && (
         <div className="flex items-center justify-between">

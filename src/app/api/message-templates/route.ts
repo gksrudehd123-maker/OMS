@@ -22,14 +22,18 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { title, body: templateBody } = body;
+    const { title, body: templateBody, channel } = body;
 
     if (!title?.trim() || !templateBody?.trim()) {
       return apiError('제목과 본문은 필수입니다');
     }
 
     const template = await prisma.messageTemplate.create({
-      data: { title: title.trim(), body: templateBody.trim() },
+      data: {
+        title: title.trim(),
+        body: templateBody.trim(),
+        channel: channel || 'SMS',
+      },
     });
 
     return apiSuccess(template);

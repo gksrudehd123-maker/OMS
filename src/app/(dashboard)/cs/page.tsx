@@ -30,6 +30,7 @@ import {
 import MessageTemplateTab from '@/components/cs/message-template-tab';
 import CSProductTab from '@/components/cs/cs-product-tab';
 import SmsSendDialog from '@/components/cs/sms-send-dialog';
+import BulkSmsSendDialog from '@/components/cs/bulk-sms-send-dialog';
 import SmsLogTab from '@/components/cs/sms-log-tab';
 import { ProgressBar } from '@/components/ui/progress-bar';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -95,6 +96,7 @@ const EMPTY_FORM = {
 };
 
 const COLUMNS = [
+  { key: '_sms', label: '문자', width: 60, align: 'center' },
   { key: 'consultDate', label: '상담날짜', width: 100, align: 'left' },
   { key: 'purchaseDate', label: '구입일자', width: 100, align: 'left' },
   { key: 'status', label: '안내상태', width: 90, align: 'center' },
@@ -274,6 +276,9 @@ function CSPageContent() {
     variables: Record<string, string>;
   }>({ open: false, recipient: '', variables: {} });
 
+  // 일괄 SMS 발송 다이얼로그
+  const [bulkDialogOpen, setBulkDialogOpen] = useState(false);
+
   // 다이얼로그
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -437,6 +442,24 @@ function CSPageContent() {
     };
 
     switch (key) {
+      case '_sms':
+        return (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setSmsDialog({
+                open: true,
+                recipient: r.customerPhone,
+                variables: { 고객명: r.customerName, 제품명: r.productName },
+              });
+            }}
+            disabled={!r.customerPhone}
+            className="inline-flex items-center justify-center rounded-md bg-orange-500 p-1.5 text-white hover:bg-orange-600 disabled:opacity-40"
+            title="문자 발송"
+          >
+            <Send className="h-3.5 w-3.5" />
+          </button>
+        );
       case 'consultDate': {
         const days = daysAgo(r.consultDate);
         const colorClass =
@@ -1006,12 +1029,21 @@ function CSPageContent() {
               )}
             </div>
 
-            <button
-              onClick={openCreate}
-              className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-            >
-              <Plus className="h-4 w-4" />새 CS 등록
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setBulkDialogOpen(true)}
+                className="inline-flex items-center gap-2 rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-600"
+              >
+                <Send className="h-4 w-4" />
+                일괄 문자 발송
+              </button>
+              <button
+                onClick={openCreate}
+                className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+              >
+                <Plus className="h-4 w-4" />새 CS 등록
+              </button>
+            </div>
           </div>
 
           {/* 테이블 */}
@@ -1372,6 +1404,11 @@ function CSPageContent() {
         onClose={() => setSmsDialog((s) => ({ ...s, open: false }))}
         defaultRecipient={smsDialog.recipient}
         defaultVariables={smsDialog.variables}
+      />
+
+      <BulkSmsSendDialog
+        open={bulkDialogOpen}
+        onClose={() => setBulkDialogOpen(false)}
       />
     </div>
   );

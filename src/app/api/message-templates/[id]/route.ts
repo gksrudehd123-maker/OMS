@@ -13,7 +13,7 @@ export async function PATCH(
 
   try {
     const body = await request.json();
-    const { title, body: templateBody } = body;
+    const { title, body: templateBody, channel } = body;
 
     if (!title?.trim() || !templateBody?.trim()) {
       return apiError('제목과 본문은 필수입니다');
@@ -21,7 +21,11 @@ export async function PATCH(
 
     const template = await prisma.messageTemplate.update({
       where: { id: params.id },
-      data: { title: title.trim(), body: templateBody.trim() },
+      data: {
+        title: title.trim(),
+        body: templateBody.trim(),
+        ...(channel ? { channel } : {}),
+      },
     });
 
     return apiSuccess(template);

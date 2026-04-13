@@ -9,8 +9,22 @@ type MessageTemplate = {
   id: string;
   title: string;
   body: string;
+  channel: string;
   createdAt: string;
   updatedAt: string;
+};
+
+const CHANNEL_LABELS: Record<string, string> = {
+  SMS: 'SMS',
+  LMS: 'LMS',
+  KAKAO: '카카오 알림톡',
+};
+
+const CHANNEL_COLORS: Record<string, string> = {
+  SMS: 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300',
+  LMS: 'bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300',
+  KAKAO:
+    'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
 };
 
 function extractVariables(text: string): string[] {
@@ -25,6 +39,7 @@ export default function MessageTemplateTab() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
+  const [channel, setChannel] = useState('SMS');
   const [previewOpen, setPreviewOpen] = useState<string | null>(null);
   const [previewVars, setPreviewVars] = useState<Record<string, string>>({});
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
@@ -46,7 +61,7 @@ export default function MessageTemplateTab() {
       const res = await fetch(url, {
         method: editingId ? 'PATCH' : 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, body }),
+        body: JSON.stringify({ title, body, channel }),
       });
       if (!res.ok) throw new Error('저장 실패');
       return res.json();
@@ -80,6 +95,7 @@ export default function MessageTemplateTab() {
     setEditingId(null);
     setTitle('');
     setBody('');
+    setChannel('SMS');
     setDialogOpen(true);
   }
 
@@ -87,6 +103,7 @@ export default function MessageTemplateTab() {
     setEditingId(tpl.id);
     setTitle(tpl.title);
     setBody(tpl.body);
+    setChannel(tpl.channel || 'SMS');
     setDialogOpen(true);
   }
 
@@ -95,6 +112,7 @@ export default function MessageTemplateTab() {
     setEditingId(null);
     setTitle('');
     setBody('');
+    setChannel('SMS');
   }
 
   function openPreview(tpl: MessageTemplate) {
@@ -167,7 +185,14 @@ export default function MessageTemplateTab() {
                 className="flex flex-col rounded-xl border border-border bg-card shadow-sm transition-shadow hover:shadow-md"
               >
                 <div className="flex items-start justify-between border-b border-border p-4">
-                  <h3 className="font-semibold">{tpl.title}</h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-semibold">{tpl.title}</h3>
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${CHANNEL_COLORS[tpl.channel] || CHANNEL_COLORS.SMS}`}
+                    >
+                      {CHANNEL_LABELS[tpl.channel] || tpl.channel}
+                    </span>
+                  </div>
                   <div className="flex gap-1">
                     <button
                       onClick={() =>
@@ -267,15 +292,29 @@ export default function MessageTemplateTab() {
             </div>
 
             <div className="space-y-4">
-              <div>
-                <label className="mb-1 block text-sm font-medium">제목</label>
-                <input
-                  type="text"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="예: A/S 안내"
-                  className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                />
+              <div className="grid grid-cols-[1fr_auto] gap-3">
+                <div>
+                  <label className="mb-1 block text-sm font-medium">제목</label>
+                  <input
+                    type="text"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="예: A/S 안내"
+                    className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm font-medium">채널</label>
+                  <select
+                    value={channel}
+                    onChange={(e) => setChannel(e.target.value)}
+                    className="rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                  >
+                    <option value="SMS">SMS</option>
+                    <option value="LMS">LMS</option>
+                    <option value="KAKAO">카카오 알림톡</option>
+                  </select>
+                </div>
               </div>
 
               <div>
