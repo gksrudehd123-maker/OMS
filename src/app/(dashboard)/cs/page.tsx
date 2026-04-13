@@ -24,9 +24,13 @@ import {
   ChevronRight,
   MessageSquareText,
   ShoppingBag,
+  Send,
+  Inbox,
 } from 'lucide-react';
 import MessageTemplateTab from '@/components/cs/message-template-tab';
 import CSProductTab from '@/components/cs/cs-product-tab';
+import SmsSendDialog from '@/components/cs/sms-send-dialog';
+import SmsLogTab from '@/components/cs/sms-log-tab';
 import { ProgressBar } from '@/components/ui/progress-bar';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -119,13 +123,20 @@ function CSPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const tabParam = searchParams.get('tab');
-  const activeTab = useMemo<'cs' | 'templates' | 'products'>(() => {
-    if (tabParam === 'templates' || tabParam === 'products') return tabParam;
+  const activeTab = useMemo<
+    'cs' | 'templates' | 'products' | 'sms-logs'
+  >(() => {
+    if (
+      tabParam === 'templates' ||
+      tabParam === 'products' ||
+      tabParam === 'sms-logs'
+    )
+      return tabParam;
     return 'cs';
   }, [tabParam]);
 
   const setActiveTab = useCallback(
-    (tab: 'cs' | 'templates' | 'products') => {
+    (tab: 'cs' | 'templates' | 'products' | 'sms-logs') => {
       const params = new URLSearchParams(searchParams.toString());
       if (tab === 'cs') {
         params.delete('tab');
@@ -255,6 +266,13 @@ function CSPageContent() {
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
     setPopover({ text, x: rect.left, y: rect.bottom + 4 });
   };
+
+  // SMS 발송 다이얼로그
+  const [smsDialog, setSmsDialog] = useState<{
+    open: boolean;
+    recipient: string;
+    variables: Record<string, string>;
+  }>({ open: false, recipient: '', variables: {} });
 
   // 다이얼로그
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -872,12 +890,25 @@ function CSPageContent() {
           <ShoppingBag className="h-5 w-5" />
           상품 정보
         </button>
+        <button
+          onClick={() => setActiveTab('sms-logs')}
+          className={`inline-flex items-center gap-2 rounded-md px-5 py-2.5 text-base font-semibold transition-all ${
+            activeTab === 'sms-logs'
+              ? 'bg-orange-500 text-white shadow-md'
+              : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
+          }`}
+        >
+          <Inbox className="h-5 w-5" />
+          발송 이력
+        </button>
       </div>
 
       {activeTab === 'templates' ? (
         <MessageTemplateTab />
       ) : activeTab === 'products' ? (
         <CSProductTab />
+      ) : activeTab === 'sms-logs' ? (
+        <SmsLogTab />
       ) : (
         <>
           {/* 상태 필터 배지 */}
@@ -1026,18 +1057,39 @@ function CSPageContent() {
                         />
                       </Field>
                       <Field label="전화번호 *">
-                        <input
-                          type="text"
-                          value={form.customerPhone}
-                          onChange={(e) =>
-                            updateField(
-                              'customerPhone',
-                              formatPhone(e.target.value),
-                            )
-                          }
-                          placeholder="010-0000-0000"
-                          className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                        />
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={form.customerPhone}
+                            onChange={(e) =>
+                              updateField(
+                                'customerPhone',
+                                formatPhone(e.target.value),
+                              )
+                            }
+                            placeholder="010-0000-0000"
+                            className="flex-1 rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                          />
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setSmsDialog({
+                                open: true,
+                                recipient: form.customerPhone,
+                                variables: {
+                                  고객명: form.customerName,
+                                  제품명: form.productName,
+                                },
+                              })
+                            }
+                            disabled={!form.customerPhone}
+                            className="inline-flex items-center gap-1 rounded-lg bg-orange-500 px-3 py-2 text-sm font-medium text-white hover:bg-orange-600 disabled:opacity-50"
+                            title="문자 발송"
+                          >
+                            <Send className="h-4 w-4" />
+                            문자
+                          </button>
+                        </div>
                       </Field>
                       <Field label="고객 주소">
                         <input
@@ -1314,6 +1366,13 @@ function CSPageContent() {
           )}
         </>
       )}
+
+      <SmsSendDialog
+        open={smsDialog.open}
+        onClose={() => setSmsDialog((s) => ({ ...s, open: false }))}
+        defaultRecipient={smsDialog.recipient}
+        defaultVariables={smsDialog.variables}
+      />
     </div>
   );
 }
