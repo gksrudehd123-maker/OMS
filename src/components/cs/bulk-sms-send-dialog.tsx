@@ -59,13 +59,14 @@ export default function BulkSmsSendDialog({ open, onClose }: Props) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [sharedVars, setSharedVars] = useState<Record<string, string>>({});
   const [title, setTitle] = useState('');
+  const [includeDone, setIncludeDone] = useState(false);
   const [sending, setSending] = useState(false);
   const [progress, setProgress] = useState<{
     done: number;
     total: number;
   } | null>(null);
 
-  const { data: records = [] } = useQuery<CSRecord[]>({
+  const { data: allRecords = [] } = useQuery<CSRecord[]>({
     queryKey: ['cs-records-for-bulk-sms'],
     queryFn: async () => {
       const res = await fetch('/api/cs');
@@ -74,6 +75,10 @@ export default function BulkSmsSendDialog({ open, onClose }: Props) {
     },
     enabled: open,
   });
+
+  const records = includeDone
+    ? allRecords
+    : allRecords.filter((r) => r.status !== '안내완료' && r.status !== '완료');
 
   const { data: templates = [] } = useQuery<MessageTemplate[]>({
     queryKey: ['message-templates'],
@@ -200,14 +205,28 @@ export default function BulkSmsSendDialog({ open, onClose }: Props) {
               <label className="text-sm font-medium">
                 수신자 ({selectedIds.size}/{records.length})
               </label>
-              <button
-                onClick={toggleAll}
-                className="text-xs text-primary hover:underline"
-              >
-                {selectedIds.size === records.length
-                  ? '전체 해제'
-                  : '전체 선택'}
-              </button>
+              <div className="flex items-center gap-3">
+                <label className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <input
+                    type="checkbox"
+                    checked={includeDone}
+                    onChange={(e) => {
+                      setIncludeDone(e.target.checked);
+                      setSelectedIds(new Set());
+                    }}
+                    className="h-3.5 w-3.5"
+                  />
+                  완료건 포함
+                </label>
+                <button
+                  onClick={toggleAll}
+                  className="text-xs text-primary hover:underline"
+                >
+                  {selectedIds.size === records.length
+                    ? '전체 해제'
+                    : '전체 선택'}
+                </button>
+              </div>
             </div>
             <div className="flex-1 overflow-auto rounded-lg border border-border">
               {records.length === 0 ? (
