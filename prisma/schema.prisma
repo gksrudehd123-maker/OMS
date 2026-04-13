@@ -38,28 +38,28 @@ model Category {
 }
 
 model Product {
-  id              String    @id @default(cuid())
-  name            String
-  optionInfo      String    @default("")
-  productKey      String    @unique
-  categoryId      String?
-  category        Category? @relation(fields: [categoryId], references: [id])
-  costPrice       Decimal?  @db.Decimal(12, 2)
-  sellingPrice    Decimal?  @db.Decimal(12, 2)
-  feeRate         Decimal?  @db.Decimal(5, 2)
-  shippingCost    Decimal   @default(0) @db.Decimal(10, 2)
-  freeShippingMin Decimal?  @db.Decimal(10, 2)
-  couponDiscount  Decimal?  @db.Decimal(10, 2)
-  fulfillmentFee  Decimal?  @db.Decimal(10, 2)
-  brand           String?               // 브랜드 (방짜, 웰스파, 카모도)
-  brandCategory   String?               // 브랜드 내 세부 카테고리 (배터리, 기포기 등)
-  brandNone       Boolean   @default(false) // true: 해당사항 없음 (분류 대상 아님)
-  memo            String?
-  isActive        Boolean   @default(true)
-  storeProductId  String?               // 네이버 쇼핑 상품 ID (키워드 순위 매칭용)
-  thumbnailUrl    String?               // 네이버 쇼핑 썸네일 URL
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id                  String                @id @default(cuid())
+  name                String
+  optionInfo          String                @default("")
+  productKey          String                @unique
+  categoryId          String?
+  category            Category?             @relation(fields: [categoryId], references: [id])
+  costPrice           Decimal?              @db.Decimal(12, 2)
+  sellingPrice        Decimal?              @db.Decimal(12, 2)
+  feeRate             Decimal?              @db.Decimal(5, 2)
+  shippingCost        Decimal               @default(0) @db.Decimal(10, 2)
+  freeShippingMin     Decimal?              @db.Decimal(10, 2)
+  couponDiscount      Decimal?              @db.Decimal(10, 2)
+  fulfillmentFee      Decimal?              @db.Decimal(10, 2)
+  brand               String? // 브랜드 (방짜, 웰스파, 카모도)
+  brandCategory       String? // 브랜드 내 세부 카테고리 (배터리, 기포기 등)
+  brandNone           Boolean               @default(false) // true: 해당사항 없음 (분류 대상 아님)
+  memo                String?
+  isActive            Boolean               @default(true)
+  storeProductId      String? // 네이버 쇼핑 상품 ID (키워드 순위 매칭용)
+  thumbnailUrl        String? // 네이버 쇼핑 썸네일 URL
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
   orders              Order[]
   dailySales          DailySales[]
   coupangDailyMetrics CoupangDailyMetrics[]
@@ -71,13 +71,13 @@ model Product {
 }
 
 model Channel {
-  id        String   @id @default(cuid())
-  name      String   @unique
-  code      String   @unique
-  feeRate   Decimal  @db.Decimal(5, 2)
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                  String                @id @default(cuid())
+  name                String                @unique
+  code                String                @unique
+  feeRate             Decimal               @db.Decimal(5, 2)
+  isActive            Boolean               @default(true)
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
   orders              Order[]
   uploads             Upload[]
   adCosts             AdCost[]
@@ -89,17 +89,17 @@ model Channel {
 }
 
 model Upload {
-  id           String   @id @default(cuid())
-  fileName     String
-  channelId    String
-  channel      Channel  @relation(fields: [channelId], references: [id])
-  uploadedById String?
-  uploadedBy   User?    @relation(fields: [uploadedById], references: [id])
-  totalRows    Int      @default(0)
-  successRows  Int      @default(0)
-  errorRows    Int      @default(0)
-  errors       Json?
-  createdAt    DateTime @default(now())
+  id                  String                @id @default(cuid())
+  fileName            String
+  channelId           String
+  channel             Channel               @relation(fields: [channelId], references: [id])
+  uploadedById        String?
+  uploadedBy          User?                 @relation(fields: [uploadedById], references: [id])
+  totalRows           Int                   @default(0)
+  successRows         Int                   @default(0)
+  errorRows           Int                   @default(0)
+  errors              Json?
+  createdAt           DateTime              @default(now())
   orders              Order[]
   dailySales          DailySales[]
   coupangDailyMetrics CoupangDailyMetrics[]
@@ -176,10 +176,10 @@ model Setting {
 
 model GeneratedReport {
   id         String   @id @default(cuid())
-  type       String   // "weekly" | "monthly"
+  type       String // "weekly" | "monthly"
   periodFrom DateTime @db.Date
   periodTo   DateTime @db.Date
-  reportData Json     // 리포트 데이터 스냅샷 (kpi, channelData, dailyData, productData)
+  reportData Json // 리포트 데이터 스냅샷 (kpi, channelData, dailyData, productData)
   createdAt  DateTime @default(now())
 
   @@index([type])
@@ -226,24 +226,24 @@ model CoupangDailyMetrics {
   id                      String   @id @default(cuid())
   date                    DateTime @db.Date
   optionId                String
-  registeredProductId     String?               // 등록상품ID
+  registeredProductId     String? // 등록상품ID
   optionName              String
   productName             String
   categoryName            String?
-  salesMethod             String?               // 판매방식 (판매자배송 등)
+  salesMethod             String? // 판매방식 (판매자배송 등)
   salesAmount             Decimal  @db.Decimal(12, 2) // 매출(원)
-  orderCount              Int                   // 주문 건수
-  salesQuantity           Int                   // 판매량
-  visitors                Int?                  // 방문자
-  views                   Int?                  // 조회
-  cart                    Int?                  // 장바구니
-  conversionRate          Decimal? @db.Decimal(5, 2)  // 구매전환율(%)
-  itemWinnerRate          Decimal? @db.Decimal(5, 2)  // 아이템위너 비율(%)
+  orderCount              Int // 주문 건수
+  salesQuantity           Int // 판매량
+  visitors                Int? // 방문자
+  views                   Int? // 조회
+  cart                    Int? // 장바구니
+  conversionRate          Decimal? @db.Decimal(5, 2) // 구매전환율(%)
+  itemWinnerRate          Decimal? @db.Decimal(5, 2) // 아이템위너 비율(%)
   totalAmount             Decimal? @db.Decimal(12, 2) // 총 매출(원)
-  totalQuantity           Int?                  // 총 판매수
+  totalQuantity           Int? // 총 판매수
   cancelAmount            Decimal? @db.Decimal(12, 2) // 총 취소 금액(원)
-  cancelQuantity          Int?                  // 총 취소된 상품수
-  immediateCancelQuantity Int?                  // 즉시 취소된 상품수
+  cancelQuantity          Int? // 총 취소된 상품수
+  immediateCancelQuantity Int? // 즉시 취소된 상품수
 
   productId String
   product   Product @relation(fields: [productId], references: [id])
@@ -269,21 +269,21 @@ model CoupangDailyMetrics {
 
 model CSRecord {
   id              String    @id @default(cuid())
-  consultDate     DateTime  @db.Date              // 상담날짜
-  purchaseDate    DateTime? @db.Date              // 제품구입일자
-  status          String    @default("교환요청")    // 교환요청|안내완료|진행 중|연락처없음|미입고
-  receivedDate    DateTime? @db.Date              // 제품입고날짜
-  customerName    String                          // 고객명
-  productName     String                          // 제품명
-  consultNote     String?                         // A/S 내용 및 상담내용
-  receivedProduct String?                         // 입고된 제품
-  serviceProgress String?                         // A/S 진행상황
-  shippingDate    DateTime? @db.Date              // 출고날짜
-  customerAddress String?                         // 고객주소
-  customerPhone   String                          // 전화번호
-  chargeType      String    @default("유상")       // 유상|무료
-  repairCost      Int?                            // 수리비용
-  trackingNumber  String?                         // 배송번호
+  consultDate     DateTime  @db.Date // 상담날짜
+  purchaseDate    DateTime? @db.Date // 제품구입일자
+  status          String    @default("교환요청") // 교환요청|안내완료|진행 중|연락처없음|미입고
+  receivedDate    DateTime? @db.Date // 제품입고날짜
+  customerName    String // 고객명
+  productName     String // 제품명
+  consultNote     String? // A/S 내용 및 상담내용
+  receivedProduct String? // 입고된 제품
+  serviceProgress String? // A/S 진행상황
+  shippingDate    DateTime? @db.Date // 출고날짜
+  customerAddress String? // 고객주소
+  customerPhone   String // 전화번호
+  chargeType      String    @default("유상") // 유상|무료
+  repairCost      Int? // 수리비용
+  trackingNumber  String? // 배송번호
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
@@ -299,13 +299,13 @@ model CSRecord {
 
 model CSProduct {
   id          String   @id @default(cuid())
-  name        String                          // 상품명
-  brand       String                          // 브랜드 (방짜/웰스파/카모도)
-  price       Int?                            // 판매가
-  imageUrl    String?                         // 메인 이미지 URL
-  storeUrl    String?                         // 스마트스토어 링크
-  description String?                         // 제품 설명 (스펙, 사용법 등)
-  sortOrder   Int      @default(0)            // 정렬 순서
+  name        String // 상품명
+  brand       String // 브랜드 (방짜/웰스파/카모도)
+  price       Int? // 판매가
+  imageUrl    String? // 메인 이미지 URL
+  storeUrl    String? // 스마트스토어 링크
+  description String? // 제품 설명 (스펙, 사용법 등)
+  sortOrder   Int      @default(0) // 정렬 순서
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -348,13 +348,13 @@ model CSProductPart {
 }
 
 model CSProductFAQ {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   productId String
   product   CSProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
-  question  String                            // 질문
-  answer    String                            // 답변
-  sortOrder Int      @default(0)
-  createdAt DateTime @default(now())
+  question  String // 질문
+  answer    String // 답변
+  sortOrder Int       @default(0)
+  createdAt DateTime  @default(now())
 
   @@index([productId])
   @@map("cs_product_faqs")
@@ -366,12 +366,40 @@ model CSProductFAQ {
 
 model MessageTemplate {
   id        String   @id @default(cuid())
-  title     String                          // 템플릿 제목
-  body      String                          // 본문 ({{변수명}} 포함)
+  title     String // 템플릿 제목
+  body      String // 본문 ({{변수명}} 포함)
+  channel   String   @default("SMS") // SMS|LMS|KAKAO (카카오 알림톡 대비)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@map("message_templates")
+}
+
+// ============================================================
+// SMS 발송 로그
+// ============================================================
+
+model SmsLog {
+  id         String   @id @default(cuid())
+  recipient  String // 수신자 전화번호
+  sender     String // 발신번호
+  body       String // 발송 본문
+  msgType    String // SMS|LMS|MMS
+  title      String? // LMS/MMS 제목
+  templateId String? // 사용한 MessageTemplate id (nullable)
+  status     String // SUCCESS|FAIL|PENDING
+  resultCode String? // 알리고 응답 코드
+  resultMsg  String? // 알리고 응답 메시지
+  msgId      String? // 알리고 msg_id
+  testMode   Boolean  @default(false)
+  userId     String? // 발송한 사용자
+  userName   String?
+  createdAt  DateTime @default(now())
+
+  @@index([recipient])
+  @@index([createdAt])
+  @@index([status])
+  @@map("sms_logs")
 }
 
 // ============================================================
@@ -381,12 +409,12 @@ model MessageTemplate {
 model AuditLog {
   id        String   @id @default(cuid())
   userId    String?
-  userName  String?  // 삭제된 사용자 추적용
-  action    String   // CREATE, UPDATE, DELETE
-  target    String   // 모델명 (Product, Channel, User 등)
-  targetId  String?  // 대상 레코드 ID
-  summary   String   // 사람이 읽을 수 있는 요약 ("상품 '온열복대' 원가 수정")
-  changes   Json?    // 변경 전후 { field: { from, to } }
+  userName  String? // 삭제된 사용자 추적용
+  action    String // CREATE, UPDATE, DELETE
+  target    String // 모델명 (Product, Channel, User 등)
+  targetId  String? // 대상 레코드 ID
+  summary   String // 사람이 읽을 수 있는 요약 ("상품 '온열복대' 원가 수정")
+  changes   Json? // 변경 전후 { field: { from, to } }
   createdAt DateTime @default(now())
 
   @@index([userId])
@@ -400,12 +428,12 @@ model AuditLog {
 // ============================================================
 
 model ProductKeyword {
-  id        String   @id @default(cuid())
+  id        String        @id @default(cuid())
   productId String
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  product   Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
   keyword   String
-  isMain    Boolean  @default(false)
-  createdAt DateTime @default(now())
+  isMain    Boolean       @default(false)
+  createdAt DateTime      @default(now())
   ranks     KeywordRank[]
 
   @@unique([productId, keyword])
@@ -414,13 +442,13 @@ model ProductKeyword {
 }
 
 model KeywordRank {
-  id        String   @id @default(cuid())
+  id        String         @id @default(cuid())
   keywordId String
   keyword   ProductKeyword @relation(fields: [keywordId], references: [id], onDelete: Cascade)
-  rank      Int?     // 순위 (null이면 100위 밖)
-  page      Int?     // 몇 페이지
-  date      DateTime @db.Date
-  createdAt DateTime @default(now())
+  rank      Int? // 순위 (null이면 100위 밖)
+  page      Int? // 몇 페이지
+  date      DateTime       @db.Date
+  createdAt DateTime       @default(now())
 
   @@unique([keywordId, date])
   @@index([keywordId])
@@ -434,7 +462,7 @@ model KeywordRank {
 
 model ProductAdBudget {
   id        String   @id @default(cuid())
-  month     String   // "2026-03" 형식
+  month     String // "2026-03" 형식
   channelId String
   channel   Channel  @relation(fields: [channelId], references: [id])
   productId String

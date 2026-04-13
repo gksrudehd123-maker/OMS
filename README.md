@@ -431,9 +431,10 @@ GitHub Push → Vercel Auto Deploy (main branch → Production)
 
 **Phase 1 — 인프라 준비 (가입 전 선행 가능)**
 
-- [ ] Prisma `SmsLog` 모델 추가 (수신자, 템플릿ID, 본문, 상태, 응답코드, 발송자, 타임스탬프)
-- [ ] `.env.example`에 `ALIGO_API_KEY`, `ALIGO_USER_ID`, `ALIGO_SENDER` 추가
-- [ ] `src/lib/aligo.ts` 알리고 REST 클라이언트 (패키지 미사용, fetch 직접 호출)
+- [x] Prisma `SmsLog` 모델 추가 (수신자, 템플릿ID, 본문, 상태, 응답코드, 발송자, 타임스탬프)
+- [x] `MessageTemplate.channel` 필드 추가 (SMS/LMS/KAKAO 구분, 카카오 알림톡 대비)
+- [x] `.env.example`에 `ALIGO_API_KEY`, `ALIGO_USER_ID`, `ALIGO_SENDER`, `ALIGO_TEST_MODE` 추가
+- [x] `src/lib/aligo.ts` 알리고 REST 클라이언트 (패키지 미사용, fetch 직접 호출)
   - `sendSms()`: 단문(SMS, 90바이트)/장문(LMS) 자동 판별
   - `getRemainingQuota()`: 잔여 건수 조회
   - `/send_test/` 엔드포인트로 테스트 모드 지원
@@ -454,8 +455,8 @@ GitHub Push → Vercel Auto Deploy (main branch → Production)
 **Phase 4 — 실계정 연동 (사용자 작업 필요)**
 
 - [x] 알리고 회원가입 (smartsms.aligo.in) + 핸드폰 본인인증
-- [ ] 발신번호 등록 (통신사 가입증명서 업로드, 승인 1영업일) — **신청 대기 중**
-- [ ] API Key 발급 (마이페이지 → API 문자서비스)
+- [x] 발신번호 등록 + 승인 완료
+- [x] API Key 발급 (마이페이지 → API 문자서비스)
 - [ ] 충전 (SMS 약 8.4원/건, LMS 약 25원/건, 최소 1만원)
 - [ ] `/send_test/`로 테스트 → `/send/`로 실발송 검증
 
