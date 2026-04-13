@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
       resultCode = String(result.result_code);
       resultMsg = result.message;
       msgId = result.msg_id !== undefined ? String(result.msg_id) : undefined;
-      if (result.result_code !== 1) status = 'FAIL';
+      if (Number(result.result_code) !== 1) status = 'FAIL';
     } catch (err) {
       status = 'FAIL';
       resultMsg = err instanceof Error ? err.message : String(err);

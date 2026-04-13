@@ -8,7 +8,7 @@ export async function GET() {
 
   try {
     const result = await getRemainingQuota();
-    if (result.result_code !== 1) {
+    if (Number(result.result_code) !== 1) {
       return apiError(result.message || '잔여 건수 조회 실패', 502);
     }
     return apiSuccess({
