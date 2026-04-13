@@ -441,9 +441,9 @@ GitHub Push → Vercel Auto Deploy (main branch → Production)
 
 **Phase 2 — API 라우트**
 
-- [ ] `POST /api/sms/send` — 발송 (requireAuth, 감사 로그 기록)
-- [ ] `GET /api/sms/logs` — 발송 이력 조회 (페이징, 고객명/전화번호 필터)
-- [ ] `GET /api/sms/quota` — 잔여 건수
+- [x] `POST /api/sms/send` — 발송 (requireAuth, 감사 로그 기록)
+- [x] `GET /api/sms/logs` — 발송 이력 조회 (페이징, 전화번호/상태 필터)
+- [x] `GET /api/sms/quota` — 잔여 건수
 
 **Phase 3 — UI (CS 페이지 통합)**
 

@@ -39,6 +39,7 @@ const TARGET_LABELS: Record<string, string> = {
   Upload: '업로드',
   AdCost: '광고비',
   CSRecord: 'CS',
+  SmsLog: 'SMS',
   Setting: '설정',
 };
 
