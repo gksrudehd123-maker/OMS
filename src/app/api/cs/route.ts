@@ -37,26 +37,27 @@ export async function GET(request: NextRequest) {
 
   const records = await prisma.cSRecord.findMany({
     where,
-    orderBy: [{ status: 'asc' }, { consultDate: 'desc' }],
+    orderBy: [{ consultDate: 'desc' }, { status: 'asc' }],
   });
 
-  // 미처리 우선 정렬 (교환요청, 진행 중, 미입고, 연락처없음 → 안내완료)
+  // 같은 상담날짜 내에서 미처리 우선 정렬 (교환요청, 진행 중, 미입고, 연락처없음, 환불 → 안내완료)
   const statusOrder: Record<string, number> = {
     교환요청: 0,
     '진행 중': 1,
     미입고: 2,
     연락처없음: 3,
-    안내완료: 4,
-    완료: 5,
+    환불: 4,
+    안내완료: 5,
+    완료: 6,
   };
 
   records.sort((a, b) => {
+    const dateDiff =
+      new Date(b.consultDate).getTime() - new Date(a.consultDate).getTime();
+    if (dateDiff !== 0) return dateDiff;
     const orderA = statusOrder[a.status] ?? 3;
     const orderB = statusOrder[b.status] ?? 3;
-    if (orderA !== orderB) return orderA - orderB;
-    return (
-      new Date(b.consultDate).getTime() - new Date(a.consultDate).getTime()
-    );
+    return orderA - orderB;
   });
 
   return apiSuccess(records);
