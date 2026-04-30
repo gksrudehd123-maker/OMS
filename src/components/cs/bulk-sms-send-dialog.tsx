@@ -80,7 +80,7 @@ export default function BulkSmsSendDialog({ open, onClose }: Props) {
     ? allRecords
     : allRecords.filter(
         (r) =>
-          r.status !== '안내완료' && r.status !== '완료' && r.status !== '환불',
+          r.status !== '안내완료' && r.status !== '완료' && r.status !== '반품',
       );
 
   const { data: templates = [] } = useQuery<MessageTemplate[]>({

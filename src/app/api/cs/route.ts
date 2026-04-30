@@ -40,13 +40,13 @@ export async function GET(request: NextRequest) {
     orderBy: [{ consultDate: 'desc' }, { status: 'asc' }],
   });
 
-  // 같은 상담날짜 내에서 미처리 우선 정렬 (교환요청, 진행 중, 미입고, 연락처없음, 환불 → 안내완료)
+  // 같은 상담날짜 내에서 미처리 우선 정렬 (교환요청, 진행 중, 미입고, 연락처없음, 반품 → 안내완료)
   const statusOrder: Record<string, number> = {
     교환요청: 0,
     '진행 중': 1,
     미입고: 2,
     연락처없음: 3,
-    환불: 4,
+    반품: 4,
     안내완료: 5,
     완료: 6,
   };

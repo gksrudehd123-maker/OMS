@@ -59,7 +59,7 @@ const STATUS_LIST = [
   '진행 중',
   '미입고',
   '연락처없음',
-  '환불',
+  '반품',
   '안내완료',
   '완료',
 ] as const;
@@ -74,7 +74,7 @@ const STATUS_COLORS: Record<string, string> = {
   연락처없음: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400',
   '진행 중':
     'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400',
-  환불: 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-400',
+  반품: 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-400',
   안내완료: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400',
   완료: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400',
 };
@@ -99,11 +99,12 @@ const EMPTY_FORM = {
 
 const COLUMNS = [
   { key: '_sms', label: '문자', width: 60, align: 'center' },
-  { key: 'consultDate', label: '상담날짜', width: 100, align: 'left' },
-  { key: 'purchaseDate', label: '구입일자', width: 100, align: 'left' },
+  { key: 'consultDate', label: '상담날짜', width: 120, align: 'left' },
+  { key: 'purchaseDate', label: '구입일자', width: 120, align: 'left' },
   { key: 'status', label: '안내상태', width: 90, align: 'center' },
   { key: 'receivedDate', label: '입고날짜', width: 100, align: 'left' },
   { key: 'customerName', label: '고객명', width: 80, align: 'left' },
+  { key: 'customerPhone', label: '전화번호', width: 120, align: 'left' },
   { key: 'productName', label: '제품명', width: 140, align: 'left' },
   { key: 'consultNote', label: '상담내용', width: 180, align: 'left' },
   { key: 'receivedProduct', label: '입고제품', width: 140, align: 'left' },
@@ -500,6 +501,16 @@ function CSPageContent() {
           <span className="text-sm font-semibold text-foreground">
             {r.customerName}
           </span>
+        );
+      case 'customerPhone':
+        return r.customerPhone ? (
+          <span
+            className={`font-mono text-xs ${COMPLETE_STATUSES.has(r.status) ? 'opacity-30' : ''}`}
+          >
+            {r.customerPhone}
+          </span>
+        ) : (
+          <span className="text-muted-foreground">-</span>
         );
       case 'productName':
         return r.productName;
