@@ -61,11 +61,12 @@ const STATUS_LIST = [
   '미입고',
   '연락처없음',
   '반품',
+  '반품완료',
   '안내완료',
   '완료',
 ] as const;
 
-const COMPLETE_STATUSES = new Set(['완료']);
+const COMPLETE_STATUSES = new Set(['완료', '반품완료']);
 
 type ViewMode = 'list' | 'monthly' | 'status';
 
@@ -78,6 +79,7 @@ const STATUS_COLORS: Record<string, string> = {
   출고보류:
     'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-400',
   반품: 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-400',
+  반품완료: 'bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-400',
   안내완료: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400',
   완료: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400',
 };
