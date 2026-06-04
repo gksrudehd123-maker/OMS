@@ -20,6 +20,7 @@ import {
   Menu,
   X,
   Headphones,
+  BookOpen,
 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { cn } from '@/lib/utils';
@@ -67,6 +68,12 @@ const mainNavItems: NavItem[] = [
     href: '/cs',
     label: '고객 관리',
     icon: Headphones,
+    roles: ['OWNER', 'MANAGER', 'STAFF'],
+  },
+  {
+    href: '/handover',
+    label: '인수인계',
+    icon: BookOpen,
     roles: ['OWNER', 'MANAGER', 'STAFF'],
   },
   {

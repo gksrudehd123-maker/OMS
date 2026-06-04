@@ -12,6 +12,8 @@ const STAFF_ALLOWED = [
   '/settings',
   '/api/user',
   '/api/settings',
+  '/handover',
+  '/api/handover',
 ];
 
 // MANAGER가 접근 불가한 경로

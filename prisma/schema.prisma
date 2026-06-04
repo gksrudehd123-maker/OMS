@@ -478,3 +478,54 @@ model ProductAdBudget {
   @@index([channelId])
   @@map("product_ad_budgets")
 }
+
+// ============================================================
+// 인수인계 문서 (Handover) — 노션형 매뉴얼/가이드
+// ============================================================
+
+model HandoverDoc {
+  id            String              @id @default(cuid())
+  title         String
+  category      String? // 폴더/분류 (CS, 발주, 정산 등)
+  content       Json // BlockNote 문서 JSON (블록 배열)
+  isPublished   Boolean             @default(false) // 임시저장 / 공개
+  sortOrder     Int                 @default(0)
+  createdById   String
+  createdByName String
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  viewers       HandoverDocViewer[]
+  reads         HandoverDocRead[]
+
+  @@index([isPublished])
+  @@index([category])
+  @@map("handover_docs")
+}
+
+// 직원 개인 단위 열람 권한
+model HandoverDocViewer {
+  id        String      @id @default(cuid())
+  docId     String
+  doc       HandoverDoc @relation(fields: [docId], references: [id], onDelete: Cascade)
+  userId    String
+  userName  String
+  createdAt DateTime    @default(now())
+
+  @@unique([docId, userId])
+  @@index([userId])
+  @@map("handover_doc_viewers")
+}
+
+// 읽음 확인
+model HandoverDocRead {
+  id       String      @id @default(cuid())
+  docId    String
+  doc      HandoverDoc @relation(fields: [docId], references: [id], onDelete: Cascade)
+  userId   String
+  userName String
+  readAt   DateTime    @default(now())
+
+  @@unique([docId, userId])
+  @@index([userId])
+  @@map("handover_doc_reads")
+}
